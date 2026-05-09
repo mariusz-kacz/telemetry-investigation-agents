@@ -221,12 +221,12 @@ Set up a clean Python project that feels maintainable to a senior enterprise dev
 
 ## Checkpoint
 
-- [ ] Project can install dependencies.
-- [ ] Tests can run.
-- [ ] Basic package import works.
-- [ ] Repository structure exists.
-- [ ] First learning note exists.
-- [ ] README states portfolio thesis clearly.
+- [x] Project can install dependencies.
+- [x] Tests can run.
+- [x] Basic package import works.
+- [x] Repository structure exists.
+- [x] First learning note exists.
+- [x] README states portfolio thesis clearly.
 
 ## Codex stop condition
 
