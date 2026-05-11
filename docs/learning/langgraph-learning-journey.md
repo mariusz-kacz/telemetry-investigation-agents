@@ -164,8 +164,8 @@ Codex should update this board as work progresses.
 | Phase | Status | Completion date | Notes |
 |---|---|---:|---|
 | 1. Python project foundation | DONE | 2026-05-09 | Minimal package foundation, README, learning note, and import test added. |
-| 2. LangGraph fundamentals | IN_PROGRESS |  | Failing test and TODO skeleton added for learner implementation. |
-| 3. Typed state and domain modeling | TODO |  |  |
+| 2. LangGraph fundamentals | DONE | 2026-05-11 | Minimal graph, typed state, fixed edges, unit test, and learning note exist. |
+| 3. Typed state and domain modeling | DONE | 2026-05-11 | Domain models, explicit graph state, validation tests, and ADR added. |
 | 4. Control flow and conditional routing | TODO |  |  |
 | 5. Tool abstraction and adapters | TODO |  |  |
 | 6. Deterministic telemetry parsing | TODO |  |  |
@@ -274,12 +274,12 @@ LangGraph’s official docs define the Graph API around shared **State**, execut
 
 ## Checkpoint
 
-- [ ] Minimal LangGraph graph runs.
-- [ ] State is typed.
-- [ ] At least two nodes exist.
-- [ ] At least one fixed edge exists.
-- [ ] Unit test verifies final state.
-- [ ] Learning note explains state/nodes/edges.
+- [x] Minimal LangGraph graph runs.
+- [x] State is typed.
+- [x] At least two nodes exist.
+- [x] At least one fixed edge exists.
+- [x] Unit test verifies final state.
+- [x] Learning note explains state/nodes/edges.
 
 ## Codex stop condition
 
@@ -332,11 +332,11 @@ Create graph state:
 
 ## Checkpoint
 
-- [ ] Domain models exist.
-- [ ] Graph state is explicit and typed.
-- [ ] State does not contain random untyped dictionaries.
-- [ ] Tests cover model validation.
-- [ ] ADR exists.
+- [x] Domain models exist.
+- [x] Graph state is explicit and typed.
+- [x] State does not contain random untyped dictionaries.
+- [x] Tests cover model validation.
+- [x] ADR exists.
 
 ## Codex stop condition
 
