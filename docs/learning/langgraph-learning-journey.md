@@ -166,7 +166,7 @@ Codex should update this board as work progresses.
 | 1. Python project foundation | DONE | 2026-05-09 | Minimal package foundation, README, learning note, and import test added. |
 | 2. LangGraph fundamentals | DONE | 2026-05-11 | Minimal graph, typed state, fixed edges, unit test, and learning note exist. |
 | 3. Typed state and domain modeling | DONE | 2026-05-11 | Domain models, explicit graph state, validation tests, and ADR added. |
-| 4. Control flow and conditional routing | TODO |  |  |
+| 4. Control flow and conditional routing | DONE | 2026-05-11 | Deterministic routing function, conditional graph wiring, tests, and learning note exist. |
 | 5. Tool abstraction and adapters | TODO |  |  |
 | 6. Deterministic telemetry parsing | TODO |  |  |
 | 7. Evidence retrieval and citations | TODO |  |  |
@@ -386,11 +386,11 @@ Initial classification should be deterministic or rule-based. LLM routing can be
 
 ## Checkpoint
 
-- [ ] Conditional route exists.
-- [ ] Routing function is tested.
-- [ ] Unknown incident type has fallback behavior.
-- [ ] State captures routing decision.
-- [ ] Learning note explains deterministic vs LLM routing.
+- [x] Conditional route exists.
+- [x] Routing function is tested.
+- [x] Unknown incident type has fallback behavior.
+- [x] State captures routing decision.
+- [x] Learning note explains deterministic vs LLM routing.
 
 ## Codex stop condition
 

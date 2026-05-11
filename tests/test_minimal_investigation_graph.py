@@ -18,4 +18,3 @@ def test_minimal_investigation_graph_normalizes_title_and_creates_summary() -> N
         result["investigation_summary"]
         == "Initial investigation created for checkout api latency spike."
     )
-

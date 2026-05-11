@@ -14,17 +14,19 @@ class MinimalInvestigationState(TypedDict, total=False):
 
 
 def normalize_incident_title(
-    state: MinimalInvestigationState
+    state: MinimalInvestigationState,
 ) -> MinimalInvestigationState:
     """Return a state update containing a normalized incident title."""
-    return { "normalized_title": state["incident_title"].strip().lower() }
+    return {"normalized_title": state["incident_title"].strip().lower()}
 
 
 def create_initial_summary(
     state: MinimalInvestigationState,
 ) -> MinimalInvestigationState:
     """Return a state update containing an initial investigation summary."""
-    return { "investigation_summary": f"Initial investigation created for {state['normalized_title']}." }
+    return {
+        "investigation_summary": f"Initial investigation created for {state['normalized_title']}."
+    }
 
 
 def build_minimal_investigation_graph() -> CompiledStateGraph:
@@ -38,4 +40,3 @@ def build_minimal_investigation_graph() -> CompiledStateGraph:
     builder.add_edge("create_initial_summary", END)
 
     return builder.compile()
-
