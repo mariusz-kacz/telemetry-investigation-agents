@@ -167,7 +167,7 @@ Codex should update this board as work progresses.
 | 2. LangGraph fundamentals | DONE | 2026-05-11 | Minimal graph, typed state, fixed edges, unit test, and learning note exist. |
 | 3. Typed state and domain modeling | DONE | 2026-05-11 | Domain models, explicit graph state, validation tests, and ADR added. |
 | 4. Control flow and conditional routing | DONE | 2026-05-11 | Deterministic routing function, conditional graph wiring, tests, and learning note exist. |
-| 5. Tool abstraction and adapters | TODO |  |  |
+| 5. Tool abstraction and adapters | DONE | 2026-05-11 | Local telemetry tool protocols/adapters, typed evidence results, explicit file/malformed-data behavior, tests, and learning note exist. |
 | 6. Deterministic telemetry parsing | TODO |  |  |
 | 7. Evidence retrieval and citations | TODO |  |  |
 | 8. Agentic hypothesis generation | TODO |  |  |
@@ -433,11 +433,11 @@ Initially they should read from local files in `sample_data`.
 
 ## Checkpoint
 
-- [ ] Telemetry tool interfaces/adapters exist.
-- [ ] Tools return typed results.
-- [ ] Tools are testable without LLMs.
-- [ ] Missing-data behavior is explicit.
-- [ ] Learning note explains ports/adapters.
+- [x] Telemetry tool interfaces/adapters exist.
+- [x] Tools return typed results.
+- [x] Tools are testable without LLMs.
+- [x] Missing-data behavior is explicit.
+- [x] Learning note explains ports/adapters.
 
 ## Codex stop condition
 
