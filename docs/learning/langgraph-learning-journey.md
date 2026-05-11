@@ -164,7 +164,7 @@ Codex should update this board as work progresses.
 | Phase | Status | Completion date | Notes |
 |---|---|---:|---|
 | 1. Python project foundation | DONE | 2026-05-09 | Minimal package foundation, README, learning note, and import test added. |
-| 2. LangGraph fundamentals | TODO |  |  |
+| 2. LangGraph fundamentals | IN_PROGRESS |  | Failing test and TODO skeleton added for learner implementation. |
 | 3. Typed state and domain modeling | TODO |  |  |
 | 4. Control flow and conditional routing | TODO |  |  |
 | 5. Tool abstraction and adapters | TODO |  |  |
