@@ -44,6 +44,49 @@ I am learning Python and LangGraph to build a public portfolio project, but I do
 
 ---
 
+## Python quality expectations
+
+I am intentionally learning how experienced Python engineers design production code.
+
+When reviewing or generating code:
+
+1. Prefer idiomatic Python approaches over C#-style patterns translated into Python.
+2. Explain when my design instincts come from .NET habits rather than native Python practices.
+3. Optimize for readability and simplicity expected in mature Python codebases.
+4. Use Pythonic constructs where they improve clarity, but explain them carefully.
+5. Avoid unnecessary abstraction layers, interfaces, factories, or inheritance patterns unless they are genuinely justified in Python.
+6. Prefer composition, modules, functions, and protocols over enterprise-style class hierarchies.
+7. Use exceptions idiomatically rather than defensive pre-validation everywhere.
+8. Prefer standard library solutions before introducing third-party utilities.
+9. Follow conventions commonly used by senior Python engineers:
+   - EAFP style (`try/except` over pre-checking),
+   - duck typing where appropriate,
+   - `pathlib`,
+   - comprehensions when readable,
+   - context managers,
+   - dataclasses/Pydantic where appropriate,
+   - pytest idioms,
+   - type hints used pragmatically rather than ceremonially.
+10. Call out code that feels "overly Java/.NET" even if technically correct.
+11. If there are multiple possible implementations, explicitly identify:
+    - the most idiomatic Python approach,
+    - the most enterprise-defensive approach,
+    - and which one you recommend for this project.
+
+I do not want:
+- mechanical translation of C# patterns into Python,
+- unnecessary interfaces,
+- repository/service abstractions without value,
+- excessive boilerplate,
+- static-class thinking,
+- overuse of getters/setters,
+- mutation-heavy procedural code,
+- or architecture that fights the Python ecosystem.
+
+I want to gradually internalize how strong Python engineers think, structure code, name things, test systems, and balance pragmatism vs structure.
+
+---
+
 ## Final project
 
 The final portfolio project is:

@@ -168,7 +168,7 @@ Codex should update this board as work progresses.
 | 3. Typed state and domain modeling | DONE | 2026-05-11 | Domain models, explicit graph state, validation tests, and ADR added. |
 | 4. Control flow and conditional routing | DONE | 2026-05-11 | Deterministic routing function, conditional graph wiring, tests, and learning note exist. |
 | 5. Tool abstraction and adapters | DONE | 2026-05-11 | Local telemetry tool protocols/adapters, typed evidence results, explicit file/malformed-data behavior, tests, and learning note exist. |
-| 6. Deterministic telemetry parsing | TODO |  |  |
+| 6. Deterministic telemetry parsing | DONE | 2026-05-14 | Deterministic parsers, filtering helpers, malformed-input tests, and one synthetic incident fixture exist. |
 | 7. Evidence retrieval and citations | TODO |  |  |
 | 8. Agentic hypothesis generation | TODO |  |  |
 | 9. Critic / evidence validator | TODO |  |  |
@@ -479,11 +479,11 @@ Create parsers for synthetic data:
 
 ## Checkpoint
 
-- [ ] Parsers exist.
-- [ ] Time-window filtering works.
-- [ ] Correlation ID filtering works.
-- [ ] Synthetic incident data exists.
-- [ ] Tests cover normal and malformed inputs.
+- [x] Parsers exist.
+- [x] Time-window filtering works.
+- [x] Correlation ID filtering works.
+- [x] Synthetic incident data exists.
+- [x] Tests cover normal and malformed inputs.
 
 ## Codex stop condition
 
