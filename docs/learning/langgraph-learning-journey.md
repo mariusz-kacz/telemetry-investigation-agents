@@ -1,125 +1,98 @@
 # LangGraph Learning Journey — Telemetry Investigation Agents
 
-**Purpose:** Private learning plan stored in the repository and used by Codex across multiple clean sessions.  
-**Final portfolio target:** `Telemetry Investigation Agents` — a production-oriented Python + LangGraph system that investigates synthetic incidents using logs, traces, metrics, and deployment events, then produces cited investigation reports with confidence levels and explicit uncertainty.
+## Purpose
 
----
+This repository is a structured learning journey for building a production-oriented Python + LangGraph investigation system.
 
-## 0. Strategic intent
+The goal is not to learn LangGraph as a trendy framework.
 
-This journey is not about learning LangGraph as a trendy framework.
+The goal is to learn how to design reliable AI workflow systems with:
 
-The goal is to acquire enough LangGraph skill to design, implement, explain, and defend an enterprise-grade agentic workflow system. The final project should demonstrate that I can build reliable AI systems with:
-
-- explicit graph state,
-- bounded LLM decision points,
-- deterministic processing where possible,
-- evidence-backed reasoning,
-- human review checkpoints,
-- evaluation cases,
+- explicit workflow state,
+- bounded LLM reasoning,
+- deterministic processing,
+- evidence-backed conclusions,
+- confidence and uncertainty handling,
+- evaluation,
 - observability,
-- clean architecture,
-- maintainable Python code.
+- maintainable Python architecture.
 
-I am a Senior .NET Developer / Tech Lead. The journey should deliberately map LangGraph concepts to familiar enterprise engineering concepts such as workflow engines, state machines, orchestration layers, domain services, adapters, observability pipelines, and integration boundaries.
+This journey should teach native Python and LangGraph engineering approaches first. .NET/C# comparisons may be used only when they clarify tradeoffs or expose habits that do not translate well into Python.
 
 ---
 
-## 1. Final project vision
+# Final project vision
 
-### Project name
+## Project
 
 `Telemetry Investigation Agents`
 
-### Portfolio thesis
+## Portfolio thesis
 
-> A LangGraph-based incident investigation system that analyzes telemetry evidence from synthetic enterprise services, correlates logs/traces/metrics/deployment events, generates root-cause hypotheses, validates those hypotheses against evidence, and produces a cited investigation report with confidence and escalation behavior.
+> A production-oriented incident investigation workflow system that analyzes synthetic telemetry evidence, generates and validates root-cause hypotheses, and produces cited investigation reports with confidence and uncertainty handling.
 
-### Final workflow
+---
+
+# System workflow
 
 ```text
 Incident intake
     ↓
 Telemetry retrieval
     ↓
-Log pattern analysis
+Log analysis
     ↓
 Trace correlation
     ↓
-Metrics anomaly review
+Metrics review
     ↓
-Deployment/change correlation
+Deployment correlation
     ↓
 Hypothesis generation
     ↓
-Evidence validation / critic
+Evidence validation
     ↓
-Human review if confidence is low or impact is high
+Human review when needed
     ↓
-Final cited investigation report
+Final cited report
 ```
-
-### Expected final output
-
-Each investigation should produce:
-
-- incident summary,
-- affected service/component,
-- suspected failure category,
-- top root-cause hypotheses,
-- supporting evidence,
-- contradicting evidence,
-- confidence level,
-- uncertainty statement,
-- recommended next actions,
-- citations to log lines, traces, metric windows, and deployment events.
-
-### Non-goals
-
-This project is **not**:
-
-- a chatbot over logs,
-- an autonomous incident commander,
-- a generic RAG demo,
-- a fake multi-agent swarm,
-- a system where LLMs perform deterministic calculations,
-- a framework showcase without engineering discipline.
 
 ---
 
-## 2. Repository structure target
+# Architectural principles
 
-The final repository should gradually evolve toward:
+1. LangGraph orchestrates workflow state and transitions.
+2. Domain models do not depend on LangGraph.
+3. Deterministic logic owns parsing, filtering, correlation, and scoring where possible.
+4. LLMs assist with summarization, hypothesis generation, contradiction analysis, and narrative synthesis.
+5. Every report claim should reference evidence.
+6. Weak evidence should reduce confidence rather than produce hallucinated certainty.
+7. Human review is a risk-control mechanism.
+8. Evaluation should exist before prompt optimization.
+9. Observability is a first-class concern.
+10. Prefer idiomatic Python over translated enterprise Java/.NET patterns.
+
+---
+
+# Repository target
 
 ```text
 telemetry-investigation-agents/
-├── README.md
-├── pyproject.toml
-├── .env.example
-├── docker-compose.yml
-├── Dockerfile
-├── sample_data/
-│   ├── incidents/
-│   ├── logs/
-│   ├── traces/
-│   ├── metrics/
-│   └── deployments/
-├── src/
-│   └── telemetry_agents/
-│       ├── domain/
-│       ├── application/
-│       ├── graph/
-│       ├── infrastructure/
-│       ├── api/
-│       └── shared/
+├── src/telemetry_agents/
+│   ├── domain/
+│   ├── application/
+│   ├── graph/
+│   ├── infrastructure/
+│   ├── api/
+│   └── shared/
 ├── tests/
 ├── evals/
+├── sample_data/
 ├── docs/
-│   ├── learning-notes/
-│   ├── adr/
-│   └── architecture/
 └── scripts/
 ```
+
+---
 
 ### Folder intent
 
@@ -144,18 +117,16 @@ Codex must follow these rules during the journey:
 1. Teach one concept at a time.
 2. Implement one small vertical slice at a time.
 3. Do not generate the full project prematurely.
-4. Always explain concepts from a .NET/C# enterprise-engineering perspective.
-5. Keep LLM calls behind interfaces/adapters.
+4. Explain concepts from the native Python/LangGraph perspective first. Use .NET/C# comparisons only when they clarify a tradeoff, expose a habit to unlearn, or help connect a difficult concept.
+5. Keep LLM calls behind small adapters or protocols when substitution, testing, or isolation requires it.
 6. Keep deterministic logic outside LLM prompts.
-7. Prefer explicit state and typed models.
+7. Prefer explicit state and typed models, without turning Python into Java/C#.
 8. Add tests as soon as there is behavior worth testing.
 9. Add evaluation cases before optimizing prompts.
 10. Add observability before the system becomes complex.
 11. Maintain a learning journal.
 12. Use architecture decision records for meaningful tradeoffs.
 13. Every phase must end with a checkpoint that can be marked complete.
-
----
 
 ## 4. Progress board
 
@@ -169,7 +140,7 @@ Codex should update this board as work progresses.
 | 4. Control flow and conditional routing | DONE | 2026-05-11 | Deterministic routing function, conditional graph wiring, tests, and learning note exist. |
 | 5. Tool abstraction and adapters | DONE | 2026-05-11 | Local telemetry tool protocols/adapters, typed evidence results, explicit file/malformed-data behavior, tests, and learning note exist. |
 | 6. Deterministic telemetry parsing | DONE | 2026-05-14 | Deterministic parsers, filtering helpers, malformed-input tests, and one synthetic incident fixture exist. |
-| 7. Evidence retrieval and citations | TODO |  |  |
+| 7. Evidence retrieval and citations | IN_PROGRESS |  | Failing tests and TODO skeleton added; learner should implement deterministic retrieval and citation metadata. |
 | 8. Agentic hypothesis generation | TODO |  |  |
 | 9. Critic / evidence validator | TODO |  |  |
 | 10. Persistence, checkpointing, and interrupts | TODO |  |  |

@@ -5,6 +5,8 @@ from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
 
+from telemetry_agents.shared.time import parse_utc_timestamp
+
 
 class Timestamped(Protocol):
     timestamp: datetime
@@ -48,10 +50,6 @@ class ParsedDeploymentEvent(BaseModel):
 EXCEPTION_PATTERN = re.compile(r"\b([A-Z][A-Za-z0-9]+Exception)\b")
 
 
-def _parse_utc_timestamp(value: str) -> datetime:
-    return datetime.fromisoformat(value.replace("Z", "+00:00"))
-
-
 def _parse_json_object(line: str, label: str) -> dict[str, Any]:
     try:
         record = json.loads(line)
@@ -84,7 +82,7 @@ def parse_log_line(line: str) -> ParsedLogRecord:
     service = tokens[2]
 
     try:
-        timestamp = _parse_utc_timestamp(timestamp_text)
+        timestamp = parse_utc_timestamp(timestamp_text)
     except ValueError as exc:
         raise ValueError("Wrong timestamp value") from exc
 
@@ -122,7 +120,7 @@ def parse_trace_span_json(line: str) -> ParsedTraceSpan:
     record = _parse_json_object(line, "Trace span")
 
     try:
-        timestamp = _parse_utc_timestamp(_required_string(record, "timestamp"))
+        timestamp = parse_utc_timestamp(_required_string(record, "timestamp"))
     except ValueError as exc:
         raise ValueError("Wrong timestamp value") from exc
 
@@ -155,7 +153,7 @@ def parse_metric_sample_json(line: str) -> ParsedMetricSample:
     record = _parse_json_object(line, "Metric sample")
 
     try:
-        timestamp = _parse_utc_timestamp(_required_string(record, "timestamp"))
+        timestamp = parse_utc_timestamp(_required_string(record, "timestamp"))
     except ValueError as exc:
         raise ValueError("Wrong timestamp value") from exc
 
@@ -180,7 +178,7 @@ def parse_deployment_event_json(line: str) -> ParsedDeploymentEvent:
     record = _parse_json_object(line, "Deployment event")
 
     try:
-        timestamp = _parse_utc_timestamp(_required_string(record, "timestamp"))
+        timestamp = parse_utc_timestamp(_required_string(record, "timestamp"))
     except ValueError as exc:
         raise ValueError("Wrong timestamp value") from exc
 

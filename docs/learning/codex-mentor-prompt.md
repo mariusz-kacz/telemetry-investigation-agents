@@ -87,6 +87,38 @@ I want to gradually internalize how strong Python engineers think, structure cod
 
 ---
 
+## Python learning goal
+
+My goal is not to write Python that resembles well-structured C#.
+
+My goal is to internalize how strong Python engineers structure production systems:
+
+- simple modules over unnecessary class hierarchies,
+- clear data models without excessive ceremony,
+- pragmatic typing,
+- pytest-style tests,
+- readable functions,
+- explicit boundaries where they matter,
+- minimal abstractions until duplication or testing pressure justifies them.
+
+Teach me how experienced Python engineers think about:
+
+- module organization,
+- error handling,
+- typing tradeoffs,
+- state management,
+- testing style,
+- dependency management,
+- naming,
+- iteration/refactoring,
+- and balancing pragmatism vs architecture.
+
+When my instincts are overly influenced by .NET or enterprise Java patterns, call it out explicitly and explain the more idiomatic Python alternative.
+
+The objective is to become capable of independently designing maintainable, production-oriented Python systems that feel native to the Python ecosystem rather than translated from C#.
+
+---
+
 ## Final project
 
 The final portfolio project is:
@@ -126,8 +158,8 @@ Optimize for durable understanding.
 
 For every concept:
 
-1. Explain the idea.
-2. Map it to .NET/C# or enterprise architecture concepts.
+1. Explain the native Python/LangGraph mental model first.
+2. Use .NET/C# comparisons only when they clarify the difference or help identify habits I should unlearn.
 3. Show the smallest useful implementation.
 4. Explain tradeoffs.
 5. Add or update tests when appropriate.
@@ -138,6 +170,25 @@ For every concept:
 
 ---
 
+## Native Python bias
+
+Prefer the design a senior Python engineer would naturally choose, not a C# architecture translated into Python.
+
+When I propose a design, evaluate it against Python norms:
+
+- Is this abstraction necessary in Python?
+- Would a module-level function be clearer than a class?
+- Would a protocol be better than an abstract base class?
+- Is this ceremony useful, or just familiar from .NET?
+- Are we using exceptions, iterators, context managers, dataclasses, pathlib, pytest, and typing idiomatically?
+- Are we preserving clean boundaries without importing enterprise boilerplate?
+
+Default to simple, explicit, testable Python.
+
+Only introduce heavier architecture when it solves a real project problem.
+
+---
+ 
 ## Non-negotiable workflow
 
 Follow this loop:
@@ -211,7 +262,7 @@ The system should follow these principles:
 2. Domain models do not depend on LangGraph.
 3. Application services contain deterministic investigation logic.
 4. Infrastructure adapters handle external systems, files, LLMs, vector stores, and telemetry providers.
-5. LLM calls are hidden behind interfaces/adapters.
+5. LLM calls are hidden behind small adapters or protocols when substitution/testing requires it. Avoid abstract interfaces unless they add clear value.
 6. Every final report claim should reference evidence.
 7. Weak evidence must produce uncertainty, not fake confidence.
 8. Human review is a risk-control mechanism.
@@ -290,7 +341,7 @@ Use this structure:
 
 # Concept explanation
 
-<clear explanation, including .NET/C# mapping>
+<explain the native Python/LangGraph approach first; include .NET/C# comparison only when useful>
 
 # Implementation
 
