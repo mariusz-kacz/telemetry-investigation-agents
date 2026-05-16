@@ -1,3 +1,5 @@
+from typing import Any
+
 from langgraph.constants import START, END
 from langgraph.graph.state import CompiledStateGraph, StateGraph
 
@@ -18,7 +20,11 @@ def record_routing_decision(
 
 
 def route_from_state(state: InvestigationGraphState) -> InvestigationRoute:
-    return state["routing_decision"]
+    route = state.get("routing_decision")
+    if route is None:
+        raise ValueError("routing_decision is required")
+
+    return route
 
 
 def log_focused_findings(state: InvestigationGraphState) -> InvestigationGraphState:
@@ -41,7 +47,7 @@ def broad_focused_findings(state: InvestigationGraphState) -> InvestigationGraph
     return {"intermediate_findings": ["broad investigation selected"]}
 
 
-def build_routed_investigation_graph() -> CompiledStateGraph:
+def build_routed_investigation_graph() -> CompiledStateGraph[Any, None, Any, Any]:
     """Build a graph that branches by routing_decision."""
 
     builder = StateGraph(InvestigationGraphState)

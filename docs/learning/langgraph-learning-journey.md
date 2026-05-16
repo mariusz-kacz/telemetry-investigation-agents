@@ -128,9 +128,35 @@ Codex must follow these rules during the journey:
 12. Use architecture decision records for meaningful tradeoffs.
 13. Every phase must end with a checkpoint that can be marked complete.
 
+---
+
+## Plan challenge rule
+
+This learning journey is a baseline, not final architecture law.
+
+Before implementing each checkpoint:
+1. Restate what the plan proposes.
+2. Identify the architectural assumptions behind it.
+3. Present 2–3 viable alternatives.
+4. Explain tradeoffs.
+5. Ask the learner to choose.
+6. Critique the learner’s choice.
+7. Only then proceed with skeletons/tests/implementation.
+
+Do not treat existing architecture decisions as final unless the learner explicitly accepts them.
+
+---
+
 ## 4. Progress board
 
-Codex should update this board as work progresses.
+Codex may recommend checkpoint completion, but the learner must approve it.
+
+Before any phase is marked DONE:
+1. Codex asks 3–5 verification questions.
+2. Learner answers.
+3. Codex reviews the answers critically.
+4. If understanding is sufficient, learner approves the checkpoint.
+5. Only then Codex updates the progress board.
 
 | Phase | Status | Completion date | Notes |
 |---|---|---:|---|

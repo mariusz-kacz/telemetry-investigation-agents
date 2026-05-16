@@ -12,7 +12,11 @@ RULES = {
 
 def classify_incident_route(state: InvestigationGraphState) -> InvestigationRoute:
     """Choose the next investigation branch from explicit state."""
-    normalized = state["incident_input"].lower()
+    incident_input = state.get("incident_input")
+    if incident_input is None:
+        raise ValueError("incident_input is required")
+
+    normalized = incident_input.lower()
 
     for investigation_route, keywords in RULES.items():
         if any(keyword in normalized for keyword in keywords):

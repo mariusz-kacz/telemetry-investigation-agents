@@ -5,16 +5,6 @@ from typing import Protocol
 from telemetry_agents.domain import EvidenceSource, TelemetryEvidence
 
 
-class LogSearchTool(Protocol):
-    def search(self, *, service: str, query: str) -> list[TelemetryEvidence]:
-        """Search logs and return cited evidence."""
-
-
-class TraceLookupTool(Protocol):
-    def lookup(self, *, service: str, trace_id: str) -> list[TelemetryEvidence]:
-        """Look up trace spans and return cited evidence."""
-
-
 class MetricWindowTool(Protocol):
     def get_window(
         self,
@@ -25,6 +15,7 @@ class MetricWindowTool(Protocol):
         end_timestamp: str,
     ) -> list[TelemetryEvidence]:
         """Read metric samples for a time window and return cited evidence."""
+        ...
 
 
 class DeploymentEventTool(Protocol):
@@ -36,34 +27,7 @@ class DeploymentEventTool(Protocol):
         end_timestamp: str,
     ) -> list[TelemetryEvidence]:
         """Find deployment changes for a service and return cited evidence."""
-
-
-class LocalFileLogSearchTool:
-    def __init__(self, data_root: Path) -> None:
-        self.data_root = data_root
-
-    def search(self, *, service: str, query: str) -> list[TelemetryEvidence]:
-        file_path = self.data_root / f"logs/{service}.log"
-
-        if not file_path.exists():
-            raise FileNotFoundError(file_path)
-
-        telemetry_evidences: list[TelemetryEvidence] = []
-        with file_path.open("r", encoding="utf-8") as file:
-            for line_number, line in enumerate(file, start=1):
-                if query.lower() not in line.lower():
-                    continue
-
-                telemetry_evidences.append(
-                    TelemetryEvidence(
-                        evidence_id=f"log-{service}-{line_number}",
-                        service=service,
-                        citation=f"{file_path.as_posix()}:{line_number}",
-                        source=EvidenceSource.LOG,
-                        summary=line.strip(),
-                    )
-                )
-        return telemetry_evidences
+        ...
 
 
 class LocalFileTraceLookupTool:

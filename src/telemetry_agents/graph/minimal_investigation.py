@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from langgraph.constants import START, END
 from langgraph.graph import StateGraph
@@ -17,19 +17,27 @@ def normalize_incident_title(
     state: MinimalInvestigationState,
 ) -> MinimalInvestigationState:
     """Return a state update containing a normalized incident title."""
-    return {"normalized_title": state["incident_title"].strip().lower()}
+    incident_title = state.get("incident_title")
+    if incident_title is None:
+        raise ValueError("incident_title is required")
+
+    return {"normalized_title": incident_title.strip().lower()}
 
 
 def create_initial_summary(
     state: MinimalInvestigationState,
 ) -> MinimalInvestigationState:
     """Return a state update containing an initial investigation summary."""
+    normalized_title = state.get("normalized_title")
+    if normalized_title is None:
+        raise ValueError("normalized_title is required")
+
     return {
-        "investigation_summary": f"Initial investigation created for {state['normalized_title']}."
+        "investigation_summary": f"Initial investigation created for {normalized_title}."
     }
 
 
-def build_minimal_investigation_graph() -> CompiledStateGraph:
+def build_minimal_investigation_graph() -> CompiledStateGraph[Any, None, Any, Any]:
     """Build and compile the smallest LangGraph StateGraph."""
     builder = StateGraph(MinimalInvestigationState)
     builder.add_node("normalize_incident_title", normalize_incident_title)

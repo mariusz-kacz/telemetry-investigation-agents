@@ -16,6 +16,7 @@ def test_retrieved_evidence_preserves_citation_metadata() -> None:
         end_timestamp="2026-05-11T10:10:00Z",
         correlation_id="cart-123",
         trace_id="trace-001",
+        data_root="sample_data",
     )
 
     evidence = retrieve_evidence(request)
@@ -43,6 +44,7 @@ def test_evidence_retrieval_ranks_strong_evidence_before_weak_evidence() -> None
         end_timestamp="2026-05-11T10:10:00Z",
         correlation_id="cart-123",
         trace_id="trace-001",
+        data_root="sample_data",
     )
 
     evidence = retrieve_evidence(request)
@@ -60,6 +62,7 @@ def test_missing_evidence_is_represented_explicitly() -> None:
         end_timestamp="2026-05-11T11:30:00Z",
         correlation_id="missing-correlation-id",
         trace_id="missing-trace-id",
+        data_root="sample_data",
     )
 
     evidence = retrieve_evidence(request)
