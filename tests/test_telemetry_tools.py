@@ -6,7 +6,6 @@ import pytest
 from telemetry_agents.domain import EvidenceSource, TelemetryEvidence
 from telemetry_agents.infrastructure.telemetry_tools import (
     LocalFileDeploymentEventTool,
-    LocalFileLogSearchTool,
     LocalFileMetricWindowTool,
     LocalFileTraceLookupTool,
 )
