@@ -2,7 +2,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from telemetry_agents.application.telemetry_parsing import (
+from telemetry_agents.telemetry.parsing import (
     ParsedDeploymentEvent,
     ParsedLogRecord,
     ParsedMetricSample,

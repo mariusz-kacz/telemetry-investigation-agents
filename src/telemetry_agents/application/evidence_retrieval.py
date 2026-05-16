@@ -1,21 +1,22 @@
 from collections import defaultdict
 from datetime import datetime
-from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from telemetry_agents.application.telemetry_parsing import ParsedLogRecord
+from telemetry_agents.application.telemetry_classification import (
+    EvidenceStrength,
+    classify_matching_log_line,
+)
+from telemetry_agents.application.log_matching import (
+    MatchReason,
+    MatchDetail,
+    MatchedLogLine,
+    get_matching_log_lines,
+)
 from telemetry_agents.domain import TelemetryEvidence, EvidenceSource
 from telemetry_agents.infrastructure.telemetry_readers import LocalFileTelemetryReader
 from telemetry_agents.shared.time import parse_utc_timestamp
-
-
-class EvidenceStrength(StrEnum):
-    STRONG = "strong"
-    MEDIUM = "medium"
-    WEAK = "weak"
-    MISSING = "missing"
 
 
 class CitationMetadata(BaseModel):
@@ -45,133 +46,6 @@ class EvidenceRetrievalRequest(BaseModel):
     trace_id: str | None = None
 
 
-class MatchReason(StrEnum):
-    CORRELATION_ID = "correlation_id"
-    TRACE_ID = "trace_id"
-    QUERY_TERM = "query_term"
-
-
-class MatchDetail(BaseModel):
-    reason: MatchReason
-    value: str
-
-
-ClassificationRule = tuple[frozenset[MatchReason], EvidenceStrength, float]
-
-
-LOG_CLASSIFICATION_RULES: tuple[ClassificationRule, ...] = (
-    (
-        frozenset(
-            {
-                MatchReason.QUERY_TERM,
-                MatchReason.CORRELATION_ID,
-                MatchReason.TRACE_ID,
-            }
-        ),
-        EvidenceStrength.STRONG,
-        1.0,
-    ),
-    (
-        frozenset({MatchReason.QUERY_TERM, MatchReason.CORRELATION_ID}),
-        EvidenceStrength.STRONG,
-        0.8,
-    ),
-    (
-        frozenset({MatchReason.QUERY_TERM, MatchReason.TRACE_ID}),
-        EvidenceStrength.STRONG,
-        0.8,
-    ),
-    (
-        frozenset({MatchReason.CORRELATION_ID, MatchReason.TRACE_ID}),
-        EvidenceStrength.MEDIUM,
-        0.6,
-    ),
-    (
-        frozenset({MatchReason.CORRELATION_ID}),
-        EvidenceStrength.MEDIUM,
-        0.4,
-    ),
-    (
-        frozenset({MatchReason.TRACE_ID}),
-        EvidenceStrength.MEDIUM,
-        0.4,
-    ),
-    (
-        frozenset({MatchReason.QUERY_TERM}),
-        EvidenceStrength.WEAK,
-        0.2,
-    ),
-)
-
-
-class MatchedLogLine(BaseModel):
-    log_line: ParsedLogRecord
-    source_file: Path
-    line_number: int
-    match_details: list[MatchDetail] = Field(default_factory=list)
-
-
-def _get_matching_query_terms(
-    message: str,
-    keywords: list[str],
-) -> list[str]:
-    normalized_message = message.lower()
-    return [key for key in keywords if key.lower() in normalized_message]
-
-
-def _get_matching_log_lines(
-    *,
-    data_root: Path,
-    start_timestamp: datetime,
-    end_timestamp: datetime,
-    service: str,
-    query_terms: list[str],
-    correlation_id: str | None,
-    trace_id: str | None,
-) -> list[MatchedLogLine]:
-    reader = LocalFileTelemetryReader(data_root)
-
-    matched_log_lines: list[MatchedLogLine] = []
-    for source_log in reader.read_logs(service=service):
-        log_line = source_log.record
-        if (
-            log_line.service == service
-            and start_timestamp <= log_line.timestamp <= end_timestamp
-        ):
-            match_details: list[MatchDetail] = []
-
-            if trace_id and log_line.trace_id == trace_id:
-                match_details.append(
-                    MatchDetail(reason=MatchReason.TRACE_ID, value=trace_id)
-                )
-
-            if correlation_id and log_line.correlation_id == correlation_id:
-                match_details.append(
-                    MatchDetail(reason=MatchReason.CORRELATION_ID, value=correlation_id)
-                )
-
-            if query_terms:
-                matched_query_terms = _get_matching_query_terms(
-                    log_line.message, keywords=query_terms
-                )
-                for query_term in matched_query_terms:
-                    match_details.append(
-                        MatchDetail(reason=MatchReason.QUERY_TERM, value=query_term)
-                    )
-
-            if match_details:
-                matched_log_lines.append(
-                    MatchedLogLine(
-                        log_line=log_line,
-                        source_file=source_log.source_file,
-                        line_number=source_log.line_number,
-                        match_details=match_details,
-                    )
-                )
-
-    return matched_log_lines
-
-
 def _format_selection_reason(
     match_details: list[MatchDetail],
 ) -> str:
@@ -185,25 +59,13 @@ def _format_selection_reason(
     if trace_ids := grouped_matches.get(MatchReason.TRACE_ID):
         result_parts.append(f"trace ID {trace_ids[0]}")
     if query_terms := grouped_matches.get(MatchReason.QUERY_TERM):
-        query_terms_text = ', '.join(query_terms)
+        query_terms_text = ", ".join(query_terms)
         result_parts.append(f"query terms: {query_terms_text}")
 
     if not result_parts:
         raise ValueError("selection reason requires at least one match detail")
 
     return f"Matched {', '.join(result_parts)}."
-
-
-def _classify_matching_log_line(
-    matching_log_line: MatchedLogLine,
-) -> tuple[EvidenceStrength, float]:
-    found_reasons = {detail.reason for detail in matching_log_line.match_details}
-
-    for required_reasons, strength, relevance_score in LOG_CLASSIFICATION_RULES:
-        if required_reasons <= found_reasons:
-            return strength, relevance_score
-
-    raise ValueError("matched log line has no match reasons")
 
 
 def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEvidence]:
@@ -221,10 +83,20 @@ def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEviden
     except ValueError as exc:
         raise ValueError("Wrong timestamp value") from exc
 
-    retrieved_evidence: list[RetrievedEvidence] = []
+    return _retrieve_log_evidence(end_timestamp, request, start_timestamp)
 
-    matching_log_lines: list[MatchedLogLine] = _get_matching_log_lines(
-        data_root=Path(request.data_root),
+
+def _retrieve_log_evidence(
+    end_timestamp: datetime,
+    request: EvidenceRetrievalRequest,
+    start_timestamp: datetime,
+) -> list[RetrievedEvidence]:
+    retrieved_log_evidence: list[RetrievedEvidence] = []
+
+    reader = LocalFileTelemetryReader(Path(request.data_root))
+
+    matching_log_lines: list[MatchedLogLine] = get_matching_log_lines(
+        log_records=reader.read_logs(service=request.service),
         start_timestamp=start_timestamp,
         end_timestamp=end_timestamp,
         service=request.service,
@@ -250,11 +122,11 @@ def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEviden
             selection_reason=_format_selection_reason(matching_log_line.match_details),
         )
 
-        evidence_strength, relevance_score = _classify_matching_log_line(
+        evidence_strength, relevance_score = classify_matching_log_line(
             matching_log_line
         )
 
-        retrieved_evidence.append(
+        retrieved_log_evidence.append(
             RetrievedEvidence(
                 evidence=telemetry_evidence,
                 citation=citation_metadata,
@@ -263,7 +135,7 @@ def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEviden
             )
         )
 
-    if not retrieved_evidence:
+    if not retrieved_log_evidence:
         return [
             RetrievedEvidence(
                 evidence=TelemetryEvidence(
@@ -285,4 +157,4 @@ def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEviden
                 relevance_score=0,
             )
         ]
-    return retrieved_evidence
+    return retrieved_log_evidence

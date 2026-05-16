@@ -1,9 +1,9 @@
 from datetime import UTC, datetime
 
 import pytest
+from telemetry_agents.telemetry.models import ParsedLogRecord
 
-from telemetry_agents.application.telemetry_parsing import (
-    ParsedLogRecord,
+from telemetry_agents.telemetry.parsing import (
     filter_by_time_window,
     filter_logs_by_correlation_id,
     parse_deployment_event_json,
