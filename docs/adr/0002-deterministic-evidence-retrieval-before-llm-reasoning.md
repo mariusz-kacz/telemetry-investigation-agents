@@ -22,7 +22,7 @@ It also represents missing evidence explicitly instead of treating an empty matc
 
 ## Decision
 
-Evidence retrieval, source-specific matching, citation assembly, evidence strength assignment, and missing-evidence representation will be deterministic application logic.
+Evidence retrieval, source-specific matching, citation assembly, evidence strength assignment, and missing-evidence representation will be deterministic investigation logic.
 
 LLM-based hypothesis generation must consume structured retrieved evidence, not raw telemetry files.
 
@@ -30,9 +30,9 @@ The current boundary is:
 
 ```text
 local telemetry files
-    -> infrastructure readers
+    -> telemetry readers
     -> parsed telemetry records with source location
-    -> application matching
+    -> investigation matching
     -> RetrievedEvidence with citation metadata
     -> later LLM hypothesis generation
 ```

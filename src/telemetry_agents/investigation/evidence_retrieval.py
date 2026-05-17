@@ -4,30 +4,29 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from telemetry_agents.application.evidence_scoring import (
+from telemetry_agents.domain import EvidenceSource, TelemetryEvidence
+from telemetry_agents.investigation.evidence_scoring import (
     EvidenceStrength,
     score_matching_log_line,
-    score_matching_trace_span,
     score_matching_metric_sample,
+    score_matching_trace_span,
 )
-
-from telemetry_agents.application.log_matching import (
-    MatchReason,
+from telemetry_agents.investigation.log_matching import (
     MatchDetail,
     MatchedLogLine,
+    MatchReason,
     get_matching_log_lines,
 )
-from telemetry_agents.application.metrics_matching import (
+from telemetry_agents.investigation.metrics_matching import (
     MatchedMetricSample,
     get_matching_metric_samples,
 )
-from telemetry_agents.application.trace_matching import (
-    get_matching_trace_spans,
+from telemetry_agents.investigation.trace_matching import (
     MatchedTraceSpan,
+    get_matching_trace_spans,
 )
-from telemetry_agents.domain import TelemetryEvidence, EvidenceSource
-from telemetry_agents.infrastructure.telemetry_readers import LocalFileTelemetryReader
 from telemetry_agents.shared.time import parse_utc_timestamp
+from telemetry_agents.telemetry.readers import LocalFileTelemetryReader
 
 
 class CitationMetadata(BaseModel):
@@ -328,3 +327,4 @@ def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEviden
     )
 
     return log_evidence + trace_span_evidence + metric_sample_evidence
+

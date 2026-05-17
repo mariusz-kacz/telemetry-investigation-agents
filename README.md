@@ -10,4 +10,4 @@ The project is intentionally incremental. The foundation starts as a small Pytho
 
 LangGraph should orchestrate workflow state and transitions. Deterministic parsing, validation, telemetry access, and domain behavior should remain in normal Python modules that are easy to test without an LLM.
 
-This mirrors enterprise .NET architecture: the graph is the orchestration layer, domain models stay framework-independent, application services hold deterministic use-case logic, and infrastructure adapters handle external systems.
+This mirrors the useful part of enterprise layering without copying its ceremony: the graph is the orchestration layer, domain models stay framework-independent, telemetry modules own parsing and local readers, and investigation modules hold deterministic retrieval, matching, and scoring logic.

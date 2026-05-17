@@ -10,7 +10,8 @@ The system is still intentionally incomplete. It has deterministic telemetry par
 
 ### `telemetry`
 
-Owns normalized telemetry record shapes and parsing for the local synthetic data format.
+Owns normalized telemetry record shapes, parsing, and local telemetry readers for
+the synthetic data format.
 
 Examples:
 
@@ -20,12 +21,7 @@ Examples:
 - `parse_log_line`
 - `parse_trace_span_json`
 - `parse_metric_sample_json`
-
-This package is source-neutral within the project. It is not responsible for file access or evidence ranking.
-
-### `infrastructure`
-
-Owns local file access and source-location preservation.
+- `LocalFileTelemetryReader`
 
 The current reader reads synthetic telemetry files and returns parsed records with:
 
@@ -33,9 +29,10 @@ The current reader reads synthetic telemetry files and returns parsed records wi
 - line number,
 - parsed telemetry record.
 
-Infrastructure may depend on telemetry parsing. Application matching should not depend on file paths or file IO.
+Readers may depend on telemetry parsing. Investigation matching should not open
+files or parse raw lines directly.
 
-### `application`
+### `investigation`
 
 Owns deterministic investigation logic.
 
@@ -50,11 +47,11 @@ Current responsibilities:
 
 Matching functions accept already-read source records. They do not open files and do not manufacture missing evidence.
 
-Evidence retrieval is the application orchestration boundary. It calls infrastructure readers, invokes matchers, creates `TelemetryEvidence`, attaches citation metadata, and represents missing evidence explicitly.
+Evidence retrieval is the deterministic investigation boundary. It calls telemetry readers, invokes matchers, creates `TelemetryEvidence`, attaches citation metadata, and represents missing evidence explicitly.
 
 ### `domain`
 
-Owns core investigation models that should not depend on LangGraph or infrastructure.
+Owns core investigation models that should not depend on LangGraph or telemetry readers.
 
 Examples:
 
@@ -70,27 +67,27 @@ Domain models are intentionally small at this stage.
 
 Owns LangGraph state and early workflow experiments.
 
-The graph layer should orchestrate application functions. It should not parse telemetry, read files directly, or contain source-specific matching rules.
+The graph layer should orchestrate investigation functions. It should not parse telemetry, read files directly, or contain source-specific matching rules.
 
 ## Dependency Direction
 
 Current intended dependency shape:
 
 ```text
-infrastructure -> telemetry
-application -> telemetry
-application -> domain
-application -> infrastructure at retrieval orchestration boundary
-graph -> application
+telemetry -> shared
+investigation -> telemetry
+investigation -> domain
+investigation -> shared
+graph -> investigation
 graph -> domain/state models
 ```
 
 Avoid these directions:
 
 ```text
-telemetry -> application
-domain -> application
-domain -> infrastructure
+telemetry -> investigation
+domain -> investigation
+domain -> telemetry readers
 matching modules -> file readers
 graph nodes -> raw file parsing
 ```

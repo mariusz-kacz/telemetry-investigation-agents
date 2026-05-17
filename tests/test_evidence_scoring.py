@@ -3,11 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from telemetry_agents.application.evidence_scoring import (
+from telemetry_agents.investigation.evidence_scoring import (
     EvidenceStrength,
     score_matching_log_line,
 )
-from telemetry_agents.application.log_matching import (
+from telemetry_agents.investigation.log_matching import (
     MatchDetail,
     MatchedLogLine,
     MatchReason,

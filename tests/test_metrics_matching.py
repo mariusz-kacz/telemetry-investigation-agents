@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from telemetry_agents.application.metrics_matching import get_matching_metric_samples
+from telemetry_agents.investigation.metrics_matching import get_matching_metric_samples
 from telemetry_agents.telemetry.models import ParsedMetricSample
 
 

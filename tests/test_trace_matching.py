@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from telemetry_agents.application.trace_matching import get_matching_trace_spans
+from telemetry_agents.investigation.trace_matching import get_matching_trace_spans
 from telemetry_agents.telemetry.models import ParsedTraceSpan
 
 

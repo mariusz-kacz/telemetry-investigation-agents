@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from telemetry_agents.infrastructure.telemetry_readers import LocalFileTelemetryReader
+from telemetry_agents.telemetry.readers import LocalFileTelemetryReader
 
 
 SAMPLE_DATA = Path("sample_data")

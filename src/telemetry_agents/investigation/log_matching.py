@@ -89,3 +89,4 @@ def get_matching_log_lines(
                 )
 
     return matched_log_lines
+

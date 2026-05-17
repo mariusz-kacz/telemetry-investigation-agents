@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from telemetry_agents.application.log_matching import (
+from telemetry_agents.investigation.log_matching import (
     MatchReason,
     get_matching_log_lines,
 )

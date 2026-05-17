@@ -1,4 +1,4 @@
-from telemetry_agents.application.evidence_retrieval import (
+from telemetry_agents.investigation.evidence_retrieval import (
     EvidenceRetrievalRequest,
     EvidenceStrength,
     RetrievedEvidence,
