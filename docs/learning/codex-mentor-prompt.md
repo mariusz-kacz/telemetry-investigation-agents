@@ -132,7 +132,6 @@ It should become a LangGraph-based incident investigation system that analyzes s
 - logs,
 - traces,
 - metrics,
-- deployment events,
 - incident descriptions.
 
 It should produce:
@@ -286,8 +285,7 @@ telemetry-investigation-agents/
 │   ├── incidents/
 │   ├── logs/
 │   ├── traces/
-│   ├── metrics/
-│   └── deployments/
+│   └── metrics/
 ├── src/
 │   └── telemetry_agents/
 │       ├── domain/

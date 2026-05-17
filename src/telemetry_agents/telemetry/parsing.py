@@ -8,7 +8,6 @@ from telemetry_agents.telemetry.models import (
     ParsedLogRecord,
     ParsedTraceSpan,
     ParsedMetricSample,
-    ParsedDeploymentEvent,
     Timestamped,
 )
 
@@ -136,49 +135,3 @@ def parse_metric_sample_json(line: str) -> ParsedMetricSample:
         metric_name=metric_name,
         value=value,
     )
-
-
-def parse_deployment_event_json(line: str) -> ParsedDeploymentEvent:
-    """Parse one JSONL deployment event into a normalized record."""
-    record = _parse_json_object(line, "Deployment event")
-
-    try:
-        timestamp = parse_utc_timestamp(_required_string(record, "timestamp"))
-    except ValueError as exc:
-        raise ValueError("Wrong timestamp value") from exc
-
-    service = _required_string(record, "service")
-    version = _required_string(record, "version")
-    commit = _required_string(record, "commit")
-    change_summary = _required_string(record, "change_summary")
-
-    return ParsedDeploymentEvent(
-        timestamp=timestamp,
-        service=service,
-        version=version,
-        commit=commit,
-        change_summary=change_summary,
-    )
-
-
-def filter_by_time_window[T: Timestamped](
-    records: list[T],
-    *,
-    start_timestamp: datetime,
-    end_timestamp: datetime,
-) -> list[T]:
-    """Return records whose timestamp falls inside the inclusive time window."""
-    return [
-        record
-        for record in records
-        if start_timestamp <= record.timestamp <= end_timestamp
-    ]
-
-
-def filter_logs_by_correlation_id(
-    records: list[ParsedLogRecord],
-    *,
-    correlation_id: str,
-) -> list[ParsedLogRecord]:
-    """Return log records that match the supplied correlation ID."""
-    return [record for record in records if record.correlation_id == correlation_id]

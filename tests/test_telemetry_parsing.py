@@ -4,9 +4,6 @@ import pytest
 from telemetry_agents.telemetry.models import ParsedLogRecord
 
 from telemetry_agents.telemetry.parsing import (
-    filter_by_time_window,
-    filter_logs_by_correlation_id,
-    parse_deployment_event_json,
     parse_log_line,
     parse_metric_sample_json,
     parse_trace_span_json,
@@ -105,65 +102,6 @@ def test_parse_metric_sample_json_normalizes_metric_fields() -> None:
     assert record.timestamp == datetime(2026, 5, 11, 10, 1, tzinfo=UTC)
 
 
-def test_parse_deployment_event_json_normalizes_deployment_fields() -> None:
-    record = parse_deployment_event_json(
-        '{"timestamp":"2026-05-11T09:45:00Z","service":"checkout-api",'
-        '"version":"2026.05.11.1","commit":"abc1234",'
-        '"change_summary":"Updated database retry timeout configuration."}'
-    )
-
-    assert record.service == "checkout-api"
-    assert record.version == "2026.05.11.1"
-    assert record.commit == "abc1234"
-    assert "retry timeout" in record.change_summary
-    assert record.timestamp == datetime(2026, 5, 11, 9, 45, tzinfo=UTC)
-
-
-def test_time_window_filter_is_inclusive() -> None:
-    before = ParsedLogRecord(
-        timestamp=datetime(2026, 5, 11, 9, 59, tzinfo=UTC),
-        level="INFO",
-        service="checkout-api",
-        message="before",
-    )
-    inside = ParsedLogRecord(
-        timestamp=datetime(2026, 5, 11, 10, 1, tzinfo=UTC),
-        level="ERROR",
-        service="checkout-api",
-        message="inside",
-    )
-
-    filtered = filter_by_time_window(
-        [before, inside],
-        start_timestamp=datetime(2026, 5, 11, 10, 0, tzinfo=UTC),
-        end_timestamp=datetime(2026, 5, 11, 10, 5, tzinfo=UTC),
-    )
-
-    assert filtered == [inside]
-
-
-def test_correlation_id_filter_returns_matching_logs_only() -> None:
-    matching = ParsedLogRecord(
-        timestamp=datetime(2026, 5, 11, 10, 1, tzinfo=UTC),
-        level="ERROR",
-        service="checkout-api",
-        message="timeout",
-        correlation_id="cart-123",
-    )
-    unrelated = ParsedLogRecord(
-        timestamp=datetime(2026, 5, 11, 10, 2, tzinfo=UTC),
-        level="ERROR",
-        service="checkout-api",
-        message="timeout",
-        correlation_id="cart-999",
-    )
-
-    assert filter_logs_by_correlation_id(
-        [matching, unrelated],
-        correlation_id="cart-123",
-    ) == [matching]
-
-
 def test_malformed_trace_json_is_rejected() -> None:
     with pytest.raises(ValueError):
         parse_trace_span_json('{"trace_id": "trace-001"')
@@ -190,13 +128,4 @@ def test_metric_sample_rejects_non_numeric_value() -> None:
         parse_metric_sample_json(
             '{"timestamp":"2026-05-11T10:01:00Z","service":"checkout-api",'
             '"metric_name":"p95_latency_ms","value":"high"}'
-        )
-
-
-def test_deployment_event_rejects_missing_commit() -> None:
-    with pytest.raises(ValueError):
-        parse_deployment_event_json(
-            '{"timestamp":"2026-05-11T09:45:00Z","service":"checkout-api",'
-            '"version":"2026.05.11.1",'
-            '"change_summary":"Updated database retry timeout configuration."}'
         )

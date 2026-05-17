@@ -3,15 +3,16 @@ from pathlib import Path
 
 import pytest
 
+from telemetry_agents.application.evidence_scoring import (
+    EvidenceStrength,
+    score_matching_log_line,
+)
 from telemetry_agents.application.log_matching import (
     MatchDetail,
     MatchedLogLine,
     MatchReason,
 )
-from telemetry_agents.application.telemetry_classification import (
-    EvidenceStrength,
-    classify_matching_log_line,
-)
+
 from telemetry_agents.telemetry.models import ParsedLogRecord
 
 
@@ -58,12 +59,12 @@ def _matched_log_line(match_reasons: list[MatchReason]) -> MatchedLogLine:
         ([MatchReason.QUERY_TERM], EvidenceStrength.WEAK, 0.2),
     ],
 )
-def test_classify_matching_log_line_uses_strongest_matching_rule(
+def test_score_matching_log_line_uses_strongest_matching_rule(
     match_reasons: list[MatchReason],
     expected_strength: EvidenceStrength,
     expected_score: float,
 ) -> None:
-    strength, relevance_score = classify_matching_log_line(
+    (strength, relevance_score) = score_matching_log_line(
         _matched_log_line(match_reasons)
     )
 
@@ -71,6 +72,6 @@ def test_classify_matching_log_line_uses_strongest_matching_rule(
     assert relevance_score == expected_score
 
 
-def test_classify_matching_log_line_rejects_match_without_reasons() -> None:
+def test_score_matching_log_line_rejects_match_without_reasons() -> None:
     with pytest.raises(ValueError, match="no match reasons"):
-        classify_matching_log_line(_matched_log_line([]))
+        score_matching_log_line(_matched_log_line([]))

@@ -9,7 +9,6 @@ class EvidenceSource(StrEnum):
     LOG = "log"
     TRACE = "trace"
     METRIC = "metric"
-    DEPLOYMENT = "deployment"
 
 
 class Incident(BaseModel):

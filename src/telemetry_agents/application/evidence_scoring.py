@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from telemetry_agents.application.log_matching import MatchReason, MatchedLogLine
+from telemetry_agents.application.log_matching import MatchedLogLine, MatchReason
 
 
 class EvidenceStrength(StrEnum):
@@ -58,7 +58,7 @@ LOG_CLASSIFICATION_RULES: tuple[ClassificationRule, ...] = (
 )
 
 
-def classify_matching_log_line(
+def score_matching_log_line(
     matching_log_line: MatchedLogLine,
 ) -> tuple[EvidenceStrength, float]:
     found_reasons = {detail.reason for detail in matching_log_line.match_details}
@@ -68,3 +68,11 @@ def classify_matching_log_line(
             return strength, relevance_score
 
     raise ValueError("matched log line has no match reasons")
+
+
+def score_matching_trace_span() -> tuple[EvidenceStrength, float]:
+    return EvidenceStrength.STRONG, 1.0
+
+
+def score_matching_metric_sample() -> tuple[EvidenceStrength, float]:
+    return EvidenceStrength.MEDIUM, 0.6

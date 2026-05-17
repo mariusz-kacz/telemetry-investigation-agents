@@ -46,8 +46,6 @@ Trace correlation
     ↓
 Metrics review
     ↓
-Deployment correlation
-    ↓
 Hypothesis generation
     ↓
 Evidence validation
@@ -104,7 +102,7 @@ telemetry-investigation-agents/
 | `infrastructure` | LLM clients, vector store, telemetry readers, persistence, external adapters. |
 | `api` | FastAPI or CLI entrypoints. |
 | `evals` | Golden cases and evaluation runners. |
-| `sample_data` | Synthetic logs, traces, metrics, deployment events, incident tickets. |
+| `sample_data` | Synthetic logs, traces, metrics, and incident tickets. |
 | `docs/adr` | Architecture decision records. |
 | `docs/learning-notes` | Personal learning notes after each checkpoint. |
 
@@ -166,7 +164,7 @@ Before any phase is marked DONE:
 | 4. Control flow and conditional routing | DONE | 2026-05-11 | Deterministic routing function, conditional graph wiring, tests, and learning note exist. |
 | 5. Tool abstraction and adapters | DONE | 2026-05-11 | Local telemetry tool protocols/adapters, typed evidence results, explicit file/malformed-data behavior, tests, and learning note exist. |
 | 6. Deterministic telemetry parsing | DONE | 2026-05-14 | Deterministic parsers, filtering helpers, malformed-input tests, and one synthetic incident fixture exist. |
-| 7. Evidence retrieval and citations | IN_PROGRESS |  | Failing tests and TODO skeleton added; learner should implement deterministic retrieval and citation metadata. |
+| 7. Evidence retrieval and citations | DONE | 2026-05-17 | Log, trace, and metric retrieval preserve citations, represent missing evidence, and have source-specific tests. |
 | 8. Agentic hypothesis generation | TODO |  |  |
 | 9. Critic / evidence validator | TODO |  |  |
 | 10. Persistence, checkpointing, and interrupts | TODO |  |  |
@@ -418,7 +416,6 @@ Create tool-like adapters for synthetic telemetry:
 - `LogSearchTool`
 - `TraceLookupTool`
 - `MetricWindowTool`
-- `DeploymentEventTool`
 
 Initially they should read from local files in `sample_data`.
 
@@ -453,7 +450,6 @@ Build deterministic parsing and normalization before using LLM reasoning.
 - Structured logs.
 - Trace spans.
 - Metric samples/windows.
-- Deployment event records.
 - Normalization.
 - Error signatures.
 - Time-window filtering.
@@ -466,7 +462,6 @@ Create parsers for synthetic data:
 - logs: timestamp, level, service, message, correlation ID, exception type.
 - traces: trace ID, span ID, service, operation, duration, status.
 - metrics: timestamp, service, metric name, value.
-- deployments: timestamp, service, version, commit, change summary.
 
 ## Learning tasks
 
@@ -513,7 +508,6 @@ Build evidence retrieval nodes:
 retrieve logs
 retrieve traces
 retrieve metrics
-retrieve deployments
 merge evidence
 rank evidence
 ```
@@ -534,11 +528,11 @@ Each evidence item should preserve citation metadata:
 
 ## Checkpoint
 
-- [ ] Evidence retrieval works.
-- [ ] Evidence has source/citation metadata.
-- [ ] Weak evidence is represented explicitly.
-- [ ] Missing evidence does not crash graph.
-- [ ] Tests validate citations.
+- [x] Evidence retrieval works.
+- [x] Evidence has source/citation metadata.
+- [x] Weak evidence is represented explicitly.
+- [x] Missing evidence does not crash graph.
+- [x] Tests validate citations.
 
 ## Codex stop condition
 
@@ -776,7 +770,7 @@ Make the system measurable.
 
 Create `/evals` with synthetic cases:
 
-- database timeout after deployment,
+- database timeout during checkout traffic,
 - auth failures after config change,
 - latency spike caused by downstream dependency,
 - flaky metric anomaly,

@@ -3,11 +3,9 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 from telemetry_agents.telemetry.parsing import (
-    ParsedDeploymentEvent,
     ParsedLogRecord,
     ParsedMetricSample,
     ParsedTraceSpan,
-    parse_deployment_event_json,
     parse_log_line,
     parse_metric_sample_json,
     parse_trace_span_json,
@@ -30,12 +28,6 @@ class SourceMetricSample(BaseModel):
     source_file: Path
     line_number: int = Field(ge=1)
     record: ParsedMetricSample
-
-
-class SourceDeploymentEvent(BaseModel):
-    source_file: Path
-    line_number: int = Field(ge=1)
-    record: ParsedDeploymentEvent
 
 
 class LocalFileTelemetryReader:
@@ -99,26 +91,6 @@ class LocalFileTelemetryReader:
                         source_file=file_path,
                         line_number=line_number,
                         record=parse_metric_sample_json(cleaned_line),
-                    )
-                )
-
-        return records
-
-    def read_deployments(self, *, service: str) -> list[SourceDeploymentEvent]:
-        file_path = self.data_root / "deployments" / f"{service}.jsonl"
-        records: list[SourceDeploymentEvent] = []
-
-        with file_path.open("r", encoding="utf-8") as file:
-            for line_number, line in enumerate(file, start=1):
-                cleaned_line = line.strip()
-                if not cleaned_line:
-                    continue
-
-                records.append(
-                    SourceDeploymentEvent(
-                        source_file=file_path,
-                        line_number=line_number,
-                        record=parse_deployment_event_json(cleaned_line),
                     )
                 )
 

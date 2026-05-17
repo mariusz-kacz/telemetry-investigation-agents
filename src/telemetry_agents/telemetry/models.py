@@ -33,11 +33,3 @@ class ParsedMetricSample(BaseModel):
     service: str = Field(min_length=1)
     metric_name: str = Field(min_length=1)
     value: float
-
-
-class ParsedDeploymentEvent(BaseModel):
-    timestamp: datetime
-    service: str = Field(min_length=1)
-    version: str = Field(min_length=1)
-    commit: str = Field(min_length=1)
-    change_summary: str = Field(min_length=1)
