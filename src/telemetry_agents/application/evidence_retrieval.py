@@ -298,14 +298,7 @@ def _retrieve_metric_evidence(
 
 
 def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEvidence]:
-    """Retrieve and rank cited evidence for one incident investigation.
-
-    TODO for Phase 7:
-    - read logs, traces and metrics from local sample data,
-    - use deterministic keyword, time-window, correlation ID, and trace ID matching,
-    - preserve citation metadata for every returned item,
-    - return weak or missing evidence explicitly instead of crashing on empty results.
-    """
+    """Retrieve and rank cited evidence for one incident investigation."""
     try:
         start_timestamp = parse_utc_timestamp(request.start_timestamp)
         end_timestamp = parse_utc_timestamp(request.end_timestamp)
