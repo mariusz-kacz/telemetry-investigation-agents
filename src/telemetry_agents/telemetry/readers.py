@@ -95,4 +95,3 @@ class LocalFileTelemetryReader:
                 )
 
         return records
-

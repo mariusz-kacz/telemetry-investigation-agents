@@ -76,4 +76,3 @@ def score_matching_trace_span() -> tuple[EvidenceStrength, float]:
 
 def score_matching_metric_sample() -> tuple[EvidenceStrength, float]:
     return EvidenceStrength.MEDIUM, 0.6
-

@@ -35,6 +35,7 @@ def test_hypothesis_references_supporting_evidence_ids() -> None:
         statement="Checkout latency is caused by database timeout errors.",
         supporting_evidence_ids=["log-001", "metric-002"],
         confidence=0.65,
+        uncertainty="Confidence is limited because supporting evidence has not been validated yet."
     )
 
     assert hypothesis.supporting_evidence_ids == ["log-001", "metric-002"]

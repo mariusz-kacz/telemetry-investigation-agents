@@ -327,4 +327,3 @@ def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEviden
     )
 
     return log_evidence + trace_span_evidence + metric_sample_evidence
-

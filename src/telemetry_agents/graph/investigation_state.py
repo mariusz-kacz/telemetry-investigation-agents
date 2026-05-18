@@ -3,10 +3,10 @@ from typing import TypedDict, Annotated
 
 from telemetry_agents.domain import (
     Incident,
-    TelemetryEvidence,
     InvestigationHypothesis,
     InvestigationReport,
 )
+from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 
 
 def append_findings(existing: list[str], new: list[str]) -> list[str]:
@@ -25,7 +25,7 @@ class InvestigationRoute(StrEnum):
 class InvestigationGraphState(TypedDict, total=False):
     incident_input: str
     normalized_incident: Incident
-    collected_evidence: list[TelemetryEvidence]
+    collected_evidence: list[RetrievedEvidence]
     intermediate_findings: Annotated[list[str], append_findings]
     hypotheses: list[InvestigationHypothesis]
     validation_result: str

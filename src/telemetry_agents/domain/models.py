@@ -44,6 +44,7 @@ class InvestigationHypothesis(BaseModel):
     statement: str = Field(min_length=1)
     supporting_evidence_ids: list[str] = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0)
+    uncertainty: str = ""
 
     @field_validator("hypothesis_id", "statement")
     @classmethod
@@ -51,6 +52,12 @@ class InvestigationHypothesis(BaseModel):
         if not value.strip():
             raise ValueError("must not be blank")
         return value
+
+    @model_validator(mode="after")
+    def must_have_uncertainty_if_not_confident(self) -> "InvestigationHypothesis":
+        if self.confidence < LOW_CONFIDENCE_THRESHOLD and not self.uncertainty.strip():
+            raise ValueError("uncertainty is required when confidence is below 0.8")
+        return self
 
 
 class InvestigationReport(BaseModel):

@@ -2,9 +2,9 @@ from telemetry_agents.domain import (
     Incident,
     InvestigationHypothesis,
     InvestigationReport,
-    TelemetryEvidence,
 )
 from telemetry_agents.graph.investigation_state import InvestigationGraphState
+from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 
 
 def test_graph_state_has_explicit_phase_3_fields() -> None:
@@ -27,7 +27,7 @@ def test_graph_state_references_domain_models_without_random_dicts() -> None:
     annotations = InvestigationGraphState.__annotations__
 
     assert annotations["normalized_incident"] is Incident
-    assert annotations["collected_evidence"] == list[TelemetryEvidence]
+    assert annotations["collected_evidence"] == list[RetrievedEvidence]
     assert annotations["hypotheses"] == list[InvestigationHypothesis]
     assert annotations["final_report"] is InvestigationReport
     assert annotations["errors"] == list[str]

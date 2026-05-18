@@ -47,4 +47,3 @@ def get_matching_trace_spans(
             )
 
     return matched_trace_spans
-
