@@ -12,7 +12,9 @@ from telemetry_agents.investigation.evidence_retrieval import (
     RetrievedEvidence,
 )
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
-from telemetry_agents.investigation.hypothesis_generation import HypothesisGenerationRequest
+from telemetry_agents.investigation.hypothesis_generation import (
+    HypothesisGenerationRequest,
+)
 
 
 class FakeHypothesisGenerator:
@@ -20,7 +22,9 @@ class FakeHypothesisGenerator:
         self.hypotheses = hypotheses
         self.request: HypothesisGenerationRequest | None = None
 
-    def generate(self, request: HypothesisGenerationRequest) -> list[InvestigationHypothesis]:
+    def generate(
+        self, request: HypothesisGenerationRequest
+    ) -> list[InvestigationHypothesis]:
         self.request = request
         return self.hypotheses
 

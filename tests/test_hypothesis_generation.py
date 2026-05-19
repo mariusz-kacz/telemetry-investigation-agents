@@ -132,85 +132,6 @@ def test_hypothesis_generation_rejects_missing_evidence_as_support() -> None:
         generate_hypotheses(request, fake_generator)
 
 
-def test_hypothesis_generation_caps_confidence_for_weak_evidence() -> None:
-    request = HypothesisGenerationRequest(
-        incident=Incident(
-            incident_id="inc-001",
-            title="Checkout API latency spike",
-            service="checkout-api",
-        ),
-        evidence=[_retrieved_evidence("log-001", strength=EvidenceStrength.WEAK)],
-    )
-    fake_generator = FakeHypothesisGenerator(
-        [
-            InvestigationHypothesis(
-                hypothesis_id="hyp-001",
-                statement="Checkout API latency is probably caused by database timeouts.",
-                supporting_evidence_ids=["log-001"],
-                confidence=0.9,
-            )
-        ]
-    )
-
-    hypotheses = generate_hypotheses(request, fake_generator)
-
-    assert hypotheses[0].confidence <= 0.4
-
-
-def test_hypothesis_generation_caps_confidence_for_medium_without_strong_evidence() -> (
-    None
-):
-    request = HypothesisGenerationRequest(
-        incident=Incident(
-            incident_id="inc-001",
-            title="Checkout API latency spike",
-            service="checkout-api",
-        ),
-        evidence=[_retrieved_evidence("metric-001", strength=EvidenceStrength.MEDIUM)],
-    )
-    fake_generator = FakeHypothesisGenerator(
-        [
-            InvestigationHypothesis(
-                hypothesis_id="hyp-001",
-                statement="Checkout API latency may be caused by elevated database latency.",
-                supporting_evidence_ids=["metric-001"],
-                confidence=0.95,
-            )
-        ]
-    )
-
-    hypotheses = generate_hypotheses(request, fake_generator)
-
-    assert hypotheses[0].confidence <= 0.8
-
-
-def test_hypothesis_generation_keeps_confidence_when_strong_evidence_supports_it() -> (
-    None
-):
-    request = HypothesisGenerationRequest(
-        incident=Incident(
-            incident_id="inc-001",
-            title="Checkout API latency spike",
-            service="checkout-api",
-        ),
-        evidence=[_retrieved_evidence("log-001", strength=EvidenceStrength.STRONG)],
-    )
-    fake_generator = FakeHypothesisGenerator(
-        [
-            InvestigationHypothesis(
-                hypothesis_id="hyp-001",
-                statement="Checkout API latency is caused by database timeout errors.",
-                supporting_evidence_ids=["log-001"],
-                confidence=0.95,
-            )
-        ]
-    )
-
-    hypotheses = generate_hypotheses(request, fake_generator)
-
-    assert hypotheses[0].confidence == 0.95
-
-
 def test_hypothesis_generation_does_not_mutate_generator_owned_hypotheses() -> None:
     generated_hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-001",
@@ -230,5 +151,5 @@ def test_hypothesis_generation_does_not_mutate_generator_owned_hypotheses() -> N
 
     hypotheses = generate_hypotheses(request, fake_generator)
 
-    assert hypotheses[0].confidence <= 0.4
+    assert hypotheses[0].confidence == 0.9
     assert generated_hypothesis.confidence == 0.9

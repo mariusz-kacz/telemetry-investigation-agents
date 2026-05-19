@@ -60,6 +60,97 @@ class InvestigationHypothesis(BaseModel):
         return self
 
 
+class RejectedHypothesis(BaseModel):
+    hypothesis: InvestigationHypothesis
+    reason: str = Field(min_length=1)
+
+    @field_validator("reason")
+    @classmethod
+    def must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("must not be blank")
+        return value
+
+
+class HypothesisContradiction(BaseModel):
+    hypothesis_id: str = Field(min_length=1)
+    contradicting_evidence_ids: list[str] = Field(min_length=1)
+    reason: str = Field(min_length=1)
+
+    @field_validator("hypothesis_id", "reason")
+    @classmethod
+    def must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("must not be blank")
+        return value
+
+    @field_validator("contradicting_evidence_ids")
+    @classmethod
+    def items_must_not_be_blank(cls, value: list[str]) -> list[str]:
+        for evidence_id in value:
+            if not evidence_id.strip():
+                raise ValueError("must not have blank items")
+        return value
+
+
+class ConfidenceAdjustment(BaseModel):
+    hypothesis_id: str = Field(min_length=1)
+    original_confidence: float = Field(ge=0.0, le=1.0)
+    adjusted_confidence: float = Field(ge=0.0, le=1.0)
+    reason: str = Field(min_length=1)
+
+    @field_validator("hypothesis_id", "reason")
+    @classmethod
+    def must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("must not be blank")
+        return value
+
+    @model_validator(mode="after")
+    def adjusted_confidence_should_be_smaller_than_original_confidence(
+        self,
+    ) -> "ConfidenceAdjustment":
+        if self.adjusted_confidence >= self.original_confidence:
+            raise ValueError(
+                "Adjusted confidence must be lower than original confidence"
+            )
+        return self
+
+
+class HypothesisValidationResult(BaseModel):
+    accepted_hypotheses: list[InvestigationHypothesis] = Field(default_factory=list)
+    rejected_hypotheses: list[RejectedHypothesis] = Field(default_factory=list)
+    contradictions: list[HypothesisContradiction] = Field(default_factory=list)
+    confidence_adjustments: list[ConfidenceAdjustment] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def references_must_be_consistent(self) -> "HypothesisValidationResult":
+        accepted_ids = {item.hypothesis_id for item in self.accepted_hypotheses}
+        rejected_ids = {
+            item.hypothesis.hypothesis_id for item in self.rejected_hypotheses
+        }
+        known_ids = accepted_ids | rejected_ids
+
+        if accepted_ids & rejected_ids:
+            raise ValueError(
+                "same hypothesis ids found in accepted and rejected hypotheses"
+            )
+
+        adjusted_ids = {item.hypothesis_id for item in self.confidence_adjustments}
+        if not adjusted_ids <= accepted_ids:
+            raise ValueError(
+                "confidence adjustments should refer to accepted hypotheses"
+            )
+
+        contradicted_ids = {item.hypothesis_id for item in self.contradictions}
+        if not contradicted_ids <= known_ids:
+            raise ValueError(
+                "contradictions should refer to accepted or rejected hypotheses"
+            )
+
+        return self
+
+
 class InvestigationReport(BaseModel):
     incident_id: str = Field(min_length=1)
     summary: str = Field(min_length=1)

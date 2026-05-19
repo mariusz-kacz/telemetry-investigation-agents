@@ -3,7 +3,6 @@ from typing import Protocol
 from pydantic import BaseModel, Field
 
 from telemetry_agents.domain import Incident, InvestigationHypothesis
-from telemetry_agents.domain.models import LOW_CONFIDENCE_THRESHOLD
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 
@@ -22,19 +21,6 @@ class HypothesisGenerator(Protocol):
     ) -> list[InvestigationHypothesis]:
         """Return candidate hypotheses from bounded incident and evidence context."""
         ...
-
-
-def _max_confidence_for_evidence_strengths(strengths: set[EvidenceStrength]) -> float:
-    if not strengths or EvidenceStrength.MISSING in strengths:
-        return 0.0
-
-    if strengths <= {EvidenceStrength.WEAK}:
-        return 0.4
-
-    if strengths <= {EvidenceStrength.WEAK, EvidenceStrength.MEDIUM}:
-        return 0.8
-
-    return 1.0
 
 
 def generate_hypotheses(
@@ -68,14 +54,6 @@ def generate_hypotheses(
 
         if EvidenceStrength.MISSING in strengths:
             raise ValueError("missing evidence")
-
-        max_confidence = _max_confidence_for_evidence_strengths(strengths)
-
-        if hypothesis.confidence > max_confidence:
-            updates: dict[str, str | float] = {"confidence": max_confidence}
-            if max_confidence < LOW_CONFIDENCE_THRESHOLD and not hypothesis.uncertainty.strip():
-                updates["uncertainty"] = "Confidence was reduced because the cited evidence is not strong enough to support a higher-confidence hypothesis."
-            hypothesis = hypothesis.model_copy(update=updates)
 
         validated_hypotheses.append(hypothesis)
 

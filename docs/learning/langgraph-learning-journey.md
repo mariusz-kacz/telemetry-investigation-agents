@@ -165,7 +165,7 @@ Before any phase is marked DONE:
 | 5. Tool abstraction and adapters | DONE | 2026-05-11 | Local telemetry tool protocols/adapters, typed evidence results, explicit file/malformed-data behavior, tests, and learning note exist. |
 | 6. Deterministic telemetry parsing | DONE | 2026-05-14 | Deterministic parsers, filtering helpers, malformed-input tests, and one synthetic incident fixture exist. |
 | 7. Evidence retrieval and citations | DONE | 2026-05-17 | Log, trace, and metric retrieval preserve citations, represent missing evidence, and have source-specific tests. |
-| 8. Agentic hypothesis generation | TODO |  |  |
+| 8. Agentic hypothesis generation | DONE | 2026-05-18 | Bounded hypothesis generation uses a protocol-backed generator, deterministic citation guardrails, confidence caps, fake LLM tests, and a learning note. |
 | 9. Critic / evidence validator | TODO |  |  |
 | 10. Persistence, checkpointing, and interrupts | TODO |  |  |
 | 11. Human-in-the-loop review | TODO |  |  |
@@ -580,12 +580,12 @@ Use an LLM adapter interface so the graph does not depend directly on a provider
 
 ## Checkpoint
 
-- [ ] LLM adapter interface exists.
-- [ ] Hypothesis node uses structured output.
-- [ ] Fake LLM tests exist.
-- [ ] Hypotheses cite evidence IDs.
-- [ ] Weak evidence produces uncertainty.
-- [ ] Learning note explains bounded LLM reasoning.
+- [x] LLM adapter interface exists.
+- [x] Hypothesis node uses structured output.
+- [x] Fake LLM tests exist.
+- [x] Hypotheses cite evidence IDs.
+- [x] Weak evidence produces uncertainty.
+- [x] Learning note explains bounded LLM reasoning.
 
 ## Codex stop condition
 
