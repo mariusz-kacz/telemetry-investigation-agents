@@ -50,6 +50,8 @@ Hypothesis generation
     ↓
 Evidence validation
     ↓
+LLM critic semantic review
+    ↓
 Human review when needed
     ↓
 Final cited report
@@ -165,15 +167,16 @@ Before any phase is marked DONE:
 | 5. Tool abstraction and adapters | DONE | 2026-05-11 | Local telemetry tool protocols/adapters, typed evidence results, explicit file/malformed-data behavior, tests, and learning note exist. |
 | 6. Deterministic telemetry parsing | DONE | 2026-05-14 | Deterministic parsers, filtering helpers, malformed-input tests, and one synthetic incident fixture exist. |
 | 7. Evidence retrieval and citations | DONE | 2026-05-17 | Log, trace, and metric retrieval preserve citations, represent missing evidence, and have source-specific tests. |
-| 8. Agentic hypothesis generation | DONE | 2026-05-18 | Bounded hypothesis generation uses a protocol-backed generator, deterministic citation guardrails, confidence caps, fake LLM tests, and a learning note. |
-| 9. Critic / evidence validator | TODO |  |  |
-| 10. Persistence, checkpointing, and interrupts | TODO |  |  |
-| 11. Human-in-the-loop review | TODO |  |  |
-| 12. Evaluation framework | TODO |  |  |
-| 13. Observability and tracing | TODO |  |  |
-| 14. API / CLI interface | TODO |  |  |
-| 15. Portfolio skeleton hardening | TODO |  |  |
-| 16. Final review and roadmap | TODO |  |  |
+| 8. Agentic hypothesis generation | DONE | 2026-05-18 | Bounded hypothesis generation uses a protocol-backed generator, structural citation guardrails, fake LLM tests, and a learning note. |
+| 9. Evidence validator | DONE | 2026-05-19 | Deterministic hypothesis validator, structured validation result, graph node, confidence adjustment audit trail, focused tests, and learning note exist. Semantic contradiction detection is deferred to the LLM critic phase. |
+| 10. LLM critic for semantic review | TODO |  |  |
+| 11. Persistence, checkpointing, and interrupts | TODO |  |  |
+| 12. Human-in-the-loop review | TODO |  |  |
+| 13. Evaluation framework | TODO |  |  |
+| 14. Observability and tracing | TODO |  |  |
+| 15. API / CLI interface | TODO |  |  |
+| 16. Portfolio skeleton hardening | TODO |  |  |
+| 17. Final review and roadmap | TODO |  |  |
 
 Status values: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`, `REWORK`.
 
@@ -576,7 +579,7 @@ Use an LLM adapter interface so the graph does not depend directly on a provider
 - Add guardrails:
   - hypothesis must cite evidence IDs,
   - hypothesis cannot cite missing evidence,
-  - low evidence means low confidence.
+  - unknown evidence IDs are rejected.
 
 ## Checkpoint
 
@@ -584,7 +587,7 @@ Use an LLM adapter interface so the graph does not depend directly on a provider
 - [x] Hypothesis node uses structured output.
 - [x] Fake LLM tests exist.
 - [x] Hypotheses cite evidence IDs.
-- [x] Weak evidence produces uncertainty.
+- [x] Unknown or missing evidence references are rejected.
 - [x] Learning note explains bounded LLM reasoning.
 
 ## Codex stop condition
@@ -593,59 +596,125 @@ Stop after bounded hypothesis generation.
 
 ---
 
-# Phase 9 — Critic / evidence validator
+# Phase 9 — Evidence validator
 
 ## Goal
 
-Add a reviewer step that challenges the generated hypotheses.
+Add a deterministic validator step that reviews generated hypotheses against retrieved evidence before they can be used downstream.
+
+## Concepts
+
+- Evidence validation.
+- Confidence adjustment.
+- Reference integrity.
+- Missing evidence handling.
+- Weak evidence handling.
+- Separation between generation and validation.
+- Validation as an audit trail.
+
+## Implementation tasks
+
+Create a `HypothesisValidatorNode` that checks:
+
+- every hypothesis has supporting evidence,
+- cited evidence IDs exist,
+- missing evidence is not used as support,
+- confidence is adjusted,
+- unsupported claims are downgraded or rejected.
+
+Semantic contradiction detection is intentionally out of scope for this phase and belongs to the LLM critic phase.
+
+## Learning tasks
+
+- Add tests for:
+  - unsupported hypothesis,
+  - unknown evidence references,
+  - missing evidence as support,
+  - weak-but-plausible hypothesis,
+  - strong evidence hypothesis.
+- Explain why deterministic validation should stay narrow and auditable.
+- Explain why semantic contradiction review is deferred to an LLM critic.
+
+## Checkpoint
+
+- [x] Validator node exists.
+- [x] Unsupported claims are rejected or downgraded.
+- [x] Semantic contradiction detection is explicitly deferred.
+- [x] Confidence changes are explainable.
+- [x] Tests cover validation cases.
+- [x] Learning note explains generator/validator separation.
+
+## Codex stop condition
+
+Stop after deterministic evidence validation.
+
+---
+
+# Phase 10 — LLM critic for semantic review
+
+## Goal
+
+Add a separate LLM critic node that reviews validated hypotheses for semantic problems that deterministic code should not pretend to understand.
+
+The deterministic validator owns reference integrity, missing evidence handling, and confidence policy. The LLM critic reviews higher-level reasoning quality while still being constrained by structured output and deterministic guardrails.
 
 ## Concepts
 
 - Critic node.
-- Evidence validation.
-- Contradicting evidence.
-- Confidence adjustment.
-- Claim verification.
-- Separation between generation and validation.
-- Avoiding self-confirming agent loops.
+- Semantic contradiction review.
+- Unsupported causal leaps.
+- Alternative interpretations.
+- Structured critic output.
+- Cited critique evidence.
+- LLM output validation.
+- Separation between deterministic validation and probabilistic critique.
+- Failure fallback when critic LLM is unavailable.
 
 ## Implementation tasks
 
-Create a `EvidenceValidatorNode` that checks:
+Create a `HypothesisCriticNode` that:
 
-- every hypothesis has supporting evidence,
-- evidence actually relates to claim,
-- contradicting signals are surfaced,
-- confidence is adjusted,
-- unsupported claims are downgraded or rejected.
+- receives retrieved evidence and `HypothesisValidationResult`,
+- reviews accepted hypotheses for semantic contradictions or unsupported causal claims,
+- returns structured critic findings,
+- cites evidence IDs for every contradiction or concern,
+- cannot invent hypothesis IDs or evidence IDs,
+- enriches the existing validation result or returns a critic result that can be merged into it.
 
-Start deterministic where possible. Add LLM critic only after deterministic checks exist.
+Use an LLM critic adapter interface so the graph does not depend directly on a provider SDK.
+
+The critic should be a separate LangGraph node, not hidden inside the deterministic validator.
 
 ## Learning tasks
 
-- Explain why critic should not be just “another agent vibes-checking.”
-- Add tests for:
-  - unsupported hypothesis,
-  - contradicted hypothesis,
-  - weak-but-plausible hypothesis,
-  - strong evidence hypothesis.
+- Explain why the critic is separate from the deterministic validator.
+- Define the critic prompt contract.
+- Add fake LLM critic tests.
+- Add deterministic guardrails for critic output:
+  - critic findings must reference known hypothesis IDs,
+  - critic findings must cite known evidence IDs,
+  - critic cannot cite missing evidence as contradiction support,
+  - critic cannot increase confidence.
+- Explain fallback behavior if the critic LLM fails.
 
 ## Checkpoint
 
-- [ ] Validator node exists.
-- [ ] Unsupported claims are rejected or downgraded.
-- [ ] Contradicting evidence is represented.
-- [ ] Confidence changes are explainable.
-- [ ] Tests cover validation cases.
-- [ ] Learning note explains generator/critic separation.
+- [ ] Critic node exists separately from validator node.
+- [ ] Critic adapter interface exists.
+- [ ] Fake critic LLM tests exist.
+- [ ] Critic output is structured.
+- [ ] Critic findings cite evidence IDs.
+- [ ] Critic cannot invent hypothesis or evidence IDs.
+- [ ] Critic failure has safe fallback behavior.
+- [ ] Learning note explains deterministic validation vs LLM critique.
 
 ## Codex stop condition
 
-Stop after critic/validator implementation.
+Stop after LLM critic review is implemented and tested. Do not add checkpointing yet.
 
 ---
 
-# Phase 10 — Persistence, checkpointing, and interrupts
+# Phase 11 — Persistence, checkpointing, and interrupts
 
 ## Goal
 
@@ -693,7 +762,7 @@ Stop after durable execution demonstration.
 
 ---
 
-# Phase 11 — Human-in-the-loop review
+# Phase 12 — Human-in-the-loop review
 
 ## Goal
 
@@ -718,7 +787,7 @@ Add human review if:
 - confidence is below threshold,
 - evidence is weak,
 - incident impact is high,
-- validator finds contradictions.
+- LLM critic finds contradictions.
 
 Human reviewer can:
 
@@ -748,7 +817,7 @@ Stop after human review flow.
 
 ---
 
-# Phase 12 — Evaluation framework
+# Phase 13 — Evaluation framework
 
 ## Goal
 
@@ -806,7 +875,7 @@ Stop after basic evaluation loop.
 
 ---
 
-# Phase 13 — Observability and tracing
+# Phase 14 — Observability and tracing
 
 ## Goal
 
@@ -861,7 +930,7 @@ Stop after local observability demonstration.
 
 ---
 
-# Phase 14 — API / CLI interface
+# Phase 15 — API / CLI interface
 
 ## Goal
 
@@ -919,7 +988,7 @@ Stop after external interface is usable.
 
 ---
 
-# Phase 15 — Portfolio skeleton hardening
+# Phase 16 — Portfolio skeleton hardening
 
 ## Goal
 
@@ -975,7 +1044,7 @@ Stop after portfolio hardening. Do not add unnecessary features.
 
 ---
 
-# Phase 16 — Final review and roadmap
+# Phase 17 — Final review and roadmap
 
 ## Goal
 

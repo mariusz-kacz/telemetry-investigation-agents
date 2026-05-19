@@ -151,5 +151,4 @@ def test_hypothesis_generation_does_not_mutate_generator_owned_hypotheses() -> N
 
     hypotheses = generate_hypotheses(request, fake_generator)
 
-    assert hypotheses[0].confidence == 0.9
-    assert generated_hypothesis.confidence == 0.9
+    assert hypotheses == [generated_hypothesis]

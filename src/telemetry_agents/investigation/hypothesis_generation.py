@@ -27,7 +27,7 @@ def generate_hypotheses(
     request: HypothesisGenerationRequest,
     generator: HypothesisGenerator,
 ) -> list[InvestigationHypothesis]:
-    """Generate hypotheses and enforce deterministic citation/confidence guardrails"""
+    """Generate hypotheses and enforce deterministic citation guardrails"""
 
     generated_hypotheses = generator.generate(request)
     validated_hypotheses: list[InvestigationHypothesis] = []

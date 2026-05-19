@@ -56,7 +56,10 @@ def test_validation_rejects_hypothesis_without_supporting_evidence() -> None:
 
     assert result.accepted_hypotheses == []
     assert result.rejected_hypotheses[0].hypothesis == hypothesis
-    assert "supporting evidence" in result.rejected_hypotheses[0].reason
+    assert (
+        "Hypothesis has no supporting evidence IDs."
+        in result.rejected_hypotheses[0].reason
+    )
 
 
 def test_validation_rejects_missing_evidence_as_support() -> None:
@@ -151,9 +154,7 @@ def test_validation_downgrades_weak_but_plausible_hypothesis() -> None:
     assert result.confidence_adjustments[0].adjusted_confidence <= 0.4
 
 
-def test_validation_caps_confidence_for_medium_without_strong_evidence() -> (
-    None
-):
+def test_validation_caps_confidence_for_medium_without_strong_evidence() -> None:
     hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-medium",
         statement="Checkout API latency may be caused by elevated database latency.",
@@ -180,9 +181,7 @@ def test_validation_caps_confidence_for_medium_without_strong_evidence() -> (
     assert result.confidence_adjustments[0].adjusted_confidence <= 0.8
 
 
-def test_validation_keeps_confidence_when_strong_evidence_supports_it() -> (
-    None
-):
+def test_validation_keeps_confidence_when_strong_evidence_supports_it() -> None:
     hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-strong",
         statement="Checkout API latency spike.",
@@ -258,30 +257,3 @@ def test_validation_accepts_strong_evidence_hypothesis() -> None:
     assert result.accepted_hypotheses == [hypothesis]
     assert result.rejected_hypotheses == []
     assert result.confidence_adjustments == []
-
-
-def test_validation_surfaces_contradicting_evidence() -> None:
-    hypothesis = InvestigationHypothesis(
-        hypothesis_id="hyp-contradicted",
-        statement="Checkout latency is caused by database timeout errors.",
-        supporting_evidence_ids=["log-timeout"],
-        confidence=0.9,
-    )
-    request = HypothesisValidationRequest(
-        evidence=[
-            _retrieved_evidence("log-timeout"),
-            _retrieved_evidence(
-                "metric-normal-db-latency",
-                summary="Database latency stayed within the normal range during the incident.",
-            ),
-        ],
-        hypotheses=[hypothesis],
-    )
-
-    result = validate_hypotheses(request)
-
-    assert result.contradictions
-    assert result.contradictions[0].hypothesis_id == "hyp-contradicted"
-    assert result.contradictions[0].contradicting_evidence_ids == [
-        "metric-normal-db-latency"
-    ]

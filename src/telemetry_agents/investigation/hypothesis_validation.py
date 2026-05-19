@@ -5,7 +5,6 @@ from telemetry_agents.domain.models import (
     HypothesisValidationResult,
     LOW_CONFIDENCE_THRESHOLD,
     RejectedHypothesis,
-    HypothesisContradiction,
     ConfidenceAdjustment,
 )
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
@@ -36,7 +35,6 @@ def validate_hypotheses(
     """Validate generated hypotheses against retrieved evidence."""
     accepted_hypotheses: list[InvestigationHypothesis] = []
     rejected_hypotheses: list[RejectedHypothesis] = []
-    contradictions: list[HypothesisContradiction] = []
     confidence_adjustments: list[ConfidenceAdjustment] = []
 
     evidences_lookup = {
@@ -51,7 +49,7 @@ def validate_hypotheses(
             rejected_hypotheses.append(
                 RejectedHypothesis(
                     hypothesis=hypothesis,
-                    reason="Hypothesis is missing evidence IDs",
+                    reason="Hypothesis has no supporting evidence IDs.",
                 )
             )
             continue
@@ -109,12 +107,4 @@ def validate_hypotheses(
         accepted_hypotheses=accepted_hypotheses,
         rejected_hypotheses=rejected_hypotheses,
         confidence_adjustments=confidence_adjustments,
-        contradictions=contradictions,
     )
-
-
-# - every hypothesis has supporting evidence,
-# - evidence actually relates to claim,
-# - contradicting signals are surfaced,
-# - confidence is adjusted,
-# - unsupported claims are downgraded or rejected.
