@@ -6,7 +6,10 @@ from telemetry_agents.domain import (
     InvestigationHypothesis,
     InvestigationReport,
 )
-from telemetry_agents.domain.models import HypothesisValidationResult
+from telemetry_agents.domain.models import (
+    HypothesisValidationResult,
+    HypothesisCritiqueFinding,
+)
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 
 
@@ -30,6 +33,7 @@ class InvestigationGraphState(TypedDict, total=False):
     intermediate_findings: Annotated[list[str], append_findings]
     hypotheses: list[InvestigationHypothesis]
     validation_result: HypothesisValidationResult
+    critique_findings: list[HypothesisCritiqueFinding]
     final_report: InvestigationReport
     errors: list[str]
     warnings: list[str]

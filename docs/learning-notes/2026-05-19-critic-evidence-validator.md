@@ -63,4 +63,4 @@ Unit tests cover:
 
 ## Next step
 
-Move to persistence, checkpointing, and interrupts after the Phase 9 checkpoint is accepted and the progress board is updated.
+Move to the LLM critic for semantic review after the Phase 9 checkpoint is accepted and the progress board is updated.

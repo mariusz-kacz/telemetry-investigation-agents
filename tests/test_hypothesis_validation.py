@@ -217,7 +217,6 @@ def test_validation_allows_empty_hypothesis_list() -> None:
     assert result.accepted_hypotheses == []
     assert result.rejected_hypotheses == []
     assert result.confidence_adjustments == []
-    assert result.contradictions == []
 
 
 def test_validation_does_not_mutate_original_hypothesis_when_confidence_is_adjusted() -> (

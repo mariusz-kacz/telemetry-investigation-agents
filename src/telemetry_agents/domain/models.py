@@ -11,6 +11,13 @@ class EvidenceSource(StrEnum):
     METRIC = "metric"
 
 
+class CritiqueFindingType(StrEnum):
+    CONTRADICTION = "contradiction"
+    UNSUPPORTED_CAUSAL_LEAP = "unsupported_causal_leap"
+    ALTERNATIVE_INTERPRETATION = "alternative_interpretation"
+    OVERSTATED_CONFIDENCE = "overstated_confidence"
+
+
 class Incident(BaseModel):
     incident_id: str = Field(min_length=1)
     title: str = Field(min_length=1)
@@ -72,27 +79,6 @@ class RejectedHypothesis(BaseModel):
         return value
 
 
-class HypothesisContradiction(BaseModel):
-    hypothesis_id: str = Field(min_length=1)
-    contradicting_evidence_ids: list[str] = Field(min_length=1)
-    reason: str = Field(min_length=1)
-
-    @field_validator("hypothesis_id", "reason")
-    @classmethod
-    def must_not_be_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("must not be blank")
-        return value
-
-    @field_validator("contradicting_evidence_ids")
-    @classmethod
-    def items_must_not_be_blank(cls, value: list[str]) -> list[str]:
-        for evidence_id in value:
-            if not evidence_id.strip():
-                raise ValueError("must not have blank items")
-        return value
-
-
 class ConfidenceAdjustment(BaseModel):
     hypothesis_id: str = Field(min_length=1)
     original_confidence: float = Field(ge=0.0, le=1.0)
@@ -120,7 +106,6 @@ class ConfidenceAdjustment(BaseModel):
 class HypothesisValidationResult(BaseModel):
     accepted_hypotheses: list[InvestigationHypothesis] = Field(default_factory=list)
     rejected_hypotheses: list[RejectedHypothesis] = Field(default_factory=list)
-    contradictions: list[HypothesisContradiction] = Field(default_factory=list)
     confidence_adjustments: list[ConfidenceAdjustment] = Field(default_factory=list)
 
     @model_validator(mode="after")
@@ -129,7 +114,6 @@ class HypothesisValidationResult(BaseModel):
         rejected_ids = {
             item.hypothesis.hypothesis_id for item in self.rejected_hypotheses
         }
-        known_ids = accepted_ids | rejected_ids
 
         if accepted_ids & rejected_ids:
             raise ValueError(
@@ -142,13 +126,33 @@ class HypothesisValidationResult(BaseModel):
                 "confidence adjustments should refer to accepted hypotheses"
             )
 
-        contradicted_ids = {item.hypothesis_id for item in self.contradictions}
-        if not contradicted_ids <= known_ids:
-            raise ValueError(
-                "contradictions should refer to accepted or rejected hypotheses"
-            )
-
         return self
+
+
+class HypothesisCritiqueFinding(BaseModel):
+    hypothesis_id: str = Field(min_length=1)
+    evidence_ids: list[str] = Field(min_length=1)
+    finding_type: CritiqueFindingType
+    reason: str = Field(min_length=1)
+
+    @field_validator("hypothesis_id", "reason")
+    @classmethod
+    def must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("must not be blank")
+        return value
+
+    @field_validator("evidence_ids")
+    @classmethod
+    def items_must_not_be_blank(cls, value: list[str]) -> list[str]:
+        for evidence_id in value:
+            if not evidence_id.strip():
+                raise ValueError("must not have blank items")
+        return value
+
+
+class HypothesisCritiqueResult(BaseModel):
+    critique_findings: list[HypothesisCritiqueFinding] = Field(default_factory=list)
 
 
 class InvestigationReport(BaseModel):

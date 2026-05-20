@@ -48,7 +48,7 @@ def test_hypothesis_validation_node_writes_validation_result_to_state() -> None:
     hypothesis = _hypothesis()
     evidence = _collected_evidence()
     validation_result = HypothesisValidationResult(
-            accepted_hypotheses=[hypothesis],
+        accepted_hypotheses=[hypothesis],
     )
 
     result = node(
