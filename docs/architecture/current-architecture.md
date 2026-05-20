@@ -2,9 +2,9 @@
 
 ## Scope
 
-This document describes the architecture after Phase 7: evidence retrieval and citations.
+This document describes the architecture after Phase 9: evidence validation.
 
-The system is still intentionally incomplete. It has deterministic telemetry parsing, matching, scoring, and cited evidence retrieval. It does not yet include LLM hypothesis generation, validation, persistence, interrupts, evaluation runners, observability, or an external API.
+The system is still intentionally incomplete. It has deterministic telemetry parsing, matching, scoring, cited evidence retrieval, bounded hypothesis generation, and deterministic hypothesis validation. It does not yet include the LLM critic, persistence, interrupts, evaluation runners, observability, or an external API.
 
 ## Module Boundaries
 
@@ -34,7 +34,7 @@ files or parse raw lines directly.
 
 ### `investigation`
 
-Owns deterministic investigation logic.
+Owns investigation application logic, including deterministic evidence processing and small LLM adapter boundaries.
 
 Current responsibilities:
 
@@ -43,11 +43,17 @@ Current responsibilities:
 - metric sample matching,
 - log evidence classification,
 - shared evidence strength vocabulary,
-- retrieval of cited evidence.
+- retrieval of cited evidence,
+- bounded hypothesis generation through an adapter protocol,
+- deterministic hypothesis validation.
 
 Matching functions accept already-read source records. They do not open files and do not manufacture missing evidence.
 
-Evidence retrieval is the deterministic investigation boundary. It calls telemetry readers, invokes matchers, creates `TelemetryEvidence`, attaches citation metadata, and represents missing evidence explicitly.
+Evidence retrieval is the deterministic investigation boundary for telemetry. It calls telemetry readers, invokes matchers, creates `TelemetryEvidence`, attaches citation metadata, and represents missing evidence explicitly.
+
+Hypothesis generation is the LLM boundary. It calls a `HypothesisGenerator` adapter and returns typed candidate `InvestigationHypothesis` objects. These raw generated hypotheses are untrusted candidate state.
+
+Hypothesis validation is the deterministic trust boundary for hypotheses. It checks evidence references, rejects unsupported or missing-evidence support, caps confidence based on evidence strength, and records audit details in `HypothesisValidationResult`.
 
 ### `domain`
 
@@ -59,6 +65,9 @@ Examples:
 - `TelemetryEvidence`
 - `EvidenceSource`
 - `InvestigationHypothesis`
+- `HypothesisValidationResult`
+- `RejectedHypothesis`
+- `ConfidenceAdjustment`
 - `InvestigationReport`
 
 Domain models are intentionally small at this stage.
@@ -67,7 +76,7 @@ Domain models are intentionally small at this stage.
 
 Owns LangGraph state and early workflow experiments.
 
-The graph layer should orchestrate investigation functions. It should not parse telemetry, read files directly, or contain source-specific matching rules.
+The graph layer should orchestrate investigation functions. It should not parse telemetry, read files directly, contain source-specific matching rules, or hide evidence-policy decisions inside graph nodes.
 
 ## Dependency Direction
 
@@ -90,6 +99,7 @@ domain -> investigation
 domain -> telemetry readers
 matching modules -> file readers
 graph nodes -> raw file parsing
+downstream nodes -> raw generated hypotheses as trusted output
 ```
 
 ## Evidence Retrieval Flow
@@ -121,7 +131,33 @@ Every retrieved evidence item should preserve:
 - service/component,
 - reason it was selected.
 
-The purpose is to make future hypotheses and final reports inspectable. Later LLM-generated hypotheses should cite evidence IDs, not raw telemetry or unsupported claims.
+The purpose is to make generated hypotheses and final reports inspectable. LLM-generated hypotheses should cite evidence IDs, not raw telemetry or unsupported claims. The validator decides whether those cited IDs are usable support.
+
+## Hypothesis Generation And Validation Flow
+
+```text
+RetrievedEvidence with citation metadata
+    -> HypothesisGenerator adapter
+    -> candidate InvestigationHypothesis objects
+    -> HypothesisValidatorNode
+    -> HypothesisValidationResult
+```
+
+Generation and validation have separate responsibilities:
+
+- generation produces typed candidate hypotheses from bounded incident and evidence context;
+- validation decides whether candidates are evidence-usable;
+- downstream nodes should trust `validation_result`, not raw `hypotheses`.
+
+The validator owns these deterministic policies:
+
+- every accepted hypothesis must have supporting evidence IDs;
+- cited evidence IDs must exist in retrieved evidence;
+- missing evidence cannot be used as support;
+- confidence is capped according to supporting evidence strength;
+- confidence changes and rejections are recorded as structured audit data.
+
+The validator intentionally does not perform broad semantic contradiction detection. That belongs to the later LLM critic phase.
 
 ## Evidence Strength
 
@@ -136,9 +172,9 @@ Metric evidence may become weak unless later phases add anomaly detection, basel
 
 ## Current Deliberate Limits
 
-- No LLM hypothesis generation yet.
 - No vector search.
 - No deployment-event evidence in the MVP.
+- No LLM critic for semantic review yet.
 - No persistence or checkpointing yet.
 - No human review routing yet.
 - No API or CLI boundary yet.
@@ -150,5 +186,5 @@ These are later learning phases, not accidental omissions.
 
 - Should metric evidence remain `MEDIUM`, or should it be downgraded to `WEAK` until anomaly logic exists?
 - Should evidence retrieval helpers remain in one module, or split into source-specific modules if the file grows?
-- What exact evidence contract should Phase 8 hypothesis generation consume?
+- Should graph state eventually rename raw `hypotheses` to `candidate_hypotheses` to make trust boundaries clearer?
 - Should missing evidence be included in prompts, or only in validator/reporting context?

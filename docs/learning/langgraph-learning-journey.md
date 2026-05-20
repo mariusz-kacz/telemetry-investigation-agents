@@ -167,8 +167,8 @@ Before any phase is marked DONE:
 | 5. Tool abstraction and adapters | DONE | 2026-05-11 | Local telemetry tool protocols/adapters, typed evidence results, explicit file/malformed-data behavior, tests, and learning note exist. |
 | 6. Deterministic telemetry parsing | DONE | 2026-05-14 | Deterministic parsers, filtering helpers, malformed-input tests, and one synthetic incident fixture exist. |
 | 7. Evidence retrieval and citations | DONE | 2026-05-17 | Log, trace, and metric retrieval preserve citations, represent missing evidence, and have source-specific tests. |
-| 8. Agentic hypothesis generation | DONE | 2026-05-18 | Bounded hypothesis generation uses a protocol-backed generator, structural citation guardrails, fake LLM tests, and a learning note. |
-| 9. Evidence validator | DONE | 2026-05-19 | Deterministic hypothesis validator, structured validation result, graph node, confidence adjustment audit trail, focused tests, and learning note exist. Semantic contradiction detection is deferred to the LLM critic phase. |
+| 8. Agentic hypothesis generation | DONE | 2026-05-18 | Bounded hypothesis generation uses a protocol-backed generator to produce typed candidate hypotheses, fake LLM tests, and a learning note. Evidence policy is owned by validation. |
+| 9. Evidence validator | DONE | 2026-05-19 | Deterministic hypothesis validator owns evidence-reference policy, structured validation result, graph node, confidence adjustment audit trail, focused tests, and learning note. Semantic contradiction detection is deferred to the LLM critic phase. |
 | 10. LLM critic for semantic review | TODO |  |  |
 | 11. Persistence, checkpointing, and interrupts | TODO |  |  |
 | 12. Human-in-the-loop review | TODO |  |  |
@@ -565,8 +565,8 @@ Introduce LLM reasoning in a bounded way.
 Create a `HypothesisGeneratorNode` that:
 
 - receives incident and evidence,
-- returns structured hypotheses,
-- references evidence IDs,
+- returns structured candidate hypotheses,
+- asks the LLM to reference evidence IDs,
 - assigns preliminary confidence,
 - states uncertainty.
 
@@ -576,18 +576,16 @@ Use an LLM adapter interface so the graph does not depend directly on a provider
 
 - Define prompt contract.
 - Add fake LLM for tests.
-- Add guardrails:
-  - hypothesis must cite evidence IDs,
-  - hypothesis cannot cite missing evidence,
-  - unknown evidence IDs are rejected.
+- Treat generator output as untrusted candidate state.
+- Defer evidence-reference policy to the validator.
 
 ## Checkpoint
 
 - [x] LLM adapter interface exists.
 - [x] Hypothesis node uses structured output.
 - [x] Fake LLM tests exist.
-- [x] Hypotheses cite evidence IDs.
-- [x] Unknown or missing evidence references are rejected.
+- [x] Hypothesis generation returns typed candidate hypotheses.
+- [x] Raw generated hypotheses are treated as untrusted until validation.
 - [x] Learning note explains bounded LLM reasoning.
 
 ## Codex stop condition
@@ -600,7 +598,7 @@ Stop after bounded hypothesis generation.
 
 ## Goal
 
-Add a deterministic validator step that reviews generated hypotheses against retrieved evidence before they can be used downstream.
+Add a deterministic validator step that reviews generated candidate hypotheses against retrieved evidence before they can be used downstream.
 
 ## Concepts
 
@@ -621,6 +619,8 @@ Create a `HypothesisValidatorNode` that checks:
 - missing evidence is not used as support,
 - confidence is adjusted,
 - unsupported claims are downgraded or rejected.
+
+Downstream nodes should treat `validation_result`, not raw generated `hypotheses`, as the trusted evidence-reviewed hypothesis state.
 
 Semantic contradiction detection is intentionally out of scope for this phase and belongs to the LLM critic phase.
 

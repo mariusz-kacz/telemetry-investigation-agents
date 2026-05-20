@@ -20,7 +20,7 @@ A validation node should be a review step in the workflow, not just a helper fun
 
 This resembles a validation/application-service boundary, but the Python design stays lighter: plain functions, Pydantic models, and small graph node wrappers instead of a large validator class hierarchy.
 
-The important boundary is behavioral, not inheritance-based: generation admits structurally valid hypotheses, while validation decides whether they survive evidence-based review.
+The important boundary is behavioral, not inheritance-based: generation produces typed candidate hypotheses, while validation decides whether they survive evidence-based review.
 
 ## What confused me
 
@@ -30,9 +30,9 @@ Another design question was contradiction detection. General contradiction detec
 
 ## Tradeoffs noticed
 
-Some checks are repeated between generation and validation. That is acceptable because they serve different purposes:
+The validation boundary owns evidence policy:
 
-- generation checks whether LLM output is structurally admissible,
+- generation produces typed candidates,
 - validation acts as the trust and audit boundary.
 
 The deterministic validator is intentionally narrow. It handles reference integrity, missing support, missing evidence, confidence policy, and audit reasons. It does not claim to understand every possible semantic contradiction.

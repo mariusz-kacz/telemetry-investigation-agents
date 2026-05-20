@@ -6,9 +6,9 @@ Introduce LLM-assisted hypothesis generation without letting the LLM become the 
 
 ## What I built
 
-Added a `HypothesisGenerator` protocol, a `HypothesisGenerationRequest`, deterministic hypothesis guardrails, and a thin LangGraph hypothesis-generation node.
+Added a `HypothesisGenerator` protocol, a `HypothesisGenerationRequest`, and a thin LangGraph hypothesis-generation node.
 
-The generator proposes `InvestigationHypothesis` objects. Deterministic code then verifies cited evidence IDs, rejects missing evidence as support, caps confidence based on evidence strength, and ensures low-confidence hypotheses carry uncertainty.
+The generator proposes `InvestigationHypothesis` objects. Evidence-reference policy and confidence policy now belong to the deterministic validator, so generation stays focused on producing typed candidate hypotheses from bounded context.
 
 ## LangGraph concept learned
 
@@ -20,19 +20,19 @@ A LangGraph node should be a workflow adapter, not the place where business rule
 
 ## What confused me
 
-Weak evidence and missing evidence require different behavior. Weak evidence can support a low-confidence hypothesis with uncertainty. Missing or unknown evidence cannot support a hypothesis and should be rejected.
+Weak evidence and missing evidence require different behavior, but generation should not make that policy decision. The validator decides whether weak evidence can support a low-confidence hypothesis and whether missing or unknown evidence should reject a candidate.
 
 ## Tradeoffs noticed
 
-The confidence cap is intentionally simple for this phase. It is enough to prove the boundary: the LLM can propose confidence, but deterministic code limits confidence based on evidence quality. More precise scoring belongs later with validation and evals.
+The generator/validator split is intentionally simple. The LLM can propose candidates, but deterministic validation decides which candidates are evidence-usable and how much confidence they can carry.
 
 ## Production concerns
 
-LLM output must be treated as untrusted. A production system cannot rely on prompt instructions alone for citation correctness, confidence, or uncertainty handling. Those constraints need deterministic checks and tests.
+LLM output must be treated as untrusted. A production system cannot rely on prompt instructions alone for citation correctness, confidence, or uncertainty handling. Those constraints need deterministic validation and tests.
 
 ## Tests/evals added
 
-Unit tests cover unknown evidence references, mixed valid and hallucinated evidence references, missing evidence support, confidence caps for weak and medium evidence, strong evidence preserving high confidence, non-mutation of generator-owned hypotheses, and LangGraph node state translation.
+Unit tests cover generator candidate pass-through, empty candidate lists, and LangGraph node state translation. Evidence-reference checks and confidence caps are covered by validator tests.
 
 ## Next step
 
