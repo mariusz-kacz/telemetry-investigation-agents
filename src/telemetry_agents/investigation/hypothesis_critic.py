@@ -7,11 +7,16 @@ from telemetry_agents.domain.models import (
     HypothesisCritiqueResult,
 )
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
+from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 
 
 class HypothesisCritiqueRequest(BaseModel):
     evidence: list[RetrievedEvidence] = Field(default_factory=list)
     validation_result: HypothesisValidationResult
+
+
+class HypothesisCriticUnavailableError(RuntimeError):
+    pass
 
 
 class HypothesisCritic(Protocol):
@@ -30,4 +35,24 @@ def critique_hypotheses(
     critic: HypothesisCritic,
 ) -> HypothesisCritiqueResult:
     """Critique validated hypotheses using an LLM-backed critic adapter."""
-    return critic.critique(request)
+    critique_result = critic.critique(
+        request=request,
+    )
+
+    validation_result = request.validation_result
+    hypotheses_ids = {
+        item.hypothesis_id for item in validation_result.accepted_hypotheses
+    }
+    evidences_by_id = {item.evidence.evidence_id: item for item in request.evidence}
+    evidences_ids = set(evidences_by_id)
+
+    for finding in critique_result.critique_findings:
+        if finding.hypothesis_id not in hypotheses_ids:
+            raise ValueError("Critique references unknown hypothesis ID.")
+        if set(finding.evidence_ids) - evidences_ids:
+            raise ValueError("Critique references unknown evidence ID.")
+        for evidence_id in finding.evidence_ids:
+            if evidences_by_id[evidence_id].strength == EvidenceStrength.MISSING:
+                raise ValueError("Critique references missing evidence.")
+
+    return critique_result

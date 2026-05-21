@@ -19,6 +19,7 @@ from telemetry_agents.investigation.evidence_retrieval import (
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 from telemetry_agents.investigation.hypothesis_critic import (
     HypothesisCritiqueRequest,
+    HypothesisCriticUnavailableError,
 )
 
 
@@ -33,6 +34,14 @@ class FakeHypothesisCritic:
     ) -> HypothesisCritiqueResult:
         self.request = request
         return self.result
+
+
+class UnavailableHypothesisCritic:
+    def critique(
+        self,
+        request: HypothesisCritiqueRequest,
+    ) -> HypothesisCritiqueResult:
+        raise HypothesisCriticUnavailableError("critic unavailable")
 
 
 def _hypothesis() -> InvestigationHypothesis:
@@ -112,3 +121,21 @@ def test_hypothesis_critic_node_requires_validation_result() -> None:
 
     with pytest.raises(ValueError, match="validation_result"):
         node({"collected_evidence": [_retrieved_evidence()]})
+
+
+def test_hypothesis_critic_node_records_warning_when_critic_is_unavailable() -> None:
+    node = make_hypothesis_critic_node(UnavailableHypothesisCritic())
+    evidence = _retrieved_evidence()
+    validation_result = _validation_result()
+
+    state_update = node(
+        {
+            "collected_evidence": [evidence],
+            "validation_result": validation_result,
+        }
+    )
+
+    assert state_update == {
+        "critique_findings": [],
+        "warnings": ["Hypothesis critic was unavailable; semantic review was skipped."],
+    }

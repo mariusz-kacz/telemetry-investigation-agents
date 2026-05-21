@@ -169,7 +169,7 @@ Before any phase is marked DONE:
 | 7. Evidence retrieval and citations | DONE | 2026-05-17 | Log, trace, and metric retrieval preserve citations, represent missing evidence, and have source-specific tests. |
 | 8. Agentic hypothesis generation | DONE | 2026-05-18 | Bounded hypothesis generation uses a protocol-backed generator to produce typed candidate hypotheses, fake LLM tests, and a learning note. Evidence policy is owned by validation. |
 | 9. Evidence validator | DONE | 2026-05-19 | Deterministic hypothesis validator owns evidence-reference policy, structured validation result, graph node, confidence adjustment audit trail, focused tests, and learning note. Semantic contradiction detection is deferred to the LLM critic phase. |
-| 10. LLM critic for semantic review | TODO |  |  |
+| 10. LLM critic for semantic review | DONE | 2026-05-21 | Separate critic node and protocol-backed adapter review accepted hypotheses for semantic issues, validate cited IDs, reject missing evidence as critique support, and safely fall back with a warning when the critic is unavailable. |
 | 11. Persistence, checkpointing, and interrupts | TODO |  |  |
 | 12. Human-in-the-loop review | TODO |  |  |
 | 13. Evaluation framework | TODO |  |  |
@@ -699,14 +699,14 @@ The critic should be a separate LangGraph node, not hidden inside the determinis
 
 ## Checkpoint
 
-- [ ] Critic node exists separately from validator node.
-- [ ] Critic adapter interface exists.
-- [ ] Fake critic LLM tests exist.
-- [ ] Critic output is structured.
-- [ ] Critic findings cite evidence IDs.
-- [ ] Critic cannot invent hypothesis or evidence IDs.
-- [ ] Critic failure has safe fallback behavior.
-- [ ] Learning note explains deterministic validation vs LLM critique.
+- [x] Critic node exists separately from validator node.
+- [x] Critic adapter interface exists.
+- [x] Fake critic LLM tests exist.
+- [x] Critic output is structured.
+- [x] Critic findings cite evidence IDs.
+- [x] Critic cannot invent hypothesis or evidence IDs.
+- [x] Critic failure has safe fallback behavior.
+- [x] Learning note explains deterministic validation vs LLM critique.
 
 ## Codex stop condition
 

@@ -5,6 +5,7 @@ from telemetry_agents.investigation.hypothesis_critic import (
     HypothesisCritic,
     HypothesisCritiqueRequest,
     critique_hypotheses,
+    HypothesisCriticUnavailableError,
 )
 
 
@@ -21,15 +22,21 @@ def make_hypothesis_critic_node(
 
         validation_result = state.get("validation_result")
         if validation_result is None:
-            raise ValueError(
-                "validation_result is required before hypothesis critique"
-            )
+            raise ValueError("validation_result is required before hypothesis critique")
 
         request = HypothesisCritiqueRequest(
             evidence=collected_evidence,
             validation_result=validation_result,
         )
-        critique_result = critique_hypotheses(request, critic)
+        try:
+            critique_result = critique_hypotheses(request, critic)
+        except HypothesisCriticUnavailableError:
+            return {
+                "critique_findings": [],
+                "warnings": [
+                    "Hypothesis critic was unavailable; semantic review was skipped."
+                ],
+            }
 
         return {"critique_findings": critique_result.critique_findings}
 
