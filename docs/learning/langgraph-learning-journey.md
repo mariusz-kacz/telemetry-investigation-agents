@@ -170,7 +170,7 @@ Before any phase is marked DONE:
 | 8. Agentic hypothesis generation | DONE | 2026-05-18 | Bounded hypothesis generation uses a protocol-backed generator to produce typed candidate hypotheses, fake LLM tests, and a learning note. Evidence policy is owned by validation. |
 | 9. Evidence validator | DONE | 2026-05-19 | Deterministic hypothesis validator owns evidence-reference policy, structured validation result, graph node, confidence adjustment audit trail, focused tests, and learning note. Semantic contradiction detection is deferred to the LLM critic phase. |
 | 10. LLM critic for semantic review | DONE | 2026-05-21 | Separate critic node and protocol-backed adapter review accepted hypotheses for semantic issues, validate cited IDs, reject missing evidence as critique support, and safely fall back with a warning when the critic is unavailable. |
-| 11. Persistence, checkpointing, and interrupts | TODO |  |  |
+| 11. Persistence, checkpointing, and interrupts | DONE | 2026-05-22 | SQLite-backed LangGraph checkpointing, app-owned run registry, state inspection, simulated resume, interrupt/resume gate, ADR, and learning note exist. |
 | 12. Human-in-the-loop review | TODO |  |  |
 | 13. Evaluation framework | TODO |  |  |
 | 14. Observability and tracing | TODO |  |  |
@@ -749,12 +749,12 @@ LangGraph supports durable execution by persisting agent state so workflows can 
 
 ## Checkpoint
 
-- [ ] Checkpointer is configured.
-- [ ] Investigation run ID exists.
-- [ ] State can be inspected.
-- [ ] Simulated resume works.
-- [ ] Interrupt point exists.
-- [ ] ADR exists.
+- [x] Checkpointer is configured.
+- [x] Investigation run ID exists.
+- [x] State can be inspected.
+- [x] Simulated resume works.
+- [x] Interrupt point exists.
+- [x] ADR exists.
 
 ## Codex stop condition
 

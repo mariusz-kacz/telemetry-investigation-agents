@@ -159,7 +159,7 @@ class InvestigationReport(BaseModel):
     incident_id: str = Field(min_length=1)
     summary: str = Field(min_length=1)
     confidence: float = Field(ge=0.0, le=1.0)
-    uncertainty: str
+    uncertainty: str = ""
 
     @field_validator("incident_id", "summary")
     @classmethod

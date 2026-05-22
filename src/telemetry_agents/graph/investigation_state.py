@@ -17,15 +17,6 @@ def append(existing: list[str], new: list[str]) -> list[str]:
     return existing + new
 
 
-class InvestigationRoute(StrEnum):
-    """Possible deterministic branches after incident intake."""
-
-    LOG_FOCUSED = "log_focused"
-    TRACE_FOCUSED = "trace_focused"
-    METRIC_FOCUSED = "metric_focused"
-    BROAD = "broad"
-
-
 class InvestigationGraphState(TypedDict, total=False):
     incident_input: str
     normalized_incident: Incident
@@ -34,7 +25,8 @@ class InvestigationGraphState(TypedDict, total=False):
     hypotheses: list[InvestigationHypothesis]
     validation_result: HypothesisValidationResult
     critique_findings: list[HypothesisCritiqueFinding]
+    report_review_decision: dict[str, bool]
+    report_review_completed: bool
     final_report: InvestigationReport
     errors: list[str]
     warnings: Annotated[list[str], append]
-    routing_decision: InvestigationRoute
