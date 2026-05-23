@@ -1,4 +1,3 @@
-from enum import StrEnum
 from typing import TypedDict, Annotated
 
 from telemetry_agents.domain import (
@@ -9,6 +8,8 @@ from telemetry_agents.domain import (
 from telemetry_agents.domain.models import (
     HypothesisValidationResult,
     HypothesisCritiqueFinding,
+    HumanReviewAssessment,
+    HumanReviewStatus,
 )
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 
@@ -25,8 +26,9 @@ class InvestigationGraphState(TypedDict, total=False):
     hypotheses: list[InvestigationHypothesis]
     validation_result: HypothesisValidationResult
     critique_findings: list[HypothesisCritiqueFinding]
-    report_review_decision: dict[str, bool]
-    report_review_completed: bool
+    human_review_assessment: HumanReviewAssessment
+    human_review_status: HumanReviewStatus
+    report_ready: bool
     final_report: InvestigationReport
     errors: list[str]
     warnings: Annotated[list[str], append]

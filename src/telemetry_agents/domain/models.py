@@ -18,6 +18,12 @@ class CritiqueFindingType(StrEnum):
     OVERSTATED_CONFIDENCE = "overstated_confidence"
 
 
+class HumanReviewStatus(StrEnum):
+    NOT_REQUIRED = "not_required"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
 class Incident(BaseModel):
     incident_id: str = Field(min_length=1)
     title: str = Field(min_length=1)
@@ -153,6 +159,17 @@ class HypothesisCritiqueFinding(BaseModel):
 
 class HypothesisCritiqueResult(BaseModel):
     critique_findings: list[HypothesisCritiqueFinding] = Field(default_factory=list)
+
+
+class HumanReviewAssessment(BaseModel):
+    human_review_required: bool
+    human_review_reason: str
+
+    @model_validator(mode="after")
+    def must_have_reason_if_review_required(self) -> "HumanReviewAssessment":
+        if self.human_review_required and not self.human_review_reason.strip():
+            raise ValueError("Reason must be added if human review is required")
+        return self
 
 
 class InvestigationReport(BaseModel):

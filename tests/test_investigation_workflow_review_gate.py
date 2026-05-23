@@ -7,6 +7,7 @@ from telemetry_agents.domain.models import (
     HypothesisCritiqueResult,
     Incident,
     TelemetryEvidence,
+    HumanReviewStatus,
 )
 from telemetry_agents.graph.investigation_workflow import build_investigation_workflow
 
@@ -100,5 +101,4 @@ def test_report_review_gate_handled() -> None:
 
     result = graph.invoke(Command(resume={"approved": True}), config=config)
 
-    assert result["report_review_decision"] == {"approved": True}
-    assert result["report_review_completed"] is True
+    assert result["human_review_status"] is HumanReviewStatus.APPROVED
