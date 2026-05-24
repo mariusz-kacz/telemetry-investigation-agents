@@ -1,4 +1,4 @@
-from telemetry_agents.domain import Incident, InvestigationHypothesis
+from telemetry_agents.domain import Incident, IncidentImpact, InvestigationHypothesis
 from telemetry_agents.investigation.hypothesis_generation import (
     HypothesisGenerationRequest,
     generate_hypotheses,
@@ -21,6 +21,7 @@ def _request() -> HypothesisGenerationRequest:
             incident_id="inc-001",
             title="Checkout API latency spike",
             service="checkout-api",
+            impact=IncidentImpact.MEDIUM,
         ),
         evidence=[],
     )

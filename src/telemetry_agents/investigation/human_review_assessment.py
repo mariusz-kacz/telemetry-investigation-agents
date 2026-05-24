@@ -1,11 +1,12 @@
 from pydantic import BaseModel, Field
 
-from telemetry_agents.domain.models import (
+from telemetry_agents.domain import (
     HypothesisValidationResult,
     Incident,
     HumanReviewAssessment,
     HypothesisCritiqueFinding,
     LOW_CONFIDENCE_THRESHOLD,
+    IncidentImpact,
 )
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
@@ -22,6 +23,9 @@ def assess_human_review_requirement(
     request: HumanReviewAssessmentRequest,
 ) -> HumanReviewAssessment:
     reasons: list[str] = []
+
+    if request.incident.impact == IncidentImpact.HIGH:
+        reasons.append("high incident impact")
 
     if request.critique_findings:
         reasons.append("critic findings present")

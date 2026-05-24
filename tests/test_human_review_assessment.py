@@ -10,6 +10,7 @@ from telemetry_agents.domain.models import (
     CritiqueFindingType,
     HypothesisValidationResult,
     Incident,
+    IncidentImpact,
     RejectedHypothesis,
 )
 from telemetry_agents.investigation.evidence_retrieval import (
@@ -75,11 +76,12 @@ def _validation_result() -> HypothesisValidationResult:
     return HypothesisValidationResult(accepted_hypotheses=[_hypothesis()])
 
 
-def _incident() -> Incident:
+def _incident(impact: IncidentImpact = IncidentImpact.MEDIUM) -> Incident:
     return Incident(
         incident_id="inc-001",
         title="Checkout API latency spike",
         service="checkout-api",
+        impact=impact,
     )
 
 
@@ -226,3 +228,31 @@ def test_collects_multiple_review_reasons() -> None:
     assert result.human_review_reason == (
         "critic findings present; missing or weak evidence strength"
     )
+
+
+def test_requires_human_review_when_incident_impact_is_high() -> None:
+    request = HumanReviewAssessmentRequest(
+        validation_result=_validation_result(),
+        critique_findings=[],
+        evidence=[_retrieved_evidence()],
+        incident=_incident(IncidentImpact.HIGH),
+    )
+
+    result = assess_human_review_requirement(request)
+
+    assert result.human_review_required is True
+    assert result.human_review_reason == "high incident impact"
+
+
+def test_medium_impact_does_not_require_review_when_other_conditions_are_safe() -> None:
+    request = HumanReviewAssessmentRequest(
+        validation_result=_validation_result(),
+        critique_findings=[],
+        evidence=[_retrieved_evidence()],
+        incident=_incident(IncidentImpact.MEDIUM),
+    )
+
+    result = assess_human_review_requirement(request)
+
+    assert result.human_review_required is False
+    assert result.human_review_reason is None

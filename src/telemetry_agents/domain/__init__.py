@@ -6,6 +6,7 @@ from telemetry_agents.domain.models import (
     EvidenceSource,
     HumanReviewAssessment,
     HumanReviewStatus,
+    IncidentImpact,
     HypothesisCritiqueFinding,
     HypothesisCritiqueResult,
     HypothesisValidationResult,
@@ -14,6 +15,7 @@ from telemetry_agents.domain.models import (
     InvestigationReport,
     RejectedHypothesis,
     TelemetryEvidence,
+    LOW_CONFIDENCE_THRESHOLD,
 )
 
 __all__ = [
@@ -22,6 +24,7 @@ __all__ = [
     "EvidenceSource",
     "HumanReviewAssessment",
     "HumanReviewStatus",
+    "IncidentImpact",
     "HypothesisCritiqueFinding",
     "HypothesisCritiqueResult",
     "HypothesisValidationResult",
@@ -30,4 +33,5 @@ __all__ = [
     "InvestigationReport",
     "RejectedHypothesis",
     "TelemetryEvidence",
+    "LOW_CONFIDENCE_THRESHOLD",
 ]

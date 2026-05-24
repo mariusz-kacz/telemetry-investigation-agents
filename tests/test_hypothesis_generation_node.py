@@ -3,6 +3,7 @@ import pytest
 from telemetry_agents.domain import (
     EvidenceSource,
     Incident,
+    IncidentImpact,
     InvestigationHypothesis,
     TelemetryEvidence,
 )
@@ -34,6 +35,7 @@ def _incident() -> Incident:
         incident_id="inc-001",
         title="Checkout API latency spike",
         service="checkout-api",
+        impact=IncidentImpact.MEDIUM,
     )
 
 

@@ -1,7 +1,7 @@
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 
-from telemetry_agents.domain import InvestigationHypothesis
+from telemetry_agents.domain import IncidentImpact, InvestigationHypothesis
 from telemetry_agents.domain.models import (
     EvidenceSource,
     HypothesisCritiqueResult,
@@ -50,6 +50,7 @@ def _incident() -> Incident:
         incident_id="inc-001",
         title="Checkout API latency spike",
         service="checkout-api",
+        impact=IncidentImpact.MEDIUM,
     )
 
 

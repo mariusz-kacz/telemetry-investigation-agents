@@ -58,10 +58,17 @@ class HumanReviewStatus(StrEnum):
     REJECTED = "rejected"
 
 
+class IncidentImpact(StrEnum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
 class Incident(BaseModel):
     incident_id: NonEmptyStr
     title: NonEmptyStr
     service: NonEmptyStr
+    impact: IncidentImpact
 
 
 class TelemetryEvidence(BaseModel):
