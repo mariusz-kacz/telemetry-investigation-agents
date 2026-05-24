@@ -171,7 +171,7 @@ Before any phase is marked DONE:
 | 9. Evidence validator | DONE | 2026-05-19 | Deterministic hypothesis validator owns evidence-reference policy, structured validation result, graph node, confidence adjustment audit trail, focused tests, and learning note. Semantic contradiction detection is deferred to the LLM critic phase. |
 | 10. LLM critic for semantic review | DONE | 2026-05-21 | Separate critic node and protocol-backed adapter review accepted hypotheses for semantic issues, validate cited IDs, reject missing evidence as critique support, and safely fall back with a warning when the critic is unavailable. |
 | 11. Persistence, checkpointing, and interrupts | DONE | 2026-05-22 | SQLite-backed LangGraph checkpointing, app-owned run registry, state inspection, simulated resume, interrupt/resume gate, ADR, and learning note exist. |
-| 12. Human-in-the-loop review | TODO |  |  |
+| 12. Human-in-the-loop review | DONE | 2026-05-25 | Risk-based review assessment, typed status, conditional interrupt/bypass routing, approval/rejection outcomes, focused tests, and learning note exist. Evidence re-entry and edited recommendations are deferred. |
 | 13. Evaluation framework | TODO |  |  |
 | 14. Observability and tracing | TODO |  |  |
 | 15. API / CLI interface | TODO |  |  |
@@ -804,12 +804,12 @@ Human reviewer can:
 
 ## Checkpoint
 
-- [ ] Human review condition exists.
-- [ ] Interrupt/resume path works.
-- [ ] Approval decision is stored.
-- [ ] Rejection path is explicit.
-- [ ] Tests cover review routing.
-- [ ] Learning note exists.
+- [x] Human review condition exists.
+- [x] Interrupt/resume path works.
+- [x] Approval decision is stored.
+- [x] Rejection path is explicit.
+- [x] Tests cover review routing.
+- [x] Learning note exists.
 
 ## Codex stop condition
 

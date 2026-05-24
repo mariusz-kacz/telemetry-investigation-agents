@@ -74,9 +74,20 @@ def _retrieved_evidence() -> RetrievedEvidence:
     )
 
 
-def build_memory_investigation_workflow_graph():
+def _supported_hypothesis() -> InvestigationHypothesis:
+    return InvestigationHypothesis(
+        hypothesis_id="hyp-001",
+        statement="Checkout latency is caused by database timeout errors.",
+        supporting_evidence_ids=["log-001"],
+        confidence=0.9,
+    )
+
+
+def build_memory_investigation_workflow_graph(
+    hypotheses: list[InvestigationHypothesis] | None = None,
+):
     checkpointer = InMemorySaver()
-    fake_generator = FakeHypothesisGenerator([])
+    fake_generator = FakeHypothesisGenerator(hypotheses or [])
     fake_critic = FakeHypothesisCritic(HypothesisCritiqueResult())
 
     return build_investigation_workflow(
@@ -103,3 +114,41 @@ def test_report_review_gate_handled() -> None:
     result = graph.invoke(Command(resume={"approved": True}), config=config)
 
     assert result["human_review_status"] is HumanReviewStatus.APPROVED
+    assert result["report_ready"] is True
+
+
+def test_rejected_human_review_does_not_mark_report_ready() -> None:
+    graph = build_memory_investigation_workflow_graph()
+    config = {"configurable": {"thread_id": "run-rejected"}}
+
+    result = graph.invoke(
+        {
+            "normalized_incident": _incident(),
+            "collected_evidence": [_retrieved_evidence()],
+        },
+        config=config,
+    )
+
+    assert result["__interrupt__"] is not None
+
+    result = graph.invoke(Command(resume={"approved": False}), config=config)
+
+    assert result["human_review_status"] is HumanReviewStatus.REJECTED
+    assert result["report_ready"] is False
+
+
+def test_safe_investigation_bypasses_human_review() -> None:
+    graph = build_memory_investigation_workflow_graph([_supported_hypothesis()])
+    config = {"configurable": {"thread_id": "run-not-required"}}
+
+    result = graph.invoke(
+        {
+            "normalized_incident": _incident(),
+            "collected_evidence": [_retrieved_evidence()],
+        },
+        config=config,
+    )
+
+    assert not result.get("__interrupt__")
+    assert result["human_review_status"] is HumanReviewStatus.NOT_REQUIRED
+    assert result["report_ready"] is True
