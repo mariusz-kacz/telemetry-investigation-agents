@@ -1,8 +1,42 @@
 from enum import StrEnum
+from typing import Annotated
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    model_validator,
+    StringConstraints,
+    AfterValidator,
+)
 
 LOW_CONFIDENCE_THRESHOLD = 0.8
+
+NonEmptyStr = Annotated[
+    str,
+    StringConstraints(
+        strip_whitespace=True,
+        min_length=1,
+    ),
+]
+
+
+def ensure_unique_ids(values: list[str]) -> list[str]:
+    if len(values) != len(set(values)):
+        raise ValueError("must not contain duplicate IDs")
+    return values
+
+
+UniqueIdList = Annotated[
+    list[NonEmptyStr],
+    AfterValidator(ensure_unique_ids),
+]
+
+
+def ensure_unique(values: list[str], *, label: str) -> set[str]:
+    unique = set(values)
+    if len(unique) != len(values):
+        raise ValueError(f"duplicate {label} IDs are not allowed")
+    return unique
 
 
 class EvidenceSource(StrEnum):
@@ -25,78 +59,45 @@ class HumanReviewStatus(StrEnum):
 
 
 class Incident(BaseModel):
-    incident_id: str = Field(min_length=1)
-    title: str = Field(min_length=1)
-    service: str = Field(min_length=1)
-
-    @field_validator("incident_id", "title", "service")
-    @classmethod
-    def must_not_be_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("must not be blank")
-        return value
+    incident_id: NonEmptyStr
+    title: NonEmptyStr
+    service: NonEmptyStr
 
 
 class TelemetryEvidence(BaseModel):
-    evidence_id: str = Field(min_length=1)
+    evidence_id: NonEmptyStr
     source: EvidenceSource
-    summary: str = Field(min_length=1)
-    citation: str = Field(min_length=1)
-    service: str = Field(min_length=1)
-
-    @field_validator("evidence_id", "summary", "citation", "service")
-    @classmethod
-    def must_not_be_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("must not be blank")
-        return value
+    summary: NonEmptyStr
+    citation: NonEmptyStr
+    service: NonEmptyStr
 
 
 class InvestigationHypothesis(BaseModel):
-    hypothesis_id: str = Field(min_length=1)
-    statement: str = Field(min_length=1)
-    supporting_evidence_ids: list[str] = Field(default_factory=list)
+    hypothesis_id: NonEmptyStr
+    statement: NonEmptyStr
+    supporting_evidence_ids: UniqueIdList = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0)
-    uncertainty: str = ""
-
-    @field_validator("hypothesis_id", "statement")
-    @classmethod
-    def must_not_be_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("must not be blank")
-        return value
+    uncertainty: NonEmptyStr | None = None
 
     @model_validator(mode="after")
     def must_have_uncertainty_if_not_confident(self) -> "InvestigationHypothesis":
-        if self.confidence < LOW_CONFIDENCE_THRESHOLD and not self.uncertainty.strip():
-            raise ValueError("uncertainty is required when confidence is below 0.8")
+        if self.confidence < LOW_CONFIDENCE_THRESHOLD and self.uncertainty is None:
+            raise ValueError(
+                f"uncertainty is required when confidence is below {LOW_CONFIDENCE_THRESHOLD}"
+            )
         return self
 
 
 class RejectedHypothesis(BaseModel):
     hypothesis: InvestigationHypothesis
-    reason: str = Field(min_length=1)
-
-    @field_validator("reason")
-    @classmethod
-    def must_not_be_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("must not be blank")
-        return value
+    reason: NonEmptyStr
 
 
 class ConfidenceAdjustment(BaseModel):
-    hypothesis_id: str = Field(min_length=1)
+    hypothesis_id: NonEmptyStr
     original_confidence: float = Field(ge=0.0, le=1.0)
     adjusted_confidence: float = Field(ge=0.0, le=1.0)
-    reason: str = Field(min_length=1)
-
-    @field_validator("hypothesis_id", "reason")
-    @classmethod
-    def must_not_be_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("must not be blank")
-        return value
+    reason: NonEmptyStr
 
     @model_validator(mode="after")
     def adjusted_confidence_should_be_smaller_than_original_confidence(
@@ -116,17 +117,24 @@ class HypothesisValidationResult(BaseModel):
 
     @model_validator(mode="after")
     def references_must_be_consistent(self) -> "HypothesisValidationResult":
-        accepted_ids = {item.hypothesis_id for item in self.accepted_hypotheses}
-        rejected_ids = {
-            item.hypothesis.hypothesis_id for item in self.rejected_hypotheses
-        }
+        accepted_ids = ensure_unique(
+            [item.hypothesis_id for item in self.accepted_hypotheses],
+            label="accepted hypothesis",
+        )
+        rejected_ids = ensure_unique(
+            [item.hypothesis.hypothesis_id for item in self.rejected_hypotheses],
+            label="rejected hypothesis",
+        )
+        adjusted_ids = ensure_unique(
+            [item.hypothesis_id for item in self.confidence_adjustments],
+            label="confidence adjustment hypothesis",
+        )
 
         if accepted_ids & rejected_ids:
             raise ValueError(
                 "same hypothesis ids found in accepted and rejected hypotheses"
             )
 
-        adjusted_ids = {item.hypothesis_id for item in self.confidence_adjustments}
         if not adjusted_ids <= accepted_ids:
             raise ValueError(
                 "confidence adjustments should refer to accepted hypotheses"
@@ -136,25 +144,10 @@ class HypothesisValidationResult(BaseModel):
 
 
 class HypothesisCritiqueFinding(BaseModel):
-    hypothesis_id: str = Field(min_length=1)
-    evidence_ids: list[str] = Field(min_length=1)
+    hypothesis_id: NonEmptyStr
+    evidence_ids: UniqueIdList = Field(min_length=1)
     finding_type: CritiqueFindingType
-    reason: str = Field(min_length=1)
-
-    @field_validator("hypothesis_id", "reason")
-    @classmethod
-    def must_not_be_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("must not be blank")
-        return value
-
-    @field_validator("evidence_ids")
-    @classmethod
-    def items_must_not_be_blank(cls, value: list[str]) -> list[str]:
-        for evidence_id in value:
-            if not evidence_id.strip():
-                raise ValueError("must not have blank items")
-        return value
+    reason: NonEmptyStr
 
 
 class HypothesisCritiqueResult(BaseModel):
@@ -163,30 +156,35 @@ class HypothesisCritiqueResult(BaseModel):
 
 class HumanReviewAssessment(BaseModel):
     human_review_required: bool
-    human_review_reason: str
+    human_review_reason: NonEmptyStr | None = None
 
     @model_validator(mode="after")
     def must_have_reason_if_review_required(self) -> "HumanReviewAssessment":
-        if self.human_review_required and not self.human_review_reason.strip():
-            raise ValueError("Reason must be added if human review is required")
+        if self.human_review_required and self.human_review_reason is None:
+            raise ValueError("reason is required if human review is required")
+        return self
+
+    @model_validator(mode="after")
+    def must_not_have_reason_if_review_not_required(self) -> "HumanReviewAssessment":
+        if (
+            not self.human_review_required
+            and self.human_review_reason
+            and self.human_review_reason.strip()
+        ):
+            raise ValueError("Reason must not be added if human review is not required")
         return self
 
 
 class InvestigationReport(BaseModel):
-    incident_id: str = Field(min_length=1)
-    summary: str = Field(min_length=1)
+    incident_id: NonEmptyStr
+    summary: NonEmptyStr
     confidence: float = Field(ge=0.0, le=1.0)
-    uncertainty: str = ""
-
-    @field_validator("incident_id", "summary")
-    @classmethod
-    def must_not_be_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("must not be blank")
-        return value
+    uncertainty: NonEmptyStr | None = None
 
     @model_validator(mode="after")
     def must_have_uncertainty_if_not_confident(self) -> "InvestigationReport":
-        if self.confidence < LOW_CONFIDENCE_THRESHOLD and not self.uncertainty.strip():
-            raise ValueError("uncertainty is required when confidence is below 0.8")
+        if self.confidence < LOW_CONFIDENCE_THRESHOLD and self.uncertainty is None:
+            raise ValueError(
+                f"uncertainty is required when confidence is below {LOW_CONFIDENCE_THRESHOLD}"
+            )
         return self

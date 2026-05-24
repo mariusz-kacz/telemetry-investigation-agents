@@ -84,9 +84,8 @@ def validate_hypotheses(
 
         if hypothesis.confidence > max_confidence:
             updates: dict[str, str | float] = {"confidence": max_confidence}
-            if (
-                max_confidence < LOW_CONFIDENCE_THRESHOLD
-                and not hypothesis.uncertainty.strip()
+            if max_confidence < LOW_CONFIDENCE_THRESHOLD and (
+                not hypothesis.uncertainty or not hypothesis.uncertainty.strip()
             ):
                 updates["uncertainty"] = (
                     "Confidence was reduced because the cited evidence is not strong enough to support a higher-confidence hypothesis."

@@ -1,6 +1,5 @@
 from collections.abc import Callable
 
-from telemetry_agents.domain.models import HumanReviewStatus
 from telemetry_agents.graph.investigation_state import InvestigationGraphState
 
 
