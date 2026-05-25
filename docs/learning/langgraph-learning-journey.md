@@ -166,7 +166,7 @@ Before any phase is marked DONE:
 | 4. Control flow and conditional routing | DONE | 2026-05-11 | Deterministic routing function, conditional graph wiring, tests, and learning note exist. |
 | 5. Tool abstraction and adapters | DONE | 2026-05-11 | Local telemetry tool protocols/adapters, typed evidence results, explicit file/malformed-data behavior, tests, and learning note exist. |
 | 6. Deterministic telemetry parsing | DONE | 2026-05-14 | Deterministic parsers, filtering helpers, malformed-input tests, and one synthetic incident fixture exist. |
-| 7. Evidence retrieval and citations | DONE | 2026-05-17 | Log, trace, and metric retrieval preserve citations, represent missing evidence, and have source-specific tests. |
+| 7. Evidence retrieval and citations | DONE | 2026-05-25 | Retrieval preserves citations, represents absent source files as missing evidence, and ranks merged evidence by relevance with regression tests. |
 | 8. Agentic hypothesis generation | DONE | 2026-05-18 | Bounded hypothesis generation uses a protocol-backed generator to produce typed candidate hypotheses, fake LLM tests, and a learning note. Evidence policy is owned by validation. |
 | 9. Evidence validator | DONE | 2026-05-19 | Deterministic hypothesis validator owns evidence-reference policy, structured validation result, graph node, confidence adjustment audit trail, focused tests, and learning note. Semantic contradiction detection is deferred to the LLM critic phase. |
 | 10. LLM critic for semantic review | DONE | 2026-05-21 | Separate critic node and protocol-backed adapter review accepted hypotheses for semantic issues, validate cited IDs, reject missing evidence as critique support, and safely fall back with a warning when the critic is unavailable. |

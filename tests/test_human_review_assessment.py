@@ -1,17 +1,15 @@
 import pytest
 
 from telemetry_agents.domain import (
-    EvidenceSource,
-    InvestigationHypothesis,
-    TelemetryEvidence,
-)
-from telemetry_agents.domain.models import (
     HypothesisCritiqueFinding,
     CritiqueFindingType,
     HypothesisValidationResult,
     Incident,
     IncidentImpact,
     RejectedHypothesis,
+    EvidenceSource,
+    InvestigationHypothesis,
+    TelemetryEvidence,
 )
 from telemetry_agents.investigation.evidence_retrieval import (
     CitationMetadata,
@@ -242,6 +240,21 @@ def test_requires_human_review_when_incident_impact_is_high() -> None:
 
     assert result.human_review_required is True
     assert result.human_review_reason == "high incident impact"
+
+
+def test_requires_human_review_when_has_warnings() -> None:
+    request = HumanReviewAssessmentRequest(
+        warnings=["Hypothesis critic was unavailable; semantic review was skipped."],
+        validation_result=_validation_result(),
+        critique_findings=[],
+        evidence=[_retrieved_evidence()],
+        incident=_incident(),
+    )
+
+    result = assess_human_review_requirement(request)
+
+    assert result.human_review_required is True
+    assert result.human_review_reason == "warnings present"
 
 
 def test_medium_impact_does_not_require_review_when_other_conditions_are_safe() -> None:

@@ -56,6 +56,37 @@ class EvidenceRetrievalRequest(BaseModel):
     trace_id: str | None = None
 
 
+def _missing_evidence(
+    *,
+    request: EvidenceRetrievalRequest,
+    source: EvidenceSource,
+    source_file: Path,
+    summary: str,
+    selection_reason: str,
+) -> list[RetrievedEvidence]:
+    return [
+        RetrievedEvidence(
+            evidence=TelemetryEvidence(
+                evidence_id=f"missing-{source.value}-{request.incident_id}",
+                service=request.service,
+                source=source,
+                citation=source_file.as_posix(),
+                summary=summary,
+            ),
+            citation=CitationMetadata(
+                source_file=source_file.as_posix(),
+                line_number=None,
+                service=request.service,
+                timestamp=None,
+                record_id=None,
+                selection_reason=selection_reason,
+            ),
+            strength=EvidenceStrength.MISSING,
+            relevance_score=0,
+        )
+    ]
+
+
 def _format_selection_reason(
     match_details: list[MatchDetail],
 ) -> str:
@@ -86,16 +117,26 @@ def _retrieve_log_evidence(
     request: EvidenceRetrievalRequest,
 ) -> list[RetrievedEvidence]:
     retrieved_log_evidence: list[RetrievedEvidence] = []
+    source_file = Path(request.data_root) / "logs" / f"{request.service}.log"
 
-    matching_log_lines: list[MatchedLogLine] = get_matching_log_lines(
-        log_records=reader.read_logs(service=request.service),
-        start_timestamp=start_timestamp,
-        end_timestamp=end_timestamp,
-        service=request.service,
-        query_terms=request.query_terms,
-        correlation_id=request.correlation_id,
-        trace_id=request.trace_id,
-    )
+    try:
+        matching_log_lines: list[MatchedLogLine] = get_matching_log_lines(
+            log_records=reader.read_logs(service=request.service),
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+            service=request.service,
+            query_terms=request.query_terms,
+            correlation_id=request.correlation_id,
+            trace_id=request.trace_id,
+        )
+    except FileNotFoundError:
+        return _missing_evidence(
+            request=request,
+            source=EvidenceSource.LOG,
+            source_file=source_file,
+            summary="Log source file is unavailable for this incident.",
+            selection_reason="Log source file was not found.",
+        )
 
     for matching_log_line in matching_log_lines:
         telemetry_evidence = TelemetryEvidence(
@@ -126,27 +167,13 @@ def _retrieve_log_evidence(
         )
 
     if not retrieved_log_evidence:
-        return [
-            RetrievedEvidence(
-                evidence=TelemetryEvidence(
-                    evidence_id=f"missing-log-{request.incident_id}",
-                    service=request.service,
-                    source=EvidenceSource.LOG,
-                    citation=f"{request.data_root}/logs/{request.service}.log",
-                    summary="No matching log evidence found for the incident filters.",
-                ),
-                citation=CitationMetadata(
-                    source_file=f"{request.data_root}/logs/{request.service}.log",
-                    line_number=None,
-                    service=request.service,
-                    timestamp=None,
-                    record_id=None,
-                    selection_reason="No log records matched the incident time window, IDs, or query terms.",
-                ),
-                strength=EvidenceStrength.MISSING,
-                relevance_score=0,
-            )
-        ]
+        return _missing_evidence(
+            request=request,
+            source=EvidenceSource.LOG,
+            source_file=source_file,
+            summary="No matching log evidence found for the incident filters.",
+            selection_reason="No log records matched the incident time window, IDs, or query terms.",
+        )
     return retrieved_log_evidence
 
 
@@ -158,14 +185,24 @@ def _retrieve_trace_evidence(
     request: EvidenceRetrievalRequest,
 ) -> list[RetrievedEvidence]:
     retrieved_trace_evidence: list[RetrievedEvidence] = []
+    source_file = Path(request.data_root) / "traces" / f"{request.service}.jsonl"
 
-    matching_trace_spans: list[MatchedTraceSpan] = get_matching_trace_spans(
-        trace_span_records=reader.read_traces(service=request.service),
-        start_timestamp=start_timestamp,
-        end_timestamp=end_timestamp,
-        service=request.service,
-        trace_id=request.trace_id,
-    )
+    try:
+        matching_trace_spans: list[MatchedTraceSpan] = get_matching_trace_spans(
+            trace_span_records=reader.read_traces(service=request.service),
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+            service=request.service,
+            trace_id=request.trace_id,
+        )
+    except FileNotFoundError:
+        return _missing_evidence(
+            request=request,
+            source=EvidenceSource.TRACE,
+            source_file=source_file,
+            summary="Trace source file is unavailable for this incident.",
+            selection_reason="Trace source file was not found.",
+        )
 
     for matching_trace_span in matching_trace_spans:
         telemetry_evidence = TelemetryEvidence(
@@ -200,27 +237,13 @@ def _retrieve_trace_evidence(
         )
 
     if not retrieved_trace_evidence:
-        return [
-            RetrievedEvidence(
-                evidence=TelemetryEvidence(
-                    evidence_id=f"missing-trace-{request.incident_id}",
-                    service=request.service,
-                    source=EvidenceSource.TRACE,
-                    citation=f"{request.data_root}/traces/{request.service}.jsonl",
-                    summary="No matching trace spans found for the incident filters.",
-                ),
-                citation=CitationMetadata(
-                    source_file=f"{request.data_root}/traces/{request.service}.jsonl",
-                    line_number=None,
-                    service=request.service,
-                    timestamp=None,
-                    record_id=None,
-                    selection_reason="No trace spans matched the incident time window or IDs",
-                ),
-                strength=EvidenceStrength.MISSING,
-                relevance_score=0,
-            )
-        ]
+        return _missing_evidence(
+            request=request,
+            source=EvidenceSource.TRACE,
+            source_file=source_file,
+            summary="No matching trace spans found for the incident filters.",
+            selection_reason="No trace spans matched the incident time window or IDs.",
+        )
     return retrieved_trace_evidence
 
 
@@ -232,13 +255,23 @@ def _retrieve_metric_evidence(
     request: EvidenceRetrievalRequest,
 ) -> list[RetrievedEvidence]:
     retrieved_metric_evidence: list[RetrievedEvidence] = []
+    source_file = Path(request.data_root) / "metrics" / f"{request.service}.jsonl"
 
-    matching_metric_samples: list[MatchedMetricSample] = get_matching_metric_samples(
-        metric_sample_records=reader.read_metrics(service=request.service),
-        start_timestamp=start_timestamp,
-        end_timestamp=end_timestamp,
-        service=request.service,
-    )
+    try:
+        matching_metric_samples: list[MatchedMetricSample] = get_matching_metric_samples(
+            metric_sample_records=reader.read_metrics(service=request.service),
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+            service=request.service,
+        )
+    except FileNotFoundError:
+        return _missing_evidence(
+            request=request,
+            source=EvidenceSource.METRIC,
+            source_file=source_file,
+            summary="Metric source file is unavailable for this incident.",
+            selection_reason="Metric source file was not found.",
+        )
 
     for matching_metric_sample in matching_metric_samples:
         telemetry_evidence = TelemetryEvidence(
@@ -272,27 +305,13 @@ def _retrieve_metric_evidence(
         )
 
     if not retrieved_metric_evidence:
-        return [
-            RetrievedEvidence(
-                evidence=TelemetryEvidence(
-                    evidence_id=f"missing-metric-{request.incident_id}",
-                    service=request.service,
-                    source=EvidenceSource.METRIC,
-                    citation=f"{request.data_root}/metrics/{request.service}.jsonl",
-                    summary="No matching metric samples found for the incident filters.",
-                ),
-                citation=CitationMetadata(
-                    source_file=f"{request.data_root}/metrics/{request.service}.jsonl",
-                    line_number=None,
-                    service=request.service,
-                    timestamp=None,
-                    record_id=None,
-                    selection_reason="No metric samples matched the incident time window or IDs",
-                ),
-                strength=EvidenceStrength.MISSING,
-                relevance_score=0,
-            )
-        ]
+        return _missing_evidence(
+            request=request,
+            source=EvidenceSource.METRIC,
+            source_file=source_file,
+            summary="No matching metric samples found for the incident filters.",
+            selection_reason="No metric samples matched the incident time window.",
+        )
     return retrieved_metric_evidence
 
 
@@ -326,4 +345,9 @@ def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEviden
         request=request,
     )
 
-    return log_evidence + trace_span_evidence + metric_sample_evidence
+    retrieved_evidence = log_evidence + trace_span_evidence + metric_sample_evidence
+    return sorted(
+        retrieved_evidence,
+        key=lambda item: item.relevance_score,
+        reverse=True,
+    )

@@ -13,6 +13,7 @@ from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 
 
 class HumanReviewAssessmentRequest(BaseModel):
+    warnings: list[str] = Field(default_factory=list)
     critique_findings: list[HypothesisCritiqueFinding] = Field(default_factory=list)
     validation_result: HypothesisValidationResult
     evidence: list[RetrievedEvidence] = Field(default_factory=list)
@@ -23,6 +24,9 @@ def assess_human_review_requirement(
     request: HumanReviewAssessmentRequest,
 ) -> HumanReviewAssessment:
     reasons: list[str] = []
+
+    if request.warnings:
+        reasons.append("warnings present")
 
     if request.incident.impact == IncidentImpact.HIGH:
         reasons.append("high incident impact")

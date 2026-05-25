@@ -1,14 +1,19 @@
 from collections.abc import Callable
 from langgraph.types import interrupt
 
-from telemetry_agents.domain.models import HumanReviewStatus
+from telemetry_agents.domain import HumanReviewStatus
 from telemetry_agents.graph.investigation_state import InvestigationGraphState
+from telemetry_agents.investigation.human_review_packet import build_human_review_packet
 
 
 def make_report_review_gate_node() -> Callable[
     [InvestigationGraphState], InvestigationGraphState
 ]:
     def node(state: InvestigationGraphState) -> InvestigationGraphState:
+        normalized_incident = state.get("normalized_incident")
+        if normalized_incident is None:
+            raise ValueError("normalized_incident is required before report review")
+
         validation_result = state.get("validation_result")
         if validation_result is None:
             raise ValueError("validation_result is required before report review")
@@ -17,13 +22,28 @@ def make_report_review_gate_node() -> Callable[
         if critique_findings is None:
             raise ValueError("critique_findings are required before report review")
 
-        user_feedback = interrupt(
-            {
-                "reason": "report_review_required",
-                "accepted_hypothesis_count": len(validation_result.accepted_hypotheses),
-                "critique_finding_count": len(critique_findings),
-            }
+        collected_evidence = state.get("collected_evidence")
+        if collected_evidence is None:
+            raise ValueError("collected_evidence are required before report review")
+
+        human_review_assessment = state.get("human_review_assessment")
+        if human_review_assessment is None:
+            raise ValueError("human_review_assessment is required before report review")
+
+        warnings = state.get("warnings")
+        if warnings is None:
+            raise ValueError("warnings are required before report review")
+
+        packet = build_human_review_packet(
+            incident=normalized_incident,
+            warnings=warnings,
+            critique_findings=critique_findings,
+            validation_result=validation_result,
+            assessment=human_review_assessment,
+            collected_evidence=collected_evidence,
         )
+
+        user_feedback = interrupt(packet.model_dump(mode="json"))
 
         user_approved = user_feedback.get("approved")
         if user_approved is None:

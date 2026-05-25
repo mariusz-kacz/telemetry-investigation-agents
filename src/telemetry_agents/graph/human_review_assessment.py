@@ -37,6 +37,7 @@ def make_human_review_assessment_node() -> Callable[
 
         assessment = assess_human_review_requirement(
             HumanReviewAssessmentRequest(
+                warnings=state.get("warnings", []),
                 evidence=collected_evidence,
                 validation_result=validation_result,
                 incident=incident,
