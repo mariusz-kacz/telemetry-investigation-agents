@@ -57,7 +57,7 @@ Current responsibilities:
 
 Matching functions accept already-read source records. They do not open files and do not manufacture missing evidence.
 
-Evidence retrieval is the deterministic investigation boundary for telemetry. It calls telemetry readers, invokes matchers, creates `TelemetryEvidence`, attaches citation metadata, and represents missing evidence explicitly.
+Evidence retrieval is the deterministic investigation boundary for telemetry. It calls telemetry readers, invokes matchers, creates `TelemetryEvidence`, attaches citation metadata, translates absent source files into explicit missing evidence, and ranks the merged result by relevance score.
 
 Hypothesis generation is the LLM boundary. It calls a `HypothesisGenerator` adapter and returns typed candidate `InvestigationHypothesis` objects. These raw generated hypotheses are untrusted candidate state.
 
@@ -157,6 +157,7 @@ local sample files
     -> parsed source records with file/line metadata
     -> source-specific matching
     -> source-specific evidence construction
+    -> merged evidence ranked by descending relevance score
     -> RetrievedEvidence with citation metadata
 ```
 
@@ -166,7 +167,7 @@ Current source-specific matching:
 - traces: service, time window, exact trace ID;
 - metrics: service and time window.
 
-Matching returns matched records only. Retrieval decides whether to create actual evidence or explicit missing evidence.
+Matching returns matched records only. Retrieval decides whether to create actual evidence or explicit missing evidence. If the expected file for a source is absent, retrieval emits missing evidence for that source rather than crashing the investigation.
 
 ## Citation Contract
 

@@ -18,7 +18,7 @@ Phase 7 introduced deterministic retrieval for logs, trace spans, and metric sam
 - service/component,
 - reason it was selected.
 
-It also represents missing evidence explicitly instead of treating an empty match as an exceptional failure.
+It also represents missing evidence explicitly instead of treating either an empty match or an absent telemetry source file as an exceptional failure.
 
 ## Decision
 
@@ -37,7 +37,9 @@ local telemetry files
     -> later LLM hypothesis generation
 ```
 
-Matching functions return matched records only. Evidence retrieval decides whether to create actual evidence or explicit missing evidence.
+Matching functions return matched records only. Evidence retrieval decides whether to create actual evidence or explicit missing evidence. A missing source file is translated at this application boundary into `MISSING` evidence for that source.
+
+Evidence retrieved from logs, traces, and metrics is merged and ranked by descending relevance score before downstream consumers see it. The source assembly order is not a ranking policy.
 
 ## Consequences
 
@@ -48,6 +50,8 @@ Positive consequences:
 - Later prompts can be smaller and more controlled.
 - Final reports can cite evidence IDs backed by inspectable source metadata.
 - Missing evidence can reduce confidence instead of causing hallucinated certainty.
+- Absent local telemetry files produce explicit missing-source evidence rather than terminating retrieval.
+- Cross-source ranking can be regression-tested independently of fixture file order.
 
 Tradeoffs:
 
