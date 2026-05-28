@@ -1,9 +1,8 @@
+from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Iterable, Protocol
-
-from pydantic import BaseModel, Field
 
 from telemetry_agents.telemetry.models import ParsedLogRecord
 
@@ -14,16 +13,18 @@ class MatchReason(StrEnum):
     QUERY_TERM = "query_term"
 
 
-class MatchDetail(BaseModel):
+@dataclass(frozen=True)
+class MatchDetail:
     reason: MatchReason
     value: str
 
 
-class MatchedLogLine(BaseModel):
+@dataclass(frozen=True)
+class MatchedLogLine:
     log_line: ParsedLogRecord
     source_file: Path
     line_number: int
-    match_details: list[MatchDetail] = Field(default_factory=list)
+    match_details: list[MatchDetail]
 
 
 class SourceLog(Protocol):

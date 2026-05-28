@@ -172,11 +172,12 @@ Before any phase is marked DONE:
 | 10. LLM critic for semantic review | DONE | 2026-05-21 | Separate critic node and protocol-backed adapter review accepted hypotheses for semantic issues, validate cited IDs, reject missing evidence as critique support, and safely fall back with a warning when the critic is unavailable. |
 | 11. Persistence, checkpointing, and interrupts | DONE | 2026-05-22 | SQLite-backed LangGraph checkpointing, app-owned run registry, state inspection, simulated resume, interrupt/resume gate, ADR, and learning note exist. |
 | 12. Human-in-the-loop review | DONE | 2026-05-25 | Risk-based review assessment, typed status, conditional interrupt/bypass routing, approval/rejection outcomes, focused tests, and learning note exist. Evidence re-entry and edited recommendations are deferred. |
-| 13. Evaluation framework | TODO |  |  |
-| 14. Observability and tracing | TODO |  |  |
-| 15. API / CLI interface | TODO |  |  |
-| 16. Portfolio skeleton hardening | TODO |  |  |
-| 17. Final review and roadmap | TODO |  |  |
+| 13. Azure OpenAI integration and graph smoke | IN_PROGRESS |  | Azure OpenAI generator and critic adapters use Microsoft Entra ID, structured outputs, mocked adapter tests, and opt-in adapter-level live smoke tests. Graph-level live smoke remains. |
+| 14. Evaluation framework | TODO |  |  |
+| 15. Observability and tracing | TODO |  |  |
+| 16. API / CLI interface | TODO |  |  |
+| 17. Portfolio skeleton hardening | TODO |  |  |
+| 18. Final review and roadmap | TODO |  |  |
 
 Status values: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`, `REWORK`.
 
@@ -817,7 +818,97 @@ Stop after human review flow.
 
 ---
 
-# Phase 13 — Evaluation framework
+# Phase 13 - Azure OpenAI integration and graph smoke
+
+## Goal
+
+Connect the existing probabilistic workflow boundaries to Azure OpenAI in Microsoft Foundry, then prove the compiled graph can execute end-to-end with the live provider adapters before building the formal evaluation framework.
+
+This phase is intentionally an infrastructure integration step. LangGraph remains responsible for workflow state, deterministic validation, checkpointing, and human-review routing. Azure OpenAI supplies bounded structured model calls only.
+
+## Concepts
+
+- Concrete provider adapter behind a Python `Protocol`.
+- Azure OpenAI deployment versus application model contract.
+- Microsoft Entra ID authentication and Azure RBAC.
+- Structured model output validated into existing Pydantic models.
+- Adapter-level live smoke validation versus graph-level live smoke validation.
+- Provider failure translation and safe fallback behavior.
+- End-to-end graph execution with live LLM adapters.
+
+## Architectural decision
+
+Use Azure OpenAI because the portfolio objective includes enterprise AI positioning in the Microsoft ecosystem.
+
+Use Microsoft Entra ID authentication only for the initial integration, implemented
+through `DefaultAzureCredential`. Do not add API-key fallback in this phase. This
+keeps the credential model aligned with Azure RBAC and prevents a second
+configuration path from obscuring the adapter lesson.
+
+The accepted boundary is:
+
+```text
+LangGraph workflow
+    -> HypothesisGenerator / HypothesisCritic protocols
+    -> Azure OpenAI infrastructure adapters
+    -> Azure OpenAI deployed model in Microsoft Foundry
+```
+
+Do not use hosted agent orchestration or move deterministic evidence policy into the provider layer. This project demonstrates LangGraph workflow ownership with Azure-backed model calls, not two overlapping orchestration systems.
+
+## Implementation tasks
+
+- Select an Azure OpenAI deployment supporting structured outputs.
+- Configure local Azure access, preferably through Microsoft Entra ID.
+- Add one concrete Azure OpenAI adapter for hypothesis generation.
+- Add one concrete Azure OpenAI adapter for hypothesis critique.
+- Parse structured responses into the existing typed domain contracts.
+- Translate known provider unavailability into the existing safe workflow behavior where applicable.
+- Add mocked adapter tests that require no Azure credentials.
+- Add opt-in adapter-level live smoke invocations using existing synthetic evidence.
+- Add one opt-in graph-level live smoke test that wires the compiled graph with the Azure generator and critic adapters in a single execution.
+- Verify the graph-level smoke run exercises the existing graph nodes together: hypothesis generation, validation, critic review, human-review assessment, and review/ready routing.
+- Document configuration, credential handling, nondeterminism, and live-call cost expectations.
+
+## Deliberate non-goals
+
+- Do not create Foundry hosted agents.
+- Do not add Azure AI Search or vector retrieval.
+- Do not optimize prompts before evaluation exists.
+- Do not put live Azure calls in the normal unit-test suite.
+- Do not add telemetry/tracing before the observability phase.
+- Do not build CLI/API exposure in this phase.
+- Do not build the full evaluation framework in this phase.
+- Do not tune prompts from a single graph-level smoke result.
+
+## Learning tasks
+
+- Explain why an infrastructure adapter is sufficient for Azure OpenAI integration.
+- Compare Microsoft Entra ID authentication with API-key configuration and choose explicitly.
+- Define which provider errors should fail the run and which critic failures may trigger the existing safe fallback.
+- Explain what an end-to-end smoke test proves and what it does not prove.
+- Run one live graph execution and inspect whether generated hypotheses and critic findings remain bounded by supplied evidence IDs.
+
+## Checkpoint
+
+- [x] Azure OpenAI authentication approach is selected and documented.
+- [x] Concrete hypothesis generator adapter exists.
+- [x] Concrete hypothesis critic adapter exists.
+- [x] Structured outputs are validated into existing typed models.
+- [x] Mocked adapter tests cover success and provider failure behavior.
+- [x] One opt-in adapter-level live smoke invocation succeeds.
+- [ ] One opt-in graph-level live smoke execution succeeds.
+- [ ] Graph-level smoke couples all current graph nodes with live Azure OpenAI generator and critic adapters in one run.
+- [ ] Live graph output is inspected for evidence-reference discipline before accepting the checkpoint.
+- [x] Learning note records provider boundaries, risks, and limitations.
+
+## Codex stop condition
+
+Stop after Azure OpenAI-backed graph smoke validation. Do not begin evaluation cases or prompt optimization yet.
+
+---
+
+# Phase 14 — Evaluation framework
 
 ## Goal
 
@@ -875,7 +966,7 @@ Stop after basic evaluation loop.
 
 ---
 
-# Phase 14 — Observability and tracing
+# Phase 15 — Observability and tracing
 
 ## Goal
 
@@ -930,7 +1021,7 @@ Stop after local observability demonstration.
 
 ---
 
-# Phase 15 — API / CLI interface
+# Phase 16 — API / CLI interface
 
 ## Goal
 
@@ -988,7 +1079,7 @@ Stop after external interface is usable.
 
 ---
 
-# Phase 16 — Portfolio skeleton hardening
+# Phase 17 — Portfolio skeleton hardening
 
 ## Goal
 
@@ -1044,7 +1135,7 @@ Stop after portfolio hardening. Do not add unnecessary features.
 
 ---
 
-# Phase 17 — Final review and roadmap
+# Phase 18 — Final review and roadmap
 
 ## Goal
 

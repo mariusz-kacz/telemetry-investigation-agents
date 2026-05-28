@@ -5,8 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "azure-identity>=1.25.3",
     "langgraph>=1.1.10",
     "langgraph-checkpoint-sqlite>=3.1.0",
+    "openai>=2.38.0",
     "pydantic>=2.13.4",
     "pytest>=9.0.3",
     "python-dotenv>=1.2.2",

@@ -1,3 +1,4 @@
+from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 
@@ -155,7 +156,7 @@ def build_memory_investigation_workflow_graph(
 
 def test_report_review_gate_handled() -> None:
     graph = build_memory_investigation_workflow_graph()
-    config = {"configurable": {"thread_id": "run-001"}}
+    config: RunnableConfig = {"configurable": {"thread_id": "run-001"}}
 
     result = graph.invoke(
         {
@@ -180,7 +181,7 @@ def test_report_review_interrupt_exposes_decision_material() -> None:
             critique_findings=[_critique_finding()]
         ),
     )
-    config = {"configurable": {"thread_id": "run-review-packet"}}
+    config: RunnableConfig = {"configurable": {"thread_id": "run-review-packet"}}
 
     result = graph.invoke(
         {
@@ -243,7 +244,7 @@ def test_critic_unavailable_warning_requires_human_review() -> None:
         hypotheses=[_supported_hypothesis()],
         critic=UnavailableHypothesisCritic(),
     )
-    config = {"configurable": {"thread_id": "run-critic-unavailable"}}
+    config: RunnableConfig = {"configurable": {"thread_id": "run-critic-unavailable"}}
 
     result = graph.invoke(
         {
@@ -264,7 +265,7 @@ def test_critic_unavailable_warning_requires_human_review() -> None:
 
 def test_rejected_human_review_does_not_mark_report_ready() -> None:
     graph = build_memory_investigation_workflow_graph()
-    config = {"configurable": {"thread_id": "run-rejected"}}
+    config: RunnableConfig = {"configurable": {"thread_id": "run-rejected"}}
 
     result = graph.invoke(
         {
@@ -284,7 +285,7 @@ def test_rejected_human_review_does_not_mark_report_ready() -> None:
 
 def test_safe_investigation_bypasses_human_review() -> None:
     graph = build_memory_investigation_workflow_graph([_supported_hypothesis()])
-    config = {"configurable": {"thread_id": "run-not-required"}}
+    config: RunnableConfig = {"configurable": {"thread_id": "run-not-required"}}
 
     result = graph.invoke(
         {

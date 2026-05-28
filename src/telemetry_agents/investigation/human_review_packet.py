@@ -1,51 +1,57 @@
-from pydantic import BaseModel, Field
+from dataclasses import dataclass
 
 from telemetry_agents.domain import (
     CritiqueFindingType,
     HumanReviewAssessment,
     HypothesisValidationResult,
-    HypothesisCritiqueFinding, Incident,
+    HypothesisCritiqueFinding,
+    Incident,
 )
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 
 
-class HumanReviewIncident(BaseModel):
+@dataclass(frozen=True)
+class HumanReviewIncident:
     incident_id: str
     title: str
     service: str
     impact: str
 
 
-class HumanReviewEvidence(BaseModel):
+@dataclass(frozen=True)
+class HumanReviewEvidence:
     evidence_id: str
     summary: str
     citation: str
     strength: EvidenceStrength
 
 
-class HumanReviewHypothesis(BaseModel):
+@dataclass(frozen=True)
+class HumanReviewHypothesis:
     hypothesis_id: str
     statement: str
     confidence: float
+    supporting_evidence: list[HumanReviewEvidence]
     uncertainty: str | None = None
-    supporting_evidence: list[HumanReviewEvidence] = Field(default_factory=list)
 
 
-class HumanReviewCriticFinding(BaseModel):
+@dataclass(frozen=True)
+class HumanReviewCriticFinding:
     hypothesis_id: str
     finding_type: CritiqueFindingType
     reason: str
-    evidence: list[HumanReviewEvidence] = Field(default_factory=list)
+    evidence: list[HumanReviewEvidence]
 
 
-class HumanReviewPacket(BaseModel):
+@dataclass(frozen=True)
+class HumanReviewPacket:
     incident: HumanReviewIncident
-    reason: str = "report_review_required"
     escalation_reason: str
-    hypotheses: list[HumanReviewHypothesis] = Field(default_factory=list)
-    critic_findings: list[HumanReviewCriticFinding] = Field(default_factory=list)
-    warnings: list[str] = Field(default_factory=list)
+    hypotheses: list[HumanReviewHypothesis]
+    critic_findings: list[HumanReviewCriticFinding]
+    warnings: list[str]
+    reason: str = "report_review_required"
 
 
 def build_human_review_packet(
@@ -106,7 +112,7 @@ def build_human_review_packet(
     if not assessment.human_review_reason:
         raise ValueError("human_review_reason is required before report review")
 
-    incident = HumanReviewIncident(
+    human_review_incident = HumanReviewIncident(
         incident_id=incident.incident_id,
         service=incident.service,
         title=incident.title,
@@ -114,7 +120,7 @@ def build_human_review_packet(
     )
 
     return HumanReviewPacket(
-        incident=incident,
+        incident=human_review_incident,
         escalation_reason=assessment.human_review_reason,
         hypotheses=mapped_hypotheses,
         critic_findings=mapped_critique_findings,

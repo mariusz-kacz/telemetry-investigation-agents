@@ -1,4 +1,5 @@
-from typing import Any
+from collections.abc import Callable
+from typing import Any, cast
 
 from langgraph.constants import START, END
 from langgraph.graph.state import CompiledStateGraph, StateGraph
@@ -23,6 +24,12 @@ from telemetry_agents.investigation.hypothesis_critic import HypothesisCritic
 from telemetry_agents.investigation.hypothesis_generation import HypothesisGenerator
 
 
+def _node(
+    action: Callable[[InvestigationGraphState], InvestigationGraphState],
+) -> Any:
+    return cast(Any, action)
+
+
 def build_investigation_workflow(
     *,
     generator: HypothesisGenerator,
@@ -32,17 +39,25 @@ def build_investigation_workflow(
     builder = StateGraph(InvestigationGraphState)
 
     builder.add_node(
-        "hypothesis_generation", make_hypothesis_generation_node(generator=generator)
+        "hypothesis_generation",
+        _node(make_hypothesis_generation_node(generator=generator)),
     )
-    builder.add_node("hypothesis_validation", make_hypothesis_validation_node())
-    builder.add_node("hypothesis_critic", make_hypothesis_critic_node(critic=critic))
-    builder.add_node("human_review_assessment", make_human_review_assessment_node())
+    builder.add_node("hypothesis_validation", _node(make_hypothesis_validation_node()))
     builder.add_node(
-        "human_review_not_required_marker", make_human_review_not_required_marker_node()
+        "hypothesis_critic",
+        _node(make_hypothesis_critic_node(critic=critic)),
     )
-    builder.add_node("report_review_gate", make_report_review_gate_node())
-    builder.add_node("report_ready_marker", make_report_ready_marker_node())
-    builder.add_node("report_rejected_marker", make_report_rejected_marker_node())
+    builder.add_node(
+        "human_review_assessment",
+        _node(make_human_review_assessment_node()),
+    )
+    builder.add_node(
+        "human_review_not_required_marker",
+        _node(make_human_review_not_required_marker_node()),
+    )
+    builder.add_node("report_review_gate", _node(make_report_review_gate_node()))
+    builder.add_node("report_ready_marker", _node(make_report_ready_marker_node()))
+    builder.add_node("report_rejected_marker", _node(make_report_rejected_marker_node()))
 
     builder.add_edge(START, "hypothesis_generation")
     builder.add_edge("hypothesis_generation", "hypothesis_validation")

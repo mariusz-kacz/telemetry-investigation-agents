@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from dataclasses import asdict
 from langgraph.types import interrupt
 
 from telemetry_agents.domain import HumanReviewStatus
@@ -43,7 +44,7 @@ def make_report_review_gate_node() -> Callable[
             collected_evidence=collected_evidence,
         )
 
-        user_feedback = interrupt(packet.model_dump(mode="json"))
+        user_feedback = interrupt(asdict(packet))
 
         user_approved = user_feedback.get("approved")
         if user_approved is None:

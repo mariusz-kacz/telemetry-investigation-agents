@@ -1,13 +1,13 @@
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Protocol
 
-from pydantic import BaseModel
-
 from telemetry_agents.telemetry.models import ParsedTraceSpan
 
 
-class MatchedTraceSpan(BaseModel):
+@dataclass(frozen=True)
+class MatchedTraceSpan:
     trace_span: ParsedTraceSpan
     source_file: Path
     line_number: int

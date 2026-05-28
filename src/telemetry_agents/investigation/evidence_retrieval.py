@@ -258,11 +258,13 @@ def _retrieve_metric_evidence(
     source_file = Path(request.data_root) / "metrics" / f"{request.service}.jsonl"
 
     try:
-        matching_metric_samples: list[MatchedMetricSample] = get_matching_metric_samples(
-            metric_sample_records=reader.read_metrics(service=request.service),
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-            service=request.service,
+        matching_metric_samples: list[MatchedMetricSample] = (
+            get_matching_metric_samples(
+                metric_sample_records=reader.read_metrics(service=request.service),
+                start_timestamp=start_timestamp,
+                end_timestamp=end_timestamp,
+                service=request.service,
+            )
         )
     except FileNotFoundError:
         return _missing_evidence(
