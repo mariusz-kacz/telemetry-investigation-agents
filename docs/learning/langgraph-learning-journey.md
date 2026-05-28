@@ -172,7 +172,7 @@ Before any phase is marked DONE:
 | 10. LLM critic for semantic review | DONE | 2026-05-21 | Separate critic node and protocol-backed adapter review accepted hypotheses for semantic issues, validate cited IDs, reject missing evidence as critique support, and safely fall back with a warning when the critic is unavailable. |
 | 11. Persistence, checkpointing, and interrupts | DONE | 2026-05-22 | SQLite-backed LangGraph checkpointing, app-owned run registry, state inspection, simulated resume, interrupt/resume gate, ADR, and learning note exist. |
 | 12. Human-in-the-loop review | DONE | 2026-05-25 | Risk-based review assessment, typed status, conditional interrupt/bypass routing, approval/rejection outcomes, focused tests, and learning note exist. Evidence re-entry and edited recommendations are deferred. |
-| 13. Azure OpenAI integration and graph smoke | IN_PROGRESS |  | Azure OpenAI generator and critic adapters use Microsoft Entra ID, structured outputs, mocked adapter tests, and opt-in adapter-level live smoke tests. Graph-level live smoke remains. |
+| 13. Azure OpenAI integration and graph smoke | DONE | 2026-05-28 | Azure OpenAI generator and critic adapters use Microsoft Entra ID, structured outputs, mocked adapter tests, adapter-level live smoke tests, and one graph-level live smoke run through generation, validation, critique, human review, and approval resume. |
 | 14. Evaluation framework | TODO |  |  |
 | 15. Observability and tracing | TODO |  |  |
 | 16. API / CLI interface | TODO |  |  |
@@ -897,9 +897,9 @@ Do not use hosted agent orchestration or move deterministic evidence policy into
 - [x] Structured outputs are validated into existing typed models.
 - [x] Mocked adapter tests cover success and provider failure behavior.
 - [x] One opt-in adapter-level live smoke invocation succeeds.
-- [ ] One opt-in graph-level live smoke execution succeeds.
-- [ ] Graph-level smoke couples all current graph nodes with live Azure OpenAI generator and critic adapters in one run.
-- [ ] Live graph output is inspected for evidence-reference discipline before accepting the checkpoint.
+- [x] One opt-in graph-level live smoke execution succeeds.
+- [x] Graph-level smoke couples all current graph nodes with live Azure OpenAI generator and critic adapters in one run.
+- [x] Live graph output is inspected for evidence-reference discipline before accepting the checkpoint.
 - [x] Learning note records provider boundaries, risks, and limitations.
 
 ## Codex stop condition

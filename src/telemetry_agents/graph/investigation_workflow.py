@@ -57,7 +57,9 @@ def build_investigation_workflow(
     )
     builder.add_node("report_review_gate", _node(make_report_review_gate_node()))
     builder.add_node("report_ready_marker", _node(make_report_ready_marker_node()))
-    builder.add_node("report_rejected_marker", _node(make_report_rejected_marker_node()))
+    builder.add_node(
+        "report_rejected_marker", _node(make_report_rejected_marker_node())
+    )
 
     builder.add_edge(START, "hypothesis_generation")
     builder.add_edge("hypothesis_generation", "hypothesis_validation")

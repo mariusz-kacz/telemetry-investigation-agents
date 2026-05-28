@@ -32,7 +32,7 @@ The provider must remain behind current protocols. Foundry-hosted agent orchestr
 
 Microsoft Entra ID is less convenient than a local API key for the first live invocation, because local identity and RBAC must be configured correctly. That complexity is accepted because identity-based access is the enterprise boundary this portfolio project is intended to demonstrate. API-key fallback is deliberately deferred.
 
-Adapter-level live smoke tests prove provider connectivity and structured-output compatibility. The remaining Phase 13 work is a graph-level live smoke test that couples the compiled graph nodes with the Azure generator and critic adapters in a single execution.
+Adapter-level live smoke tests prove provider connectivity and structured-output compatibility. A graph-level live smoke test now couples the compiled graph nodes with the Azure generator and critic adapters in a single execution.
 
 ## Production concerns
 
@@ -49,8 +49,9 @@ Adapter-level live smoke tests prove provider connectivity and structured-output
 - Mocked Azure OpenAI generator tests cover structured response parsing, prompt/request wiring, empty provider response, and provider connection failure propagation.
 - Mocked Azure OpenAI critic tests cover structured response parsing, prompt/request wiring, valid empty critique results, empty provider response, and provider availability translation.
 - Opt-in live smoke tests exist for both generator and critic adapters using synthetic evidence and the `hypothesis-model` deployment.
+- An opt-in graph-level live smoke test executed successfully with the Azure generator and critic adapters wired into the compiled graph. It exercised generation, validation, critic review, human-review routing, interrupt/resume, and report-ready marking.
 - Normal unit tests remain credential-free.
 
 ## Next step
 
-Complete Phase 13 by adding one opt-in graph-level live smoke test. It should execute the compiled graph with Azure-backed generator and critic adapters and inspect whether the graph output remains bounded by supplied evidence IDs. Begin Phase 14 only after that smoke test is complete.
+Begin Phase 14 by defining evaluation cases that inspect evidence-reference quality, unsupported claims, escalation behavior, and model-backed output quality. Do not tune prompts before the scoring loop exists.
