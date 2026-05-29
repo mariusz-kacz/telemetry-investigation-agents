@@ -1,37 +1,40 @@
 from telemetry_agents.evaluation.models import (
     EvalCase,
     EvaluationRunOutput,
-    HypothesisCategoryCorrectnessScore,
+    ExpectedEvidenceSourceDetail,
     ExpectedEvidenceSourcesScore,
-    ExpectedEvidenceSourceDetail
+    HypothesisCategory,
+    HypothesisCategoryCorrectnessScore,
 )
 
-GenericTermsRule = tuple[frozenset[str], str]
+
+GenericTermsRule = tuple[frozenset[str], HypothesisCategory]
+
 
 GENERIC_TERMS_TO_CATEGORIES: tuple[GenericTermsRule, ...] = (
-    (frozenset({"timeout", "database", "db"}), "database_timeout"),
+    (frozenset({"timeout", "database", "db"}), HypothesisCategory.DATABASE_TIMEOUT),
     (
         frozenset({"auth", "unauthorized", "token", "401", "403"}),
-        "authentication_failure",
+        HypothesisCategory.AUTHENTICATION_FAILURE,
     ),
     (
         frozenset({"downstream", "dependency", "upstream", "external"}),
-        "downstream_dependency_latency",
+        HypothesisCategory.DOWNSTREAM_DEPENDENCY_LATENCY,
     ),
-    (frozenset({"metric", "anomaly", "spike"}), "metric_anomaly"),
+    (frozenset({"metric", "anomaly", "spike"}), HypothesisCategory.METRIC_ANOMALY),
 )
 
 
-def _classify_hypothesis_categories(statement: str) -> set[str]:
+def _classify_hypothesis_categories(statement: str) -> set[HypothesisCategory]:
     normalized = statement.lower()
-    categories: set[str] = set()
+    categories: set[HypothesisCategory] = set()
 
     for keywords, category in GENERIC_TERMS_TO_CATEGORIES:
         if any(keyword in normalized for keyword in keywords):
             categories.add(category)
 
     if not categories:
-        categories.add("insufficient_evidence")
+        categories.add(HypothesisCategory.INSUFFICIENT_EVIDENCE)
 
     return categories
 
@@ -73,7 +76,7 @@ def score_expected_category(
 ) -> HypothesisCategoryCorrectnessScore:
     expected_category = case.expected_category
     matched_hypothesis_ids = []
-    observed_categories: set[str] = set()
+    observed_categories: set[HypothesisCategory] = set()
     if output.validation_result:
         for hypothesis in output.validation_result.accepted_hypotheses:
             categories = _classify_hypothesis_categories(hypothesis.statement)

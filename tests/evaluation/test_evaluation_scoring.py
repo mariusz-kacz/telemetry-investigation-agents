@@ -9,7 +9,7 @@ from telemetry_agents.evaluation import (
     EvalExpectedEvidenceSource,
     EvaluationRunOutput,
     score_expected_evidence_sources,
-    score_expected_category,
+    score_expected_category, HypothesisCategory,
 )
 from telemetry_agents.evaluation.models import ExpectedEvidenceSourceDetail
 from telemetry_agents.investigation.evidence_retrieval import (
@@ -220,7 +220,7 @@ def test_categorization_passes_when_all_hypotheses_match_category() -> None:
 
     assert score.passed is True
     assert score.matched_hypothesis_ids == ["hyp-001", "hyp-002"]
-    assert score.observed_categories == ["database_timeout"]
+    assert score.observed_categories == [HypothesisCategory.DATABASE_TIMEOUT]
 
 
 def test_categorization_passes_when_any_hypotheses_match_category() -> None:
@@ -250,8 +250,8 @@ def test_categorization_passes_when_any_hypotheses_match_category() -> None:
     assert score.passed is True
     assert score.matched_hypothesis_ids == ["hyp-001"]
     assert score.observed_categories == [
-        "database_timeout",
-        "downstream_dependency_latency",
+        HypothesisCategory.DATABASE_TIMEOUT,
+        HypothesisCategory.DOWNSTREAM_DEPENDENCY_LATENCY,
     ]
 
 
@@ -275,6 +275,6 @@ def test_categorization_fails_when_none_hypotheses_match_category() -> None:
     assert score.passed is False
     assert score.matched_hypothesis_ids == []
     assert score.observed_categories == [
-        "database_timeout",
-        "downstream_dependency_latency",
+        HypothesisCategory.DATABASE_TIMEOUT,
+        HypothesisCategory.DOWNSTREAM_DEPENDENCY_LATENCY,
     ]
