@@ -1,6 +1,5 @@
 import json
 import re
-from datetime import datetime
 from typing import Any
 
 from telemetry_agents.shared.time import parse_utc_timestamp
@@ -8,7 +7,6 @@ from telemetry_agents.telemetry.models import (
     ParsedLogRecord,
     ParsedTraceSpan,
     ParsedMetricSample,
-    Timestamped,
 )
 
 EXCEPTION_PATTERN = re.compile(r"\b([A-Z][A-Za-z0-9]+Exception)\b")

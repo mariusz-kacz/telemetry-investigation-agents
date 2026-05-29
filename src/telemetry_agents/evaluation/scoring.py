@@ -4,7 +4,7 @@ from telemetry_agents.evaluation.models import (
     ExpectedEvidenceSourceDetail,
     ExpectedEvidenceSourcesScore,
     HypothesisCategory,
-    HypothesisCategoryCorrectnessScore,
+    ExpectedHypothesisCategoryScore,
 )
 
 
@@ -25,7 +25,9 @@ GENERIC_TERMS_TO_CATEGORIES: tuple[GenericTermsRule, ...] = (
 )
 
 
-def _classify_hypothesis_categories(statement: str) -> set[HypothesisCategory]:
+def _classify_hypothesis_categories_by_keywords(
+    statement: str,
+) -> set[HypothesisCategory]:
     normalized = statement.lower()
     categories: set[HypothesisCategory] = set()
 
@@ -73,18 +75,20 @@ def score_expected_category(
     *,
     case: EvalCase,
     output: EvaluationRunOutput,
-) -> HypothesisCategoryCorrectnessScore:
+) -> ExpectedHypothesisCategoryScore:
     expected_category = case.expected_category
     matched_hypothesis_ids = []
     observed_categories: set[HypothesisCategory] = set()
     if output.validation_result:
         for hypothesis in output.validation_result.accepted_hypotheses:
-            categories = _classify_hypothesis_categories(hypothesis.statement)
+            categories = _classify_hypothesis_categories_by_keywords(
+                hypothesis.statement
+            )
             if expected_category in categories:
                 matched_hypothesis_ids.append(hypothesis.hypothesis_id)
             observed_categories.update(categories)
 
-    return HypothesisCategoryCorrectnessScore(
+    return ExpectedHypothesisCategoryScore(
         passed=bool(matched_hypothesis_ids),
         expected_category=expected_category,
         matched_hypothesis_ids=matched_hypothesis_ids,

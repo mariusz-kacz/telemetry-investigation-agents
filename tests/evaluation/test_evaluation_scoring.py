@@ -9,7 +9,8 @@ from telemetry_agents.evaluation import (
     EvalExpectedEvidenceSource,
     EvaluationRunOutput,
     score_expected_evidence_sources,
-    score_expected_category, HypothesisCategory,
+    score_expected_category,
+    HypothesisCategory,
 )
 from telemetry_agents.evaluation.models import ExpectedEvidenceSourceDetail
 from telemetry_agents.investigation.evidence_retrieval import (
@@ -21,7 +22,7 @@ from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 
 def _eval_case(
     expected_evidence_sources: list[EvalExpectedEvidenceSource] | None = None,
-    expected_category: str = "database_timeout",
+    expected_category: HypothesisCategory = HypothesisCategory.DATABASE_TIMEOUT,
 ) -> EvalCase:
     if expected_evidence_sources is None:
         expected_evidence_sources = [
@@ -36,7 +37,6 @@ def _eval_case(
         incident_file="sample_data/incidents/checkout-database-timeout.json",
         expected_category=expected_category,
         expected_evidence_sources=expected_evidence_sources,
-        acceptable_hypothesis_terms=["database", "timeout"],
         forbidden_unsupported_claims=["cache poisoning"],
         expected_human_review_required=False,
     )
@@ -256,7 +256,7 @@ def test_categorization_passes_when_any_hypotheses_match_category() -> None:
 
 
 def test_categorization_fails_when_none_hypotheses_match_category() -> None:
-    case = _eval_case(expected_category="metric_anomaly")
+    case = _eval_case(expected_category=HypothesisCategory.METRIC_ANOMALY)
 
     output = EvaluationRunOutput(
         validation_result=HypothesisValidationResult(
