@@ -13,7 +13,7 @@ def test_retrieved_evidence_preserves_citation_metadata() -> None:
     request = EvidenceRetrievalRequest(
         incident_id="inc-checkout-db-timeout-001",
         service="checkout-api",
-        query_terms=["timeout", "database", "deployment"],
+        query_terms=["timeout", "database"],
         start_timestamp="2026-05-11T09:40:00Z",
         end_timestamp="2026-05-11T10:10:00Z",
         correlation_id="cart-123",
@@ -34,6 +34,14 @@ def test_retrieved_evidence_preserves_citation_metadata() -> None:
         EvidenceSource.TRACE,
         EvidenceSource.METRIC,
     }
+    for item in evidence:
+        assert item.evidence.service == item.citation.service
+        if item.citation.line_number is not None:
+            assert item.evidence.citation == (
+                f"{item.citation.source_file}:{item.citation.line_number}"
+            )
+        else:
+            assert item.evidence.citation == item.citation.source_file
 
 
 def test_evidence_retrieval_ranks_strong_evidence_before_weak_evidence() -> None:
@@ -60,7 +68,7 @@ def test_evidence_retrieval_ranks_across_telemetry_sources(tmp_path: Path) -> No
     (tmp_path / "metrics").mkdir()
     (tmp_path / "logs" / "checkout-api.log").write_text(
         "2026-05-11T10:01:13Z INFO checkout-api "
-        "correlation_id=unrelated trace_id=unrelated deployment observed\n",
+        "correlation_id=unrelated trace_id=unrelated timeout observed\n",
         encoding="utf-8",
     )
     (tmp_path / "traces" / "checkout-api.jsonl").write_text(
@@ -78,7 +86,7 @@ def test_evidence_retrieval_ranks_across_telemetry_sources(tmp_path: Path) -> No
     request = EvidenceRetrievalRequest(
         incident_id="inc-ranking-regression",
         service="checkout-api",
-        query_terms=["deployment"],
+        query_terms=["timeout"],
         start_timestamp="2026-05-11T09:40:00Z",
         end_timestamp="2026-05-11T10:10:00Z",
         trace_id="trace-ranked",

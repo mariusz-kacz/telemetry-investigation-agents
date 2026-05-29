@@ -114,8 +114,7 @@ def test_azure_investigation_workflow_runs_graph_with_live_llm_adapters() -> Non
         for hypothesis in validation_result.accepted_hypotheses
     )
     assert all(
-        set(finding.evidence_ids) <= known_evidence_ids
-        for finding in critique_findings
+        set(finding.evidence_ids) <= known_evidence_ids for finding in critique_findings
     )
 
     result = graph.invoke(Command(resume={"approved": True}), config=config)

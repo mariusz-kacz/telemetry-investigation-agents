@@ -1,11 +1,11 @@
 {
   "incident_id": "inc-checkout-db-timeout-001",
-  "title": "Checkout API latency and timeout errors after deployment",
+  "title": "Checkout API latency and database timeout errors",
   "service": "checkout-api",
   "reported_at": "2026-05-11T10:05:00Z",
   "investigation_window": {
     "start": "2026-05-11T09:40:00Z",
     "end": "2026-05-11T10:10:00Z"
   },
-  "known_root_cause": "Database retry timeout configuration changed in deployment 2026.05.11.1."
+  "known_root_cause": "Checkout API requests to the orders database exceeded the retry timeout threshold."
 }

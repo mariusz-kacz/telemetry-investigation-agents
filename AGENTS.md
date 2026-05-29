@@ -73,6 +73,23 @@ I should implement the main learning targets:
 - human-review routing,
 - eval scoring.
 
+## Code review quality bar
+
+When reviewing code, Codex must review both behavior and maintainability.
+
+Do not stop at whether tests pass. Explicitly check for:
+
+- unclear names such as `item`, `data`, `result`, `obj`, or `temp` when a domain name would be clearer,
+- tuple/list indexing such as `item[0]` or `item[1]` where destructuring or a small named model would improve readability,
+- functions that hide intent behind clever comprehensions,
+- code that is technically correct but hard to audit,
+- missing negative tests and edge cases,
+- tests that pass for the wrong reason,
+- unnecessary abstractions or C#-style ceremony,
+- duplicated logic that should be extracted only if it is meaningful, not preemptively.
+
+For every review, include a short `Maintainability` section, even if there are no issues.
+
 ## Stop rule
 
 After every learning unit, stop and wait for my next instruction.

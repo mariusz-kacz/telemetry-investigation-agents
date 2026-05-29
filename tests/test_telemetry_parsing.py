@@ -1,7 +1,6 @@
 from datetime import UTC, datetime
 
 import pytest
-from telemetry_agents.telemetry.models import ParsedLogRecord
 
 from telemetry_agents.telemetry.parsing import (
     parse_log_line,

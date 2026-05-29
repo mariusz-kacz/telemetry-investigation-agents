@@ -1,0 +1,31 @@
+{
+  "case_id": "checkout-database-timeout",
+  "incident_file": "sample_data/incidents/checkout-database-timeout.json",
+  "expected_category": "database_timeout",
+  "expected_evidence_sources": [
+    {
+      "source": "log",
+      "source_file": "sample_data/logs/checkout-api.log"
+    },
+    {
+      "source": "trace",
+      "source_file": "sample_data/traces/checkout-api.jsonl"
+    },
+    {
+      "source": "metric",
+      "source_file": "sample_data/metrics/checkout-api.jsonl"
+    }
+  ],
+  "acceptable_hypothesis_terms": [
+    "database",
+    "timeout"
+  ],
+  "forbidden_unsupported_claims": [
+    "cache poisoning",
+    "dns outage",
+    "deployment rollback",
+    "deployment configuration change",
+    "payment provider outage"
+  ],
+  "expected_human_review_required": false
+}
