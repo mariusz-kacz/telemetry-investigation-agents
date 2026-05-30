@@ -3,7 +3,10 @@ from enum import StrEnum
 from pydantic import BaseModel, Field
 
 from telemetry_agents.domain import EvidenceSource
-from telemetry_agents.domain.models import HypothesisValidationResult
+from telemetry_agents.domain.models import (
+    HumanReviewAssessment,
+    HypothesisValidationResult,
+)
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 
 
@@ -32,6 +35,7 @@ class EvalCase(BaseModel):
 class EvaluationRunOutput(BaseModel):
     retrieved_evidence: list[RetrievedEvidence] = Field(default_factory=list)
     validation_result: HypothesisValidationResult | None = None
+    human_review_assessment: HumanReviewAssessment | None = None
     warnings: list[str] = Field(default_factory=list)
 
 
@@ -57,8 +61,15 @@ class ExpectedHypothesisCategoryScore(BaseModel):
     observed_categories: list[HypothesisCategory] = Field(default_factory=list)
 
 
+class ExpectedHumanReviewScore(BaseModel):
+    passed: bool
+    expected_human_review_required: bool
+    actual_human_review_required: bool | None
+
+
 class EvaluationScorecard(BaseModel):
     case_id: str = Field(min_length=1)
     passed: bool
     expected_evidence_sources_score: ExpectedEvidenceSourcesScore
     expected_category_score: ExpectedHypothesisCategoryScore
+    expected_human_review_score: ExpectedHumanReviewScore

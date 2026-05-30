@@ -3,6 +3,7 @@ from telemetry_agents.evaluation.models import (
     EvaluationRunOutput,
     ExpectedEvidenceSourceDetail,
     ExpectedEvidenceSourcesScore,
+    ExpectedHumanReviewScore,
     HypothesisCategory,
     ExpectedHypothesisCategoryScore,
 )
@@ -93,4 +94,26 @@ def score_expected_category(
         expected_category=expected_category,
         matched_hypothesis_ids=matched_hypothesis_ids,
         observed_categories=sorted(observed_categories),
+    )
+
+
+def score_expected_human_review(
+    *,
+    case: EvalCase,
+    output: EvaluationRunOutput,
+) -> ExpectedHumanReviewScore:
+    """Score whether the workflow produced the expected human-review decision."""
+    if output.human_review_assessment is None:
+        return ExpectedHumanReviewScore(
+            passed=False,
+            expected_human_review_required=case.expected_human_review_required,
+            actual_human_review_required=None,
+        )
+
+    actual_human_review_required = output.human_review_assessment.human_review_required
+
+    return ExpectedHumanReviewScore(
+        passed=case.expected_human_review_required == actual_human_review_required,
+        expected_human_review_required=case.expected_human_review_required,
+        actual_human_review_required=actual_human_review_required,
     )

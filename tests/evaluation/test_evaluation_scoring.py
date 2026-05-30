@@ -1,5 +1,6 @@
 from telemetry_agents.domain import (
     EvidenceSource,
+    HumanReviewAssessment,
     TelemetryEvidence,
     InvestigationHypothesis,
     HypothesisValidationResult,
@@ -10,6 +11,7 @@ from telemetry_agents.evaluation import (
     EvaluationRunOutput,
     score_expected_evidence_sources,
     score_expected_category,
+    score_expected_human_review,
     HypothesisCategory,
 )
 from telemetry_agents.evaluation.models import ExpectedEvidenceSourceDetail
@@ -278,3 +280,61 @@ def test_categorization_fails_when_none_hypotheses_match_category() -> None:
         HypothesisCategory.DATABASE_TIMEOUT,
         HypothesisCategory.DOWNSTREAM_DEPENDENCY_LATENCY,
     ]
+
+
+def test_expected_human_review_passes_when_required_review_is_expected() -> None:
+    case = _eval_case()
+    case.expected_human_review_required = True
+    output = _output()
+    output.human_review_assessment = HumanReviewAssessment(
+        human_review_required=True,
+        human_review_reason="Low accepted hypothesis confidence.",
+    )
+
+    score = score_expected_human_review(case=case, output=output)
+
+    assert score.passed is True
+    assert score.expected_human_review_required is True
+    assert score.actual_human_review_required is True
+
+
+def test_expected_human_review_passes_when_required_review_is_not_expected() -> None:
+    case = _eval_case()
+    case.expected_human_review_required = False
+    output = _output()
+    output.human_review_assessment = HumanReviewAssessment(
+        human_review_required=False,
+    )
+
+    score = score_expected_human_review(case=case, output=output)
+
+    assert score.passed is True
+    assert score.expected_human_review_required is False
+    assert score.actual_human_review_required is False
+
+
+def test_expected_human_review_fails_when_human_review_assessment_is_missing() -> None:
+    case = _eval_case()
+    case.expected_human_review_required = True
+    output = _output()
+
+    score = score_expected_human_review(case=case, output=output)
+
+    assert score.passed is False
+    assert score.expected_human_review_required is True
+    assert score.actual_human_review_required is None
+
+
+def test_expected_human_review_fails_when_required_review_is_not_produced() -> None:
+    case = _eval_case()
+    case.expected_human_review_required = True
+    output = _output()
+    output.human_review_assessment = HumanReviewAssessment(
+        human_review_required=False,
+    )
+
+    score = score_expected_human_review(case=case, output=output)
+
+    assert score.passed is False
+    assert score.expected_human_review_required is True
+    assert score.actual_human_review_required is False

@@ -26,7 +26,7 @@ The important boundary is behavioral, not inheritance-based: generation produces
 
 The main confusion was where confidence adjustment belongs. It started in hypothesis generation, but it fits validation better because confidence depends on evidence strength, not merely whether the LLM output is structurally valid.
 
-Another design question was contradiction detection. General contradiction detection is semantic and broad, so it is deferred to a later LLM critic rather than hardcoded into fragile deterministic rules.
+Another design question was contradiction detection. The initial AI recommendation was to implement contradiction detection deterministically inside the validator. I challenged that recommendation because general contradiction detection is semantic and broad. The resulting decision was to defer it to a later LLM critic rather than hardcode fragile deterministic rules.
 
 ## Tradeoffs noticed
 
