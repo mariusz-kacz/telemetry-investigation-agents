@@ -37,11 +37,8 @@ def validate_hypotheses(
     rejected_hypotheses: list[RejectedHypothesis] = []
     confidence_adjustments: list[ConfidenceAdjustment] = []
 
-    evidences_lookup = {
+    evidence_by_id = {
         evidence.evidence.evidence_id: evidence for evidence in request.evidence
-    }
-    known_evidence_ids: set[str] = {
-        item.evidence.evidence_id for item in request.evidence
     }
 
     for hypothesis in request.hypotheses:
@@ -54,7 +51,7 @@ def validate_hypotheses(
             )
             continue
 
-        unknown_ids = set(hypothesis.supporting_evidence_ids) - known_evidence_ids
+        unknown_ids = set(hypothesis.supporting_evidence_ids) - evidence_by_id.keys()
         if unknown_ids:
             rejected_hypotheses.append(
                 RejectedHypothesis(
@@ -65,7 +62,7 @@ def validate_hypotheses(
             continue
 
         supporting_evidences: list[RetrievedEvidence] = [
-            evidences_lookup[supporting_evidence_id]
+            evidence_by_id[supporting_evidence_id]
             for supporting_evidence_id in hypothesis.supporting_evidence_ids
         ]
 
@@ -84,21 +81,27 @@ def validate_hypotheses(
 
         if hypothesis.confidence > max_confidence:
             updates: dict[str, str | float] = {"confidence": max_confidence}
+            adjustment_reason = "Confidence was reduced because the cited evidence is not strong enough to support a higher-confidence hypothesis."
             if max_confidence < LOW_CONFIDENCE_THRESHOLD and (
                 not hypothesis.uncertainty or not hypothesis.uncertainty.strip()
             ):
-                updates["uncertainty"] = (
-                    "Confidence was reduced because the cited evidence is not strong enough to support a higher-confidence hypothesis."
-                )
+                updates["uncertainty"] = adjustment_reason
+
             confidence_adjustments.append(
                 ConfidenceAdjustment(
-                    reason="Confidence was reduced because the cited evidence is not strong enough to support a higher-confidence hypothesis.",
+                    reason=adjustment_reason,
                     hypothesis_id=hypothesis.hypothesis_id,
                     original_confidence=hypothesis.confidence,
                     adjusted_confidence=max_confidence,
                 )
             )
-            accepted_hypotheses.append(hypothesis.model_copy(update=updates))
+
+            adjusted_hypothesis_data = hypothesis.model_dump()
+            adjusted_hypothesis_data.update(updates)
+            adjusted_hypothesis = InvestigationHypothesis.model_validate(
+                adjusted_hypothesis_data
+            )
+            accepted_hypotheses.append(adjusted_hypothesis)
         else:
             accepted_hypotheses.append(hypothesis)
 

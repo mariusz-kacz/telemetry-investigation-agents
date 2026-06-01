@@ -173,7 +173,7 @@ Before any phase is marked DONE:
 | 11. Persistence, checkpointing, and interrupts | DONE | 2026-05-22 | SQLite-backed LangGraph checkpointing, app-owned run registry, state inspection, simulated resume, interrupt/resume gate, ADR, and learning note exist. |
 | 12. Human-in-the-loop review | DONE | 2026-05-25 | Risk-based review assessment, typed status, conditional interrupt/bypass routing, approval/rejection outcomes, focused tests, and learning note exist. Evidence re-entry and edited recommendations are deferred. |
 | 13. Azure OpenAI integration and graph smoke | DONE | 2026-05-28 | Azure OpenAI generator and critic adapters use Microsoft Entra ID, structured outputs, mocked adapter tests, adapter-level live smoke tests, and one graph-level live smoke run through generation, validation, critique, human review, and approval resume. |
-| 14. Evaluation framework | TODO |  |  |
+| 14. Evaluation framework | IN_PROGRESS |  | Deterministic scorecard, citation-correctness invariant scoring, and protocol-backed semantic unsupported-claim review guardrails exist. Azure reviewer integration, golden-case expansion, batch execution, reproducible reporting, ADR, and learning note remain. |
 | 15. Observability and tracing | TODO |  |  |
 | 16. API / CLI interface | TODO |  |  |
 | 17. Portfolio skeleton hardening | TODO |  |  |
@@ -940,22 +940,63 @@ For each case define:
 
 - expected category,
 - expected evidence sources,
-- acceptable hypotheses,
-- forbidden unsupported claims,
 - expected escalation behavior.
+
+Do not maintain speculative unsupported-claim blacklists in golden cases.
+Semantic unsupported-claim review should independently compare accepted
+hypotheses with retrieved evidence.
+
+Build a bounded MVP scorecard with visibly separate dimensions:
+
+Deterministic dimensions:
+
+- expected hypothesis category,
+- expected evidence-source coverage,
+- citation correctness,
+- expected human-review behavior.
+
+Probabilistic dimension:
+
+- semantic unsupported causal-claim review.
+
+Use a separate protocol-backed reviewer after workflow execution. The evaluator
+may use similar inputs and structural guardrails as the workflow critic, but it
+must not call the workflow critic or influence graph state. Evaluation measures
+whether unsupported causal claims passed through the workflow controls.
+
+Keep the MVP constrained:
+
+- add one Azure OpenAI reviewer adapter,
+- add mocked adapter tests and one opt-in live smoke test,
+- load eval cases from JSON,
+- run all golden cases through a batch runner,
+- emit a simple reproducible pass/fail report.
+
+Do not add embeddings, multiple judges, weighted score aggregation,
+statistical benchmarking, dashboards, or prompt optimization in this phase.
 
 ## Learning tasks
 
-- Build simple eval runner.
-- Add scoring dimensions.
-- Track pass/fail over time.
-- Write ADR: “Evaluation before prompt optimization.”
+- [x] Build simple deterministic eval runner.
+- [x] Add expected-category scoring.
+- [x] Add expected evidence-source scoring.
+- [x] Add expected human-review scoring.
+- [x] Add citation-correctness invariant scoring.
+- [x] Add protocol-backed semantic unsupported-claim reviewer with deterministic
+  output guardrails.
+- [ ] Add Azure OpenAI semantic reviewer adapter.
+- [ ] Add mocked adapter tests and one opt-in live smoke test.
+- [ ] Add semantic-review scorecard integration.
+- [ ] Add remaining golden cases.
+- [ ] Add JSON loading and batch execution.
+- [ ] Track pass/fail over time with a simple reproducible report.
+- [ ] Write ADR: “Evaluation before prompt optimization.”
 
 ## Checkpoint
 
 - [ ] At least five eval cases exist.
-- [ ] Eval runner exists.
-- [ ] Citation correctness is scored.
+- [x] Eval runner exists.
+- [x] Citation correctness is scored.
 - [ ] Unsupported claims are detected.
 - [ ] Results are reproducible.
 - [ ] ADR exists.

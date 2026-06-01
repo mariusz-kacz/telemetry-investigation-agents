@@ -1,4 +1,7 @@
+from collections import defaultdict
+
 from telemetry_agents.evaluation.models import (
+    CitationCorrectnessScore,
     EvalCase,
     EvaluationRunOutput,
     ExpectedEvidenceSourceDetail,
@@ -6,6 +9,52 @@ from telemetry_agents.evaluation.models import (
     ExpectedHumanReviewScore,
     ExpectedHypothesisCategoryScore,
 )
+from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
+
+
+def score_citation_correctness(
+    *,
+    output: EvaluationRunOutput,
+) -> CitationCorrectnessScore:
+    """Score whether accepted hypotheses cite usable retrieved evidence."""
+    if output.validation_result is None:
+        return CitationCorrectnessScore(passed=True)
+
+    hypotheses_without_citations: list[str] = []
+    unknown_evidence_references: defaultdict[str, list[str]] = defaultdict(list)
+    missing_evidence_references: defaultdict[str, list[str]] = defaultdict(list)
+    evidence_by_id = {
+        evidence.evidence.evidence_id: evidence
+        for evidence in output.retrieved_evidence
+    }
+
+    for hypothesis in output.validation_result.accepted_hypotheses:
+        if not hypothesis.supporting_evidence_ids:
+            hypotheses_without_citations.append(hypothesis.hypothesis_id)
+            continue
+
+        for supporting_evidence_id in hypothesis.supporting_evidence_ids:
+            retrieved_evidence = evidence_by_id.get(supporting_evidence_id)
+            if retrieved_evidence is None:
+                unknown_evidence_references[hypothesis.hypothesis_id].append(
+                    supporting_evidence_id
+                )
+            elif retrieved_evidence.strength == EvidenceStrength.MISSING:
+                missing_evidence_references[hypothesis.hypothesis_id].append(
+                    retrieved_evidence.evidence.evidence_id
+                )
+
+    overall_score = not (
+        hypotheses_without_citations
+        or unknown_evidence_references
+        or missing_evidence_references
+    )
+    return CitationCorrectnessScore(
+        passed=overall_score,
+        hypotheses_without_citations=hypotheses_without_citations,
+        unknown_evidence_references=unknown_evidence_references,
+        missing_evidence_references=missing_evidence_references,
+    )
 
 
 def score_expected_evidence_sources(

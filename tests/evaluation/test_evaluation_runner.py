@@ -30,7 +30,6 @@ def _eval_case() -> EvalCase:
                 source_file="sample_data/logs/checkout-api.log",
             )
         ],
-        forbidden_unsupported_claims=["cache poisoning"],
         expected_human_review_required=False,
     )
 
@@ -39,6 +38,7 @@ def _evaluation_run_output(
     statement: str = "Checkout latency is caused by database timeout errors.",
     category: HypothesisCategory = HypothesisCategory.DATABASE_FAILURE,
     source: EvidenceSource = EvidenceSource.LOG,
+    supporting_evidence_id: str = "log-checkout-api-1",
     human_review_required: bool = False,
 ) -> EvaluationRunOutput:
     return EvaluationRunOutput(
@@ -67,7 +67,7 @@ def _evaluation_run_output(
                     hypothesis_id="hyp-001",
                     statement=statement,
                     category=category,
-                    supporting_evidence_ids=["log-checkout-api-1"],
+                    supporting_evidence_ids=[supporting_evidence_id],
                     confidence=0.9,
                 )
             ]
@@ -90,6 +90,7 @@ def test_evaluate_case_output_combines_existing_scores() -> None:
     assert scorecard.expected_category_score.passed is True
     assert scorecard.expected_evidence_sources_score.passed is True
     assert scorecard.expected_human_review_score.passed is True
+    assert scorecard.citation_correctness_score.passed is True
 
 
 def test_evaluate_case_output_fails_if_expected_category_score_fails() -> None:
@@ -105,6 +106,7 @@ def test_evaluate_case_output_fails_if_expected_category_score_fails() -> None:
     assert scorecard.expected_category_score.passed is False
     assert scorecard.expected_evidence_sources_score.passed is True
     assert scorecard.expected_human_review_score.passed is True
+    assert scorecard.citation_correctness_score.passed is True
 
 
 def test_evaluate_case_output_fails_if_expected_evidence_sources_score_fails() -> None:
@@ -118,6 +120,7 @@ def test_evaluate_case_output_fails_if_expected_evidence_sources_score_fails() -
     assert scorecard.expected_category_score.passed is True
     assert scorecard.expected_evidence_sources_score.passed is False
     assert scorecard.expected_human_review_score.passed is True
+    assert scorecard.citation_correctness_score.passed is True
 
 
 def test_evaluate_case_output_fails_if_expected_human_review_score_fails() -> None:
@@ -131,3 +134,18 @@ def test_evaluate_case_output_fails_if_expected_human_review_score_fails() -> No
     assert scorecard.expected_category_score.passed is True
     assert scorecard.expected_evidence_sources_score.passed is True
     assert scorecard.expected_human_review_score.passed is False
+    assert scorecard.citation_correctness_score.passed is True
+
+
+def test_evaluate_case_output_fails_if_citation_correctness_score_fails() -> None:
+    case = _eval_case()
+    output = _evaluation_run_output(supporting_evidence_id="unknown-evidence-id")
+
+    scorecard = evaluate_case_output(case=case, output=output)
+
+    assert scorecard.case_id == "checkout-database-timeout"
+    assert scorecard.passed is False
+    assert scorecard.expected_category_score.passed is True
+    assert scorecard.expected_evidence_sources_score.passed is True
+    assert scorecard.expected_human_review_score.passed is True
+    assert scorecard.citation_correctness_score.passed is False

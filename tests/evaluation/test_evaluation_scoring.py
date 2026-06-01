@@ -10,6 +10,7 @@ from telemetry_agents.evaluation import (
     EvalCase,
     EvalExpectedEvidenceSource,
     EvaluationRunOutput,
+    score_citation_correctness,
     score_expected_evidence_sources,
     score_expected_category,
     score_expected_human_review,
@@ -39,7 +40,6 @@ def _eval_case(
         incident_file="sample_data/incidents/checkout-database-timeout.json",
         expected_category=expected_category,
         expected_evidence_sources=expected_evidence_sources,
-        forbidden_unsupported_claims=["cache poisoning"],
         expected_human_review_required=False,
     )
 
@@ -94,12 +94,16 @@ def _hypothesis(
     uncertainty: str | None = None,
     statement: str = "Checkout latency is caused by database timeout errors.",
     category: HypothesisCategory = HypothesisCategory.DATABASE_FAILURE,
+    supporting_evidence_ids: list[str] | None = None,
 ) -> InvestigationHypothesis:
+    if supporting_evidence_ids is None:
+        supporting_evidence_ids = ["log-001"]
+
     return InvestigationHypothesis(
         hypothesis_id=hypothesis_id,
         statement=statement,
         category=category,
-        supporting_evidence_ids=["log-001"],
+        supporting_evidence_ids=supporting_evidence_ids,
         confidence=confidence,
         uncertainty=uncertainty,
     )
@@ -118,6 +122,106 @@ def test_expected_evidence_sources_passes_when_sources_are_present() -> None:
         )
     ]
     assert score.missing_expected_sources == []
+
+
+def test_citation_correctness_passes_when_accepted_hypothesis_cites_retrieved_evidence() -> (
+    None
+):
+    output = _output(
+        retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
+        accepted_hypotheses=[_hypothesis()],
+    )
+
+    score = score_citation_correctness(output=output)
+
+    assert score.passed is True
+    assert score.hypotheses_without_citations == []
+    assert score.unknown_evidence_references == {}
+    assert score.missing_evidence_references == {}
+
+
+def test_citation_correctness_fails_when_accepted_hypothesis_has_no_citations() -> None:
+    output = _output(
+        retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
+        accepted_hypotheses=[_hypothesis(supporting_evidence_ids=[])],
+    )
+
+    score = score_citation_correctness(output=output)
+
+    assert score.passed is False
+    assert score.hypotheses_without_citations == ["hyp-001"]
+
+
+def test_citation_correctness_fails_when_citation_is_not_retrieved() -> None:
+    output = _output(
+        retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
+        accepted_hypotheses=[_hypothesis(supporting_evidence_ids=["unknown-log-001"])],
+    )
+
+    score = score_citation_correctness(output=output)
+
+    assert score.passed is False
+    assert score.unknown_evidence_references == {"hyp-001": ["unknown-log-001"]}
+
+
+def test_citation_correctness_fails_when_citation_refers_to_missing_evidence() -> None:
+    missing_evidence = _retrieved_evidence(evidence_id="missing-log-inc-001")
+    missing_evidence.strength = EvidenceStrength.MISSING
+    output = _output(
+        retrieved_evidence=[missing_evidence],
+        accepted_hypotheses=[
+            _hypothesis(supporting_evidence_ids=["missing-log-inc-001"])
+        ],
+    )
+
+    score = score_citation_correctness(output=output)
+
+    assert score.passed is False
+    assert score.missing_evidence_references == {"hyp-001": ["missing-log-inc-001"]}
+
+
+def test_citation_correctness_logs_all_defects() -> None:
+    missing_evidence = _retrieved_evidence(evidence_id="missing-log-inc-001")
+    missing_evidence.strength = EvidenceStrength.MISSING
+    output = _output(
+        retrieved_evidence=[missing_evidence],
+        accepted_hypotheses=[
+            _hypothesis(
+                supporting_evidence_ids=["missing-log-inc-001", "unknown-log-001"]
+            )
+        ],
+    )
+
+    score = score_citation_correctness(output=output)
+
+    assert score.passed is False
+    assert score.missing_evidence_references == {"hyp-001": ["missing-log-inc-001"]}
+    assert score.unknown_evidence_references == {"hyp-001": ["unknown-log-001"]}
+
+
+def test_citation_correctness_passes_when_validation_result_is_empty() -> None:
+    output = _output(
+        retrieved_evidence=[],
+        accepted_hypotheses=[],
+    )
+
+    score = score_citation_correctness(output=output)
+
+    assert score.passed is True
+    assert score.missing_evidence_references == {}
+    assert score.unknown_evidence_references == {}
+
+
+def test_citation_correctness_passes_when_validation_result_is_missing() -> None:
+    output = _output(
+        retrieved_evidence=[],
+    )
+
+    score = score_citation_correctness(output=output)
+
+    assert score.passed is True
+    assert score.missing_evidence_references == {}
+    assert score.unknown_evidence_references == {}
 
 
 def test_expected_evidence_sources_fails_when_expected_source_is_missing() -> None:

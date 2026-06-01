@@ -19,7 +19,6 @@ class EvalCase(BaseModel):
     incident_file: str = Field(min_length=1)
     expected_category: HypothesisCategory = Field(min_length=1)
     expected_evidence_sources: list[EvalExpectedEvidenceSource]
-    forbidden_unsupported_claims: list[str] = Field(default_factory=list)
     expected_human_review_required: bool
 
 
@@ -57,9 +56,17 @@ class ExpectedHumanReviewScore(BaseModel):
     actual_human_review_required: bool | None
 
 
+class CitationCorrectnessScore(BaseModel):
+    passed: bool
+    hypotheses_without_citations: list[str] = Field(default_factory=list)
+    unknown_evidence_references: dict[str, list[str]] = Field(default_factory=dict)
+    missing_evidence_references: dict[str, list[str]] = Field(default_factory=dict)
+
+
 class EvaluationScorecard(BaseModel):
     case_id: str = Field(min_length=1)
     passed: bool
     expected_evidence_sources_score: ExpectedEvidenceSourcesScore
     expected_category_score: ExpectedHypothesisCategoryScore
     expected_human_review_score: ExpectedHumanReviewScore
+    citation_correctness_score: CitationCorrectnessScore
