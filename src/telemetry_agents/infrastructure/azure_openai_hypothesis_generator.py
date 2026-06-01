@@ -32,6 +32,9 @@ class AzureOpenAIHypothesisGenerator:
                         "Generate zero or more candidate investigation hypotheses from only the "
                         "provided incident and evidence. Reference only evidence IDs present in "
                         "the supplied context. State uncertainty when evidence is insufficient. "
+                        "Assign exactly one coarse category to each hypothesis using the structured "
+                        "output schema. Treat the category as a proposed classification, not a "
+                        "validated conclusion. "
                         "Do not present candidates as validated conclusions."
                     ),
                     role="system",

@@ -11,6 +11,7 @@ from telemetry_agents.domain import (
     Incident,
     IncidentImpact,
     InvestigationHypothesis,
+    HypothesisCategory,
     InvestigationReport,
     RejectedHypothesis,
     TelemetryEvidence,
@@ -27,6 +28,7 @@ def _hypothesis(
     return InvestigationHypothesis(
         hypothesis_id=hypothesis_id,
         statement="Checkout latency is caused by database timeout errors.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=supporting_evidence_ids or ["log-001"],
         confidence=confidence,
         uncertainty=uncertainty,
@@ -90,12 +92,67 @@ def test_hypothesis_references_supporting_evidence_ids() -> None:
     hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-001",
         statement="Checkout latency is caused by database timeout errors.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["log-001", "metric-002"],
         confidence=0.65,
         uncertainty="Confidence is limited because supporting evidence has not been validated yet.",
     )
 
     assert hypothesis.supporting_evidence_ids == ["log-001", "metric-002"]
+
+
+def test_hypothesis_category_taxonomy_is_explicit() -> None:
+    assert set(HypothesisCategory) == {
+        HypothesisCategory.DATABASE_FAILURE,
+        HypothesisCategory.AUTHENTICATION_FAILURE,
+        HypothesisCategory.DOWNSTREAM_DEPENDENCY_FAILURE,
+        HypothesisCategory.RESOURCE_SATURATION,
+        HypothesisCategory.NETWORK_FAILURE,
+        HypothesisCategory.CONFIGURATION_ERROR,
+        HypothesisCategory.APPLICATION_ERROR,
+        HypothesisCategory.METRIC_ANOMALY,
+        HypothesisCategory.OTHER,
+        HypothesisCategory.INSUFFICIENT_EVIDENCE,
+    }
+
+
+def test_hypothesis_requires_category() -> None:
+    with pytest.raises(ValidationError):
+        InvestigationHypothesis.model_validate(
+            {
+                "hypothesis_id": "hyp-001",
+                "statement": "Database calls are failing.",
+                "supporting_evidence_ids": ["log-001"],
+                "confidence": 0.9,
+            }
+        )
+
+
+def test_hypothesis_rejects_unknown_serialized_category() -> None:
+    with pytest.raises(ValidationError):
+        InvestigationHypothesis.model_validate(
+            {
+                "hypothesis_id": "hyp-001",
+                "category": "unknown_failure",
+                "statement": "Database calls are failing.",
+                "supporting_evidence_ids": ["log-001"],
+                "confidence": 0.9,
+            }
+        )
+
+
+def test_hypothesis_accepts_known_serialized_category() -> None:
+    hypothesis = InvestigationHypothesis.model_validate(
+        {
+            "hypothesis_id": "hyp-001",
+            "category": "database_failure",
+            "statement": "Database calls are failing.",
+            "supporting_evidence_ids": ["log-001"],
+            "confidence": 0.9,
+        }
+    )
+
+    assert hypothesis.category is HypothesisCategory.DATABASE_FAILURE
 
 
 def test_report_contains_summary_confidence_and_uncertainty() -> None:

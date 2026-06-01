@@ -11,6 +11,7 @@ from telemetry_agents.domain.models import (
     Incident,
     TelemetryEvidence,
     HumanReviewStatus,
+    HypothesisCategory,
 )
 from telemetry_agents.graph.investigation_workflow import build_investigation_workflow
 
@@ -112,6 +113,7 @@ def _supported_hypothesis() -> InvestigationHypothesis:
     return InvestigationHypothesis(
         hypothesis_id="hyp-001",
         statement="Checkout latency is caused by database timeout errors.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["log-001"],
         confidence=0.9,
     )
@@ -121,6 +123,7 @@ def _low_confidence_hypothesis() -> InvestigationHypothesis:
     return InvestigationHypothesis(
         hypothesis_id="hyp-001",
         statement="Checkout latency is caused by database timeout errors.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["log-001"],
         confidence=0.6,
         uncertainty="The timeout evidence does not prove the underlying database cause.",
@@ -205,6 +208,7 @@ def test_report_review_interrupt_exposes_decision_material() -> None:
     assert payload["hypotheses"] == [
         {
             "hypothesis_id": "hyp-001",
+            "category": "database_failure",
             "statement": "Checkout latency is caused by database timeout errors.",
             "confidence": 0.6,
             "uncertainty": (

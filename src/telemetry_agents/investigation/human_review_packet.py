@@ -6,6 +6,7 @@ from telemetry_agents.domain import (
     HypothesisValidationResult,
     HypothesisCritiqueFinding,
     Incident,
+    HypothesisCategory,
 )
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
@@ -31,6 +32,7 @@ class HumanReviewEvidence:
 class HumanReviewHypothesis:
     hypothesis_id: str
     statement: str
+    category: HypothesisCategory
     confidence: float
     supporting_evidence: list[HumanReviewEvidence]
     uncertainty: str | None = None
@@ -82,6 +84,7 @@ def build_human_review_packet(
                 uncertainty=hypothesis.uncertainty,
                 confidence=hypothesis.confidence,
                 statement=hypothesis.statement,
+                category=hypothesis.category,
                 supporting_evidence=mapped_evidence,
             )
         )

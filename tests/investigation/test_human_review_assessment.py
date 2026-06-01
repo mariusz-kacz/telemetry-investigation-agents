@@ -10,6 +10,7 @@ from telemetry_agents.domain import (
     EvidenceSource,
     InvestigationHypothesis,
     TelemetryEvidence,
+    HypothesisCategory,
 )
 from telemetry_agents.investigation.evidence_retrieval import (
     CitationMetadata,
@@ -64,6 +65,7 @@ def _hypothesis(
     return InvestigationHypothesis(
         hypothesis_id=hypothesis_id,
         statement="Checkout latency is caused by database timeout errors.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["log-001"],
         confidence=confidence,
         uncertainty=uncertainty,

@@ -1,4 +1,9 @@
-from telemetry_agents.domain import Incident, IncidentImpact, InvestigationHypothesis
+from telemetry_agents.domain import (
+    Incident,
+    IncidentImpact,
+    InvestigationHypothesis,
+    HypothesisCategory,
+)
 from telemetry_agents.investigation.hypothesis_generation import (
     HypothesisGenerationRequest,
     generate_hypotheses,
@@ -31,6 +36,7 @@ def test_hypothesis_generation_returns_generator_candidates_as_is() -> None:
     generated_hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-001",
         statement="Checkout API latency is probably caused by database timeouts.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["unknown-until-validation"],
         confidence=0.9,
     )

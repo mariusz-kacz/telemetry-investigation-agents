@@ -4,12 +4,12 @@ from telemetry_agents.domain import (
     InvestigationHypothesis,
     TelemetryEvidence,
     HumanReviewAssessment,
+    HypothesisCategory,
 )
 from telemetry_agents.evaluation import (
     EvalCase,
     EvalExpectedEvidenceSource,
     EvaluationRunOutput,
-    HypothesisCategory,
     evaluate_case_output,
 )
 from telemetry_agents.investigation.evidence_retrieval import (
@@ -23,7 +23,7 @@ def _eval_case() -> EvalCase:
     return EvalCase(
         case_id="checkout-database-timeout",
         incident_file="sample_data/incidents/checkout-database-timeout.json",
-        expected_category=HypothesisCategory.DATABASE_TIMEOUT,
+        expected_category=HypothesisCategory.DATABASE_FAILURE,
         expected_evidence_sources=[
             EvalExpectedEvidenceSource(
                 source=EvidenceSource.LOG,
@@ -37,6 +37,7 @@ def _eval_case() -> EvalCase:
 
 def _evaluation_run_output(
     statement: str = "Checkout latency is caused by database timeout errors.",
+    category: HypothesisCategory = HypothesisCategory.DATABASE_FAILURE,
     source: EvidenceSource = EvidenceSource.LOG,
     human_review_required: bool = False,
 ) -> EvaluationRunOutput:
@@ -65,6 +66,7 @@ def _evaluation_run_output(
                 InvestigationHypothesis(
                     hypothesis_id="hyp-001",
                     statement=statement,
+                    category=category,
                     supporting_evidence_ids=["log-checkout-api-1"],
                     confidence=0.9,
                 )
@@ -93,7 +95,7 @@ def test_evaluate_case_output_combines_existing_scores() -> None:
 def test_evaluate_case_output_fails_if_expected_category_score_fails() -> None:
     case = _eval_case()
     output = _evaluation_run_output(
-        statement="Checkout latency is caused by external service timeout errors"
+        category=HypothesisCategory.DOWNSTREAM_DEPENDENCY_FAILURE
     )
 
     scorecard = evaluate_case_output(case=case, output=output)

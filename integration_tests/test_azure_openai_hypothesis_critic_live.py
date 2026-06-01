@@ -8,6 +8,7 @@ from telemetry_agents.domain import (
     HypothesisValidationResult,
     InvestigationHypothesis,
     TelemetryEvidence,
+    HypothesisCategory,
 )
 from telemetry_agents.infrastructure.azure_openai_client import (
     create_azure_openai_client,
@@ -42,6 +43,7 @@ def test_live_azure_critic_returns_evidence_bounded_findings() -> None:
                 statement=(
                     "Checkout API latency is definitively caused by database timeouts."
                 ),
+                category=HypothesisCategory.DATABASE_FAILURE,
                 supporting_evidence_ids=["log-001"],
                 confidence=0.9,
             )

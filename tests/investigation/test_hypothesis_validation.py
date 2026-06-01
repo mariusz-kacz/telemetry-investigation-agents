@@ -2,6 +2,7 @@ from telemetry_agents.domain import (
     EvidenceSource,
     InvestigationHypothesis,
     TelemetryEvidence,
+    HypothesisCategory,
 )
 from telemetry_agents.investigation.evidence_retrieval import (
     CitationMetadata,
@@ -44,6 +45,7 @@ def test_validation_rejects_hypothesis_without_supporting_evidence() -> None:
     hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-unsupported",
         statement="Checkout latency is caused by database timeout errors.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=[],
         confidence=0.8,
     )
@@ -66,6 +68,7 @@ def test_validation_rejects_missing_evidence_as_support() -> None:
     hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-missing-evidence",
         statement="Checkout latency is caused by database timeout errors.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["missing-log-inc-001"],
         confidence=0.8,
     )
@@ -91,6 +94,7 @@ def test_validation_rejects_unknown_evidence_reference() -> None:
     hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-unknown-evidence",
         statement="Checkout latency is caused by database timeout errors.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["unknown-log-001"],
         confidence=0.8,
     )
@@ -110,6 +114,7 @@ def test_validation_rejects_mixed_known_and_unknown_evidence_references() -> Non
     hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-mixed-evidence",
         statement="Checkout latency is caused by database timeout errors.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["log-001", "unknown-log-001"],
         confidence=0.8,
     )
@@ -129,6 +134,7 @@ def test_validation_downgrades_weak_but_plausible_hypothesis() -> None:
     hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-weak",
         statement="Checkout latency may be related to intermittent database timeouts.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["log-weak"],
         confidence=0.9,
     )
@@ -158,6 +164,7 @@ def test_validation_caps_confidence_for_medium_without_strong_evidence() -> None
     hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-medium",
         statement="Checkout API latency may be caused by elevated database latency.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["metric-001"],
         confidence=0.95,
     )
@@ -185,6 +192,7 @@ def test_validation_keeps_confidence_when_strong_evidence_supports_it() -> None:
     hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-strong",
         statement="Checkout API latency spike.",
+        category=HypothesisCategory.METRIC_ANOMALY,
         supporting_evidence_ids=["metric-001"],
         confidence=0.95,
     )
@@ -225,6 +233,7 @@ def test_validation_does_not_mutate_original_hypothesis_when_confidence_is_adjus
     hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-weak",
         statement="Checkout latency may be related to intermittent database timeouts.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["log-weak"],
         confidence=0.9,
     )
@@ -243,6 +252,7 @@ def test_validation_accepts_strong_evidence_hypothesis() -> None:
     hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-strong",
         statement="Checkout latency is caused by database timeout errors.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["log-strong"],
         confidence=0.9,
     )

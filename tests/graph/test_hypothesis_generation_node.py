@@ -6,6 +6,7 @@ from telemetry_agents.domain import (
     IncidentImpact,
     InvestigationHypothesis,
     TelemetryEvidence,
+    HypothesisCategory,
 )
 from telemetry_agents.graph.hypothesis_generation import make_hypothesis_generation_node
 from telemetry_agents.investigation.evidence_retrieval import (
@@ -63,6 +64,7 @@ def test_hypothesis_generation_node_writes_hypotheses_to_state() -> None:
     hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-001",
         statement="Checkout API latency is caused by database timeout errors.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["log-001"],
         confidence=0.9,
     )

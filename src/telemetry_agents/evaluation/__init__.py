@@ -8,7 +8,6 @@ from telemetry_agents.evaluation.models import (
     EvalExpectedEvidenceSource,
     EvaluationScorecard,
     EvaluationRunOutput,
-    HypothesisCategory,
     ExpectedHypothesisCategoryScore,
 )
 from telemetry_agents.evaluation.runner import evaluate_case_output
@@ -26,7 +25,6 @@ __all__ = [
     "EvalExpectedEvidenceSource",
     "EvaluationScorecard",
     "EvaluationRunOutput",
-    "HypothesisCategory",
     "ExpectedHypothesisCategoryScore",
     "evaluate_case_output",
     "score_expected_evidence_sources",

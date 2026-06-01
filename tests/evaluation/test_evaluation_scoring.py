@@ -4,6 +4,7 @@ from telemetry_agents.domain import (
     TelemetryEvidence,
     InvestigationHypothesis,
     HypothesisValidationResult,
+    HypothesisCategory,
 )
 from telemetry_agents.evaluation import (
     EvalCase,
@@ -12,7 +13,6 @@ from telemetry_agents.evaluation import (
     score_expected_evidence_sources,
     score_expected_category,
     score_expected_human_review,
-    HypothesisCategory,
 )
 from telemetry_agents.evaluation.models import ExpectedEvidenceSourceDetail
 from telemetry_agents.investigation.evidence_retrieval import (
@@ -24,7 +24,7 @@ from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 
 def _eval_case(
     expected_evidence_sources: list[EvalExpectedEvidenceSource] | None = None,
-    expected_category: HypothesisCategory = HypothesisCategory.DATABASE_TIMEOUT,
+    expected_category: HypothesisCategory = HypothesisCategory.DATABASE_FAILURE,
 ) -> EvalCase:
     if expected_evidence_sources is None:
         expected_evidence_sources = [
@@ -93,10 +93,12 @@ def _hypothesis(
     confidence: float = 0.9,
     uncertainty: str | None = None,
     statement: str = "Checkout latency is caused by database timeout errors.",
+    category: HypothesisCategory = HypothesisCategory.DATABASE_FAILURE,
 ) -> InvestigationHypothesis:
     return InvestigationHypothesis(
         hypothesis_id=hypothesis_id,
         statement=statement,
+        category=category,
         supporting_evidence_ids=["log-001"],
         confidence=confidence,
         uncertainty=uncertainty,
@@ -222,7 +224,6 @@ def test_categorization_passes_when_all_hypotheses_match_category() -> None:
 
     assert score.passed is True
     assert score.matched_hypothesis_ids == ["hyp-001", "hyp-002"]
-    assert score.observed_categories == [HypothesisCategory.DATABASE_TIMEOUT]
 
 
 def test_categorization_passes_when_any_hypotheses_match_category() -> None:
@@ -242,7 +243,11 @@ def test_categorization_passes_when_any_hypotheses_match_category() -> None:
                     "hyp-001",
                     statement="Checkout latency is caused by database timeout errors.",
                 ),
-                _hypothesis("hyp-002", statement="Downstream system unresponsive."),
+                _hypothesis(
+                    "hyp-002",
+                    statement="Downstream system unresponsive.",
+                    category=HypothesisCategory.DOWNSTREAM_DEPENDENCY_FAILURE,
+                ),
             ]
         )
     )
@@ -251,10 +256,6 @@ def test_categorization_passes_when_any_hypotheses_match_category() -> None:
 
     assert score.passed is True
     assert score.matched_hypothesis_ids == ["hyp-001"]
-    assert score.observed_categories == [
-        HypothesisCategory.DATABASE_TIMEOUT,
-        HypothesisCategory.DOWNSTREAM_DEPENDENCY_LATENCY,
-    ]
 
 
 def test_categorization_fails_when_none_hypotheses_match_category() -> None:
@@ -276,10 +277,6 @@ def test_categorization_fails_when_none_hypotheses_match_category() -> None:
 
     assert score.passed is False
     assert score.matched_hypothesis_ids == []
-    assert score.observed_categories == [
-        HypothesisCategory.DATABASE_TIMEOUT,
-        HypothesisCategory.DOWNSTREAM_DEPENDENCY_LATENCY,
-    ]
 
 
 def test_expected_human_review_passes_when_required_review_is_expected() -> None:

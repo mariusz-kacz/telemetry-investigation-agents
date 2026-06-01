@@ -5,7 +5,10 @@ from telemetry_agents.domain import (
     InvestigationHypothesis,
     TelemetryEvidence,
 )
-from telemetry_agents.domain.models import HypothesisValidationResult
+from telemetry_agents.domain.models import (
+    HypothesisValidationResult,
+    HypothesisCategory,
+)
 from telemetry_agents.graph.hypothesis_validation import make_hypothesis_validation_node
 from telemetry_agents.investigation.evidence_retrieval import (
     CitationMetadata,
@@ -18,6 +21,7 @@ def _hypothesis() -> InvestigationHypothesis:
     return InvestigationHypothesis(
         hypothesis_id="hyp-001",
         statement="Checkout API latency is caused by database timeout errors.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["log-001"],
         confidence=0.9,
     )

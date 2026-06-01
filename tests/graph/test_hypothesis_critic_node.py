@@ -4,8 +4,7 @@ from telemetry_agents.domain import (
     EvidenceSource,
     InvestigationHypothesis,
     TelemetryEvidence,
-)
-from telemetry_agents.domain.models import (
+    HypothesisCategory,
     CritiqueFindingType,
     HypothesisCritiqueFinding,
     HypothesisCritiqueResult,
@@ -48,6 +47,7 @@ def _hypothesis() -> InvestigationHypothesis:
     return InvestigationHypothesis(
         hypothesis_id="hyp-001",
         statement="Checkout latency is caused by database timeout errors.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["log-001"],
         confidence=0.9,
     )

@@ -64,6 +64,19 @@ class IncidentImpact(StrEnum):
     HIGH = "high"
 
 
+class HypothesisCategory(StrEnum):
+    DATABASE_FAILURE = "database_failure"
+    AUTHENTICATION_FAILURE = "authentication_failure"
+    DOWNSTREAM_DEPENDENCY_FAILURE = "downstream_dependency_failure"
+    RESOURCE_SATURATION = "resource_saturation"
+    NETWORK_FAILURE = "network_failure"
+    CONFIGURATION_ERROR = "configuration_error"
+    APPLICATION_ERROR = "application_error"
+    METRIC_ANOMALY = "metric_anomaly"
+    OTHER = "other"
+    INSUFFICIENT_EVIDENCE = "insufficient_evidence"
+
+
 class Incident(BaseModel):
     incident_id: NonEmptyStr
     title: NonEmptyStr
@@ -82,6 +95,7 @@ class TelemetryEvidence(BaseModel):
 class InvestigationHypothesis(BaseModel):
     hypothesis_id: NonEmptyStr
     statement: NonEmptyStr
+    category: HypothesisCategory
     supporting_evidence_ids: UniqueIdList = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0)
     uncertainty: NonEmptyStr | None = None

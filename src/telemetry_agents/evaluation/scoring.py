@@ -4,42 +4,8 @@ from telemetry_agents.evaluation.models import (
     ExpectedEvidenceSourceDetail,
     ExpectedEvidenceSourcesScore,
     ExpectedHumanReviewScore,
-    HypothesisCategory,
     ExpectedHypothesisCategoryScore,
 )
-
-
-GenericTermsRule = tuple[frozenset[str], HypothesisCategory]
-
-
-GENERIC_TERMS_TO_CATEGORIES: tuple[GenericTermsRule, ...] = (
-    (frozenset({"timeout", "database", "db"}), HypothesisCategory.DATABASE_TIMEOUT),
-    (
-        frozenset({"auth", "unauthorized", "token", "401", "403"}),
-        HypothesisCategory.AUTHENTICATION_FAILURE,
-    ),
-    (
-        frozenset({"downstream", "dependency", "upstream", "external"}),
-        HypothesisCategory.DOWNSTREAM_DEPENDENCY_LATENCY,
-    ),
-    (frozenset({"metric", "anomaly", "spike"}), HypothesisCategory.METRIC_ANOMALY),
-)
-
-
-def _classify_hypothesis_categories_by_keywords(
-    statement: str,
-) -> set[HypothesisCategory]:
-    normalized = statement.lower()
-    categories: set[HypothesisCategory] = set()
-
-    for keywords, category in GENERIC_TERMS_TO_CATEGORIES:
-        if any(keyword in normalized for keyword in keywords):
-            categories.add(category)
-
-    if not categories:
-        categories.add(HypothesisCategory.INSUFFICIENT_EVIDENCE)
-
-    return categories
 
 
 def score_expected_evidence_sources(
@@ -79,21 +45,15 @@ def score_expected_category(
 ) -> ExpectedHypothesisCategoryScore:
     expected_category = case.expected_category
     matched_hypothesis_ids = []
-    observed_categories: set[HypothesisCategory] = set()
     if output.validation_result:
         for hypothesis in output.validation_result.accepted_hypotheses:
-            categories = _classify_hypothesis_categories_by_keywords(
-                hypothesis.statement
-            )
-            if expected_category in categories:
+            if expected_category == hypothesis.category:
                 matched_hypothesis_ids.append(hypothesis.hypothesis_id)
-            observed_categories.update(categories)
 
     return ExpectedHypothesisCategoryScore(
         passed=bool(matched_hypothesis_ids),
         expected_category=expected_category,
         matched_hypothesis_ids=matched_hypothesis_ids,
-        observed_categories=sorted(observed_categories),
     )
 
 

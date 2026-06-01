@@ -28,6 +28,9 @@ class AzureOpenAIHypothesisCritic:
                         content=(
                             "Review accepted investigation hypotheses for semantic problems only. "
                             "Do not generate new hypotheses. Do not rewrite hypotheses. "
+                            "Review whether each hypothesis category is semantically consistent "
+                            "with its statement and cited evidence. Report category inconsistencies "
+                            "using the existing critique finding types. "
                             "Return critique findings only when the supplied evidence suggests a "
                             "contradiction, unsupported causal leap, alternative interpretation, or "
                             "overstated confidence. Reference only hypothesis IDs from the accepted "

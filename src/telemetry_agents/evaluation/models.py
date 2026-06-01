@@ -1,21 +1,12 @@
-from enum import StrEnum
-
 from pydantic import BaseModel, Field
 
-from telemetry_agents.domain import EvidenceSource
-from telemetry_agents.domain.models import (
+from telemetry_agents.domain import (
+    EvidenceSource,
     HumanReviewAssessment,
+    HypothesisCategory,
     HypothesisValidationResult,
 )
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
-
-
-class HypothesisCategory(StrEnum):
-    DATABASE_TIMEOUT = "database_timeout"
-    AUTHENTICATION_FAILURE = "authentication_failure"
-    DOWNSTREAM_DEPENDENCY_LATENCY = "downstream_dependency_latency"
-    METRIC_ANOMALY = "metric_anomaly"
-    INSUFFICIENT_EVIDENCE = "insufficient_evidence"
 
 
 class EvalExpectedEvidenceSource(BaseModel):
@@ -58,7 +49,6 @@ class ExpectedHypothesisCategoryScore(BaseModel):
     passed: bool
     expected_category: str
     matched_hypothesis_ids: list[str] = Field(default_factory=list)
-    observed_categories: list[HypothesisCategory] = Field(default_factory=list)
 
 
 class ExpectedHumanReviewScore(BaseModel):

@@ -12,6 +12,7 @@ from telemetry_agents.domain import (
     HypothesisValidationResult,
     InvestigationHypothesis,
     TelemetryEvidence,
+    HypothesisCategory,
 )
 from telemetry_agents.infrastructure.azure_openai_hypothesis_critic import (
     AzureOpenAIHypothesisCritic,
@@ -50,7 +51,8 @@ def _retrieved_evidence() -> RetrievedEvidence:
 def _hypothesis() -> InvestigationHypothesis:
     return InvestigationHypothesis(
         hypothesis_id="hyp-001",
-        statement=("Checkout API latency is definitively caused by database timeouts."),
+        statement="Checkout API latency is definitively caused by database timeouts.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["log-001"],
         confidence=0.9,
     )
@@ -124,6 +126,8 @@ def test_critic_passes_system_prompt_to_model() -> None:
         (item["content"] for item in call["messages"] if item["role"] == "system"), None
     )
     assert system_message is not None
+    assert "category" in system_message
+    assert "statement" in system_message
 
 
 def test_critic_raises_value_error_from_empty_response() -> None:

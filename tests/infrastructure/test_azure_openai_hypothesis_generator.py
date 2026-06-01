@@ -10,6 +10,7 @@ from telemetry_agents.domain import (
     IncidentImpact,
     InvestigationHypothesis,
     TelemetryEvidence,
+    HypothesisCategory,
 )
 from telemetry_agents.infrastructure.azure_openai_hypothesis_generator import (
     AzureOpenAIHypothesisGenerator,
@@ -60,6 +61,7 @@ def test_generate_returns_hypotheses_from_parsed_structured_response() -> None:
     expected_hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-001",
         statement="Database timeouts may explain checkout latency.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["log-001"],
         confidence=0.7,
         uncertainty="Database metrics are not available.",
@@ -96,6 +98,7 @@ def test_generate_passes_system_prompt_to_model() -> None:
     expected_hypothesis = InvestigationHypothesis(
         hypothesis_id="hyp-001",
         statement="Database timeouts may explain checkout latency.",
+        category=HypothesisCategory.DATABASE_FAILURE,
         supporting_evidence_ids=["log-001"],
         confidence=0.7,
         uncertainty="Database metrics are not available.",
@@ -126,6 +129,8 @@ def test_generate_passes_system_prompt_to_model() -> None:
         (item["content"] for item in call["messages"] if item["role"] == "system"), None
     )
     assert system_message is not None
+    assert "category" in system_message
+    assert "coarse" in system_message
 
 
 def test_generate_raises_value_error_from_empty_response() -> None:
