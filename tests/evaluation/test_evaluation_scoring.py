@@ -1,3 +1,5 @@
+import pytest
+
 from telemetry_agents.domain import (
     EvidenceSource,
     HumanReviewAssessment,
@@ -16,11 +18,31 @@ from telemetry_agents.evaluation import (
     score_expected_human_review,
 )
 from telemetry_agents.evaluation.models import ExpectedEvidenceSourceDetail
+from telemetry_agents.evaluation.scoring import score_unsupported_claims
+from telemetry_agents.evaluation.unsupported_claim_review import (
+    UnsupportedClaimFinding,
+    UnsupportedClaimReviewRequest,
+    UnsupportedClaimReviewResult,
+    GuardedUnsupportedClaimReviewer,
+)
 from telemetry_agents.investigation.evidence_retrieval import (
     CitationMetadata,
     RetrievedEvidence,
 )
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
+
+
+class FakeUnsupportedClaimAdapter:
+    def __init__(self, result: UnsupportedClaimReviewResult) -> None:
+        self.result = result
+        self.requests: list[UnsupportedClaimReviewRequest] = []
+
+    def review(
+        self,
+        request: UnsupportedClaimReviewRequest,
+    ) -> UnsupportedClaimReviewResult:
+        self.requests.append(request)
+        return self.result
 
 
 def _eval_case(
@@ -439,3 +461,81 @@ def test_expected_human_review_fails_when_required_review_is_not_produced() -> N
     assert score.passed is False
     assert score.expected_human_review_required is True
     assert score.actual_human_review_required is False
+
+
+def test_unsupported_claims_passes_when_reviewer_returns_no_findings() -> None:
+    output = _output(
+        retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
+        accepted_hypotheses=[_hypothesis()],
+    )
+    adapter = FakeUnsupportedClaimAdapter(UnsupportedClaimReviewResult())
+    reviewer = GuardedUnsupportedClaimReviewer(adapter=adapter)
+
+    score = score_unsupported_claims(output=output, reviewer=reviewer)
+
+    assert score.passed is True
+    assert score.findings == []
+    assert output.validation_result is not None
+    assert adapter.requests == [
+        UnsupportedClaimReviewRequest(
+            evidence=output.retrieved_evidence,
+            accepted_hypotheses=output.validation_result.accepted_hypotheses,
+        )
+    ]
+
+
+def test_unsupported_claims_fails_when_reviewer_returns_finding() -> None:
+    finding = UnsupportedClaimFinding(
+        hypothesis_id="hyp-001",
+        claim="A DNS outage caused checkout database timeouts.",
+        reason="The cited log reports a timeout but does not support a DNS outage.",
+        evidence_ids=["log-001"],
+    )
+    output = _output(
+        retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
+        accepted_hypotheses=[_hypothesis()],
+    )
+    adapter = FakeUnsupportedClaimAdapter(
+        UnsupportedClaimReviewResult(findings=[finding])
+    )
+    reviewer = GuardedUnsupportedClaimReviewer(adapter=adapter)
+
+    score = score_unsupported_claims(output=output, reviewer=reviewer)
+
+    assert score.passed is False
+    assert score.findings == [finding]
+
+
+def test_unsupported_claims_rejects_unknown_evidence_id_through_scoring() -> None:
+    finding = UnsupportedClaimFinding(
+        hypothesis_id="hyp-001",
+        claim="A DNS outage caused checkout database timeouts.",
+        reason="The cited evidence does not support the claim.",
+        evidence_ids=["log-unknown"],
+    )
+    output = _output(
+        retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
+        accepted_hypotheses=[_hypothesis()],
+    )
+    adapter = FakeUnsupportedClaimAdapter(
+        UnsupportedClaimReviewResult(findings=[finding])
+    )
+    reviewer = GuardedUnsupportedClaimReviewer(adapter=adapter)
+
+    with pytest.raises(ValueError, match="unknown evidence ID"):
+        score_unsupported_claims(output=output, reviewer=reviewer)
+
+
+def test_unsupported_claims_skips_reviewer_when_no_hypotheses_are_accepted() -> None:
+    output = _output(
+        retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
+        accepted_hypotheses=[],
+    )
+    adapter = FakeUnsupportedClaimAdapter(UnsupportedClaimReviewResult())
+    reviewer = GuardedUnsupportedClaimReviewer(adapter=adapter)
+
+    score = score_unsupported_claims(output=output, reviewer=reviewer)
+
+    assert score.passed is True
+    assert score.findings == []
+    assert adapter.requests == []

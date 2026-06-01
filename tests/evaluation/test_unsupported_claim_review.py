@@ -6,12 +6,11 @@ from telemetry_agents.domain import (
     InvestigationHypothesis,
     TelemetryEvidence,
 )
+from telemetry_agents.evaluation import GuardedUnsupportedClaimReviewer
 from telemetry_agents.evaluation.unsupported_claim_review import (
     UnsupportedClaimFinding,
-    UnsupportedClaimReviewer,
     UnsupportedClaimReviewRequest,
     UnsupportedClaimReviewResult,
-    review_unsupported_claims,
 )
 from telemetry_agents.investigation.evidence_retrieval import (
     CitationMetadata,
@@ -20,7 +19,7 @@ from telemetry_agents.investigation.evidence_retrieval import (
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 
 
-class FakeUnsupportedClaimReviewer:
+class FakeUnsupportedClaimReviewAdapter:
     def __init__(self, result: UnsupportedClaimReviewResult) -> None:
         self.result = result
         self.requests: list[UnsupportedClaimReviewRequest] = []
@@ -76,7 +75,7 @@ def _request(
 
 
 def test_review_unsupported_claims_returns_structured_findings() -> None:
-    reviewer = FakeUnsupportedClaimReviewer(
+    adapter = FakeUnsupportedClaimReviewAdapter(
         UnsupportedClaimReviewResult(
             findings=[
                 UnsupportedClaimFinding(
@@ -88,15 +87,16 @@ def test_review_unsupported_claims_returns_structured_findings() -> None:
             ]
         )
     )
+    reviewer = GuardedUnsupportedClaimReviewer(adapter=adapter)
 
-    result = review_unsupported_claims(request=_request(), reviewer=reviewer)
+    result = reviewer.review(request=_request())
 
-    assert result == reviewer.result
-    assert reviewer.requests == [_request()]
+    assert result == adapter.result
+    assert adapter.requests == [_request()]
 
 
 def test_review_unsupported_claims_rejects_unknown_hypothesis_id() -> None:
-    reviewer = FakeUnsupportedClaimReviewer(
+    adapter = FakeUnsupportedClaimReviewAdapter(
         UnsupportedClaimReviewResult(
             findings=[
                 UnsupportedClaimFinding(
@@ -107,13 +107,14 @@ def test_review_unsupported_claims_rejects_unknown_hypothesis_id() -> None:
             ]
         )
     )
+    reviewer = GuardedUnsupportedClaimReviewer(adapter=adapter)
 
     with pytest.raises(ValueError, match="unknown hypothesis ID"):
-        review_unsupported_claims(request=_request(), reviewer=reviewer)
+        reviewer.review(request=_request())
 
 
 def test_review_unsupported_claims_rejects_unknown_evidence_id() -> None:
-    reviewer = FakeUnsupportedClaimReviewer(
+    adapter = FakeUnsupportedClaimReviewAdapter(
         UnsupportedClaimReviewResult(
             findings=[
                 UnsupportedClaimFinding(
@@ -125,13 +126,14 @@ def test_review_unsupported_claims_rejects_unknown_evidence_id() -> None:
             ]
         )
     )
+    reviewer = GuardedUnsupportedClaimReviewer(adapter=adapter)
 
     with pytest.raises(ValueError, match="unknown evidence ID"):
-        review_unsupported_claims(request=_request(), reviewer=reviewer)
+        reviewer.review(request=_request())
 
 
 def test_review_unsupported_claims_rejects_missing_evidence() -> None:
-    reviewer = FakeUnsupportedClaimReviewer(
+    adapter = FakeUnsupportedClaimReviewAdapter(
         UnsupportedClaimReviewResult(
             findings=[
                 UnsupportedClaimFinding(
@@ -143,17 +145,9 @@ def test_review_unsupported_claims_rejects_missing_evidence() -> None:
             ]
         )
     )
+    reviewer = GuardedUnsupportedClaimReviewer(adapter=adapter)
 
     with pytest.raises(ValueError, match="missing evidence"):
-        review_unsupported_claims(
+        reviewer.review(
             request=_request(evidence_strength=EvidenceStrength.MISSING),
-            reviewer=reviewer,
         )
-
-
-def test_reviewer_protocol_accepts_fake_adapter() -> None:
-    reviewer: UnsupportedClaimReviewer = FakeUnsupportedClaimReviewer(
-        UnsupportedClaimReviewResult()
-    )
-
-    assert reviewer.review(_request()) == UnsupportedClaimReviewResult()

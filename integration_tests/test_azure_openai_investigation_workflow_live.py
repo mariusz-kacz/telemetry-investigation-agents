@@ -61,7 +61,7 @@ def build_memory_investigation_workflow_graph():
     load_dotenv()
 
     endpoint = os.environ["AZURE_OPENAI_ENDPOINT"]
-    deployment_name = os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"]
+    deployment_name = os.environ["AZURE_OPENAI_HYPOTHESIS_DEPLOYMENT_NAME"]
 
     generator_client = create_azure_openai_client(
         endpoint=endpoint,

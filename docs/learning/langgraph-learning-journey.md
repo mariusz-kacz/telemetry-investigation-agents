@@ -984,9 +984,9 @@ statistical benchmarking, dashboards, or prompt optimization in this phase.
 - [x] Add citation-correctness invariant scoring.
 - [x] Add protocol-backed semantic unsupported-claim reviewer with deterministic
   output guardrails.
-- [ ] Add Azure OpenAI semantic reviewer adapter.
-- [ ] Add mocked adapter tests and one opt-in live smoke test.
-- [ ] Add semantic-review scorecard integration.
+- [x] Add Azure OpenAI semantic reviewer adapter.
+- [x] Add mocked adapter tests and one opt-in live smoke test.
+- [x] Add semantic-review scorecard integration.
 - [ ] Add remaining golden cases.
 - [ ] Add JSON loading and batch execution.
 - [ ] Track pass/fail over time with a simple reproducible report.

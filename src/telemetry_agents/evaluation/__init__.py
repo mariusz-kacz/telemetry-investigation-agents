@@ -1,5 +1,8 @@
 """Evaluation contracts for investigation workflow regression checks."""
 
+from telemetry_agents.evaluation.unsupported_claim_review import (
+    GuardedUnsupportedClaimReviewer,
+)
 from telemetry_agents.evaluation.models import (
     CitationCorrectnessScore,
     ExpectedEvidenceSourcesScore,
@@ -10,6 +13,7 @@ from telemetry_agents.evaluation.models import (
     EvaluationScorecard,
     EvaluationRunOutput,
     ExpectedHypothesisCategoryScore,
+    UnsupportedClaimScore,
 )
 from telemetry_agents.evaluation.runner import evaluate_case_output
 from telemetry_agents.evaluation.scoring import (
@@ -17,6 +21,7 @@ from telemetry_agents.evaluation.scoring import (
     score_expected_evidence_sources,
     score_expected_category,
     score_expected_human_review,
+    score_unsupported_claims,
 )
 
 __all__ = [
@@ -34,4 +39,7 @@ __all__ = [
     "score_expected_evidence_sources",
     "score_expected_category",
     "score_expected_human_review",
+    "GuardedUnsupportedClaimReviewer",
+    "UnsupportedClaimScore",
+    "score_unsupported_claims"
 ]

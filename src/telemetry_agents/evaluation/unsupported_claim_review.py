@@ -7,6 +7,10 @@ from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 
 
+class UnsupportedClaimReviewerUnavailableError(RuntimeError):
+    pass
+
+
 class UnsupportedClaimFinding(BaseModel):
     hypothesis_id: str = Field(min_length=1)
     claim: str = Field(min_length=1)
@@ -23,32 +27,39 @@ class UnsupportedClaimReviewResult(BaseModel):
     findings: list[UnsupportedClaimFinding] = Field(default_factory=list)
 
 
-class UnsupportedClaimReviewer(Protocol):
-    """Adapter boundary for semantic unsupported-claim review."""
+class _UnsupportedClaimReviewAdapter(Protocol):
+    """Raw adapter boundary for semantic review. Use the guarded wrapper in application code."""
 
     def review(
         self,
         request: UnsupportedClaimReviewRequest,
     ) -> UnsupportedClaimReviewResult:
-        """Review accepted hypotheses for unsupported causal claims."""
+        """Provider call only. Prefer GuardedUnsupportedClaimReviewer to enforce ID guardrails."""
         ...
 
 
-def review_unsupported_claims(
-    *,
-    request: UnsupportedClaimReviewRequest,
-    reviewer: UnsupportedClaimReviewer,
-) -> UnsupportedClaimReviewResult:
-    """Run semantic unsupported-claim review and enforce result guardrails."""
-    review_result = reviewer.review(
-        request=request,
-    )
+class GuardedUnsupportedClaimReviewer:
+    def __init__(self, *, adapter: _UnsupportedClaimReviewAdapter) -> None:
+        self.adapter = adapter
 
+    def review(
+        self,
+        request: UnsupportedClaimReviewRequest,
+    ) -> UnsupportedClaimReviewResult:
+        result = self.adapter.review(request)
+        validate_unsupported_claim_review(request=request, result=result)
+        return result
+
+
+def validate_unsupported_claim_review(
+    *, request: UnsupportedClaimReviewRequest, result: UnsupportedClaimReviewResult
+) -> None:
+    """Run semantic unsupported-claim review and enforce result guardrails."""
     hypothesis_ids = {item.hypothesis_id for item in request.accepted_hypotheses}
     evidence_by_id = {item.evidence.evidence_id: item for item in request.evidence}
     evidence_ids = set(evidence_by_id)
 
-    for finding in review_result.findings:
+    for finding in result.findings:
         if finding.hypothesis_id not in hypothesis_ids:
             raise ValueError("Reviewer references unknown hypothesis ID.")
         if set(finding.evidence_ids) - evidence_ids:
@@ -56,4 +67,3 @@ def review_unsupported_claims(
         for evidence_id in finding.evidence_ids:
             if evidence_by_id[evidence_id].strength == EvidenceStrength.MISSING:
                 raise ValueError("Reviewer references missing evidence.")
-    return review_result

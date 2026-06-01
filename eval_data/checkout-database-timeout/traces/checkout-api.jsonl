@@ -1,0 +1,1 @@
+{"trace_id":"trace-001","span_id":"span-001","service":"checkout-api","operation":"POST /checkout","duration_ms":2420,"status":"error","timestamp":"2026-05-11T10:01:13Z"}

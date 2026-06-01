@@ -4,47 +4,56 @@ from dotenv import load_dotenv
 
 from telemetry_agents.domain import (
     EvidenceSource,
-    Incident,
-    IncidentImpact,
+    HypothesisCategory,
     InvestigationHypothesis,
     TelemetryEvidence,
+)
+from telemetry_agents.evaluation.unsupported_claim_review import (
+    UnsupportedClaimReviewRequest,
+    UnsupportedClaimReviewResult,
+    GuardedUnsupportedClaimReviewer,
 )
 from telemetry_agents.infrastructure.azure_openai_client import (
     create_azure_openai_client,
 )
-from telemetry_agents.infrastructure.azure_openai_hypothesis_generator import (
-    AzureOpenAIHypothesisGenerator,
+from telemetry_agents.infrastructure.azure_openai_unsupported_claim_adapter import (
+    AzureOpenAIUnsupportedClaimAdapter,
 )
 from telemetry_agents.investigation.evidence_retrieval import (
     CitationMetadata,
     RetrievedEvidence,
 )
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
-from telemetry_agents.investigation.hypothesis_generation import (
-    HypothesisGenerationRequest,
-)
 
 
-def test_azure_generator_returns_typed_candidate_hypotheses() -> None:
+def test_live_azure_reviewer_returns_evidence_bounded_findings() -> None:
     load_dotenv()
 
     endpoint = os.environ["AZURE_OPENAI_ENDPOINT"]
-    deployment_name = os.environ["AZURE_OPENAI_HYPOTHESIS_DEPLOYMENT_NAME"]
+    deployment_name = os.environ["AZURE_OPENAI_EVALUATION_DEPLOYMENT_NAME"]
 
     client = create_azure_openai_client(
         endpoint=endpoint,
     )
-    generator = AzureOpenAIHypothesisGenerator(
+    adapter = AzureOpenAIUnsupportedClaimAdapter(
         client=client,
         deployment_name=deployment_name,
     )
-    request = HypothesisGenerationRequest(
-        incident=Incident(
-            incident_id="inc-001",
-            title="Checkout API latency spike",
-            service="checkout-api",
-            impact=IncidentImpact.MEDIUM,
-        ),
+
+    reviewer = GuardedUnsupportedClaimReviewer(
+        adapter=adapter,
+    )
+
+    result = reviewer.review(request=_request())
+
+    assert isinstance(result, UnsupportedClaimReviewResult)
+    assert result.findings
+    assert all(finding.hypothesis_id == "hyp-001" for finding in result.findings)
+    assert all(set(finding.evidence_ids) <= {"log-001"} for finding in result.findings)
+
+
+def _request() -> UnsupportedClaimReviewRequest:
+    return UnsupportedClaimReviewRequest(
         evidence=[
             RetrievedEvidence(
                 evidence=TelemetryEvidence(
@@ -64,10 +73,13 @@ def test_azure_generator_returns_typed_candidate_hypotheses() -> None:
                 relevance_score=1.0,
             )
         ],
+        accepted_hypotheses=[
+            InvestigationHypothesis(
+                hypothesis_id="hyp-001",
+                statement="A DNS outage caused checkout database timeouts.",
+                category=HypothesisCategory.NETWORK_FAILURE,
+                supporting_evidence_ids=["log-001"],
+                confidence=0.9,
+            )
+        ],
     )
-
-    result = generator.generate(request)
-
-    assert all(isinstance(item, InvestigationHypothesis) for item in result)
-    assert all(item.supporting_evidence_ids for item in result)
-    assert all(set(item.supporting_evidence_ids) <= {"log-001"} for item in result)

@@ -1,5 +1,9 @@
 from collections import defaultdict
 
+from telemetry_agents.evaluation.unsupported_claim_review import (
+    GuardedUnsupportedClaimReviewer,
+    UnsupportedClaimReviewRequest,
+)
 from telemetry_agents.evaluation.models import (
     CitationCorrectnessScore,
     EvalCase,
@@ -8,8 +12,32 @@ from telemetry_agents.evaluation.models import (
     ExpectedEvidenceSourcesScore,
     ExpectedHumanReviewScore,
     ExpectedHypothesisCategoryScore,
+    UnsupportedClaimScore,
 )
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
+
+
+def score_unsupported_claims(
+    *,
+    output: EvaluationRunOutput,
+    reviewer: GuardedUnsupportedClaimReviewer,
+) -> UnsupportedClaimScore:
+    """Score whether accepted hypotheses contain unsupported causal claims."""
+    if (
+        output.validation_result is None
+        or not output.validation_result.accepted_hypotheses
+    ):
+        return UnsupportedClaimScore(passed=True)
+
+    request = UnsupportedClaimReviewRequest(
+        accepted_hypotheses=output.validation_result.accepted_hypotheses,
+        evidence=output.retrieved_evidence,
+    )
+    review_result = reviewer.review(request=request)
+
+    return UnsupportedClaimScore(
+        passed=not bool(review_result.findings), findings=review_result.findings
+    )
 
 
 def score_citation_correctness(

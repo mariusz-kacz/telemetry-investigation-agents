@@ -7,6 +7,7 @@ from telemetry_agents.domain import (
     HypothesisValidationResult,
 )
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
+from telemetry_agents.evaluation.unsupported_claim_review import UnsupportedClaimFinding
 
 
 class EvalExpectedEvidenceSource(BaseModel):
@@ -17,6 +18,7 @@ class EvalExpectedEvidenceSource(BaseModel):
 class EvalCase(BaseModel):
     case_id: str = Field(min_length=1)
     incident_file: str = Field(min_length=1)
+
     expected_category: HypothesisCategory = Field(min_length=1)
     expected_evidence_sources: list[EvalExpectedEvidenceSource]
     expected_human_review_required: bool
@@ -63,6 +65,11 @@ class CitationCorrectnessScore(BaseModel):
     missing_evidence_references: dict[str, list[str]] = Field(default_factory=dict)
 
 
+class UnsupportedClaimScore(BaseModel):
+    passed: bool
+    findings: list[UnsupportedClaimFinding] = Field(default_factory=list)
+
+
 class EvaluationScorecard(BaseModel):
     case_id: str = Field(min_length=1)
     passed: bool
@@ -70,3 +77,4 @@ class EvaluationScorecard(BaseModel):
     expected_category_score: ExpectedHypothesisCategoryScore
     expected_human_review_score: ExpectedHumanReviewScore
     citation_correctness_score: CitationCorrectnessScore
+    unsupported_claim_score: UnsupportedClaimScore
