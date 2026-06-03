@@ -54,7 +54,7 @@ Current responsibilities:
 - retrieval of cited evidence,
 - bounded hypothesis generation through an adapter protocol,
 - deterministic hypothesis validation;
-- LLM critic review of accepted hypotheses.
+- LLM critic review of validated hypotheses.
 
 Matching functions accept already-read source records. They do not open files and do not manufacture missing evidence.
 
@@ -68,7 +68,7 @@ caps confidence based on evidence strength, and records audit details in
 `HypothesisValidationResult`.
 
 Hypothesis critique is the semantic review boundary. It calls a
-`HypothesisCritic` adapter, reviews accepted hypotheses for semantic concerns,
+`HypothesisCritic` adapter, reviews validated hypotheses for semantic concerns,
 and stores structured critique findings. Deterministic guardrails reject critic
 findings that cite unknown hypotheses, unknown evidence, or missing evidence as
 critique support.
@@ -207,12 +207,12 @@ Generation and validation have separate responsibilities:
 
 - generation produces typed candidate hypotheses from bounded incident and evidence context;
 - validation decides whether candidates are evidence-usable;
-- critique reviews accepted hypotheses for semantic concerns;
+- critique reviews validated hypotheses for semantic concerns;
 - downstream nodes should trust `validation_result`, not raw `hypotheses`.
 
 The validator owns these deterministic policies:
 
-- every accepted hypothesis must have supporting evidence IDs;
+- every validated hypothesis must have supporting evidence IDs;
 - cited evidence IDs must exist in retrieved evidence;
 - missing evidence cannot be used as support;
 - confidence is capped according to supporting evidence strength;

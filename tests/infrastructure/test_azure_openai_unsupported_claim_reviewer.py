@@ -47,7 +47,7 @@ def _request() -> UnsupportedClaimReviewRequest:
                 relevance_score=1.0,
             )
         ],
-        accepted_hypotheses=[
+        vaidated_hypotheses=[
             InvestigationHypothesis(
                 hypothesis_id="hyp-001",
                 statement="A DNS outage caused checkout database timeouts.",

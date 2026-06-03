@@ -153,15 +153,15 @@ class ConfidenceAdjustment(BaseModel):
 
 
 class HypothesisValidationResult(BaseModel):
-    accepted_hypotheses: list[InvestigationHypothesis] = Field(default_factory=list)
+    validated_hypotheses: list[InvestigationHypothesis] = Field(default_factory=list)
     rejected_hypotheses: list[RejectedHypothesis] = Field(default_factory=list)
     confidence_adjustments: list[ConfidenceAdjustment] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def references_must_be_consistent(self) -> "HypothesisValidationResult":
-        accepted_ids = ensure_unique(
-            [item.hypothesis_id for item in self.accepted_hypotheses],
-            label="accepted hypothesis",
+        validated_ids = ensure_unique(
+            [item.hypothesis_id for item in self.validated_hypotheses],
+            label="validated hypothesis",
         )
         rejected_ids = ensure_unique(
             [item.hypothesis.hypothesis_id for item in self.rejected_hypotheses],
@@ -172,14 +172,14 @@ class HypothesisValidationResult(BaseModel):
             label="confidence adjustment hypothesis",
         )
 
-        if accepted_ids & rejected_ids:
+        if validated_ids & rejected_ids:
             raise ValueError(
-                "same hypothesis ids found in accepted and rejected hypotheses"
+                "same hypothesis ids found in validated and rejected hypotheses"
             )
 
-        if not adjusted_ids <= accepted_ids:
+        if not adjusted_ids <= validated_ids:
             raise ValueError(
-                "confidence adjustments should refer to accepted hypotheses"
+                "confidence adjustments should refer to validated hypotheses"
             )
 
         return self

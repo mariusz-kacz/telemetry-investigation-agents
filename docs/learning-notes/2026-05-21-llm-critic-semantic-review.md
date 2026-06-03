@@ -8,7 +8,7 @@ Add a separate LLM critic step after deterministic hypothesis validation, so sem
 
 Added a `HypothesisCritic` protocol and `HypothesisCritiqueRequest` boundary for an LLM-backed critic adapter.
 
-Added `critique_hypotheses()` to call the critic and validate critic output against known accepted hypothesis IDs and known retrieved evidence IDs.
+Added `critique_hypotheses()` to call the critic and validate critic output against known validated hypothesis IDs and known retrieved evidence IDs.
 
 Added a separate LangGraph critic node that reads `collected_evidence` and `validation_result`, writes `critique_findings`, and records a warning when the critic adapter is unavailable.
 
@@ -34,7 +34,7 @@ The important distinction is responsibility, not class layering:
 
 The main confusion was where to catch failures. Catching every exception inside the application function would hide adapter bugs and unsafe critic behavior. The better boundary is for concrete adapters to raise `HypothesisCriticUnavailableError`, and for the graph node to catch only that known fallback case.
 
-Another design question was whether the critic should review rejected hypotheses. For this checkpoint it reviews accepted hypotheses only, because those are the hypotheses downstream nodes may trust.
+Another design question was whether the critic should review rejected hypotheses. For this checkpoint it reviews validated hypotheses only, because those are the hypotheses downstream nodes may trust.
 
 ## Tradeoffs noticed
 

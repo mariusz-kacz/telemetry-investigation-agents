@@ -30,6 +30,7 @@ from telemetry_agents.investigation.evidence_retrieval import (
     RetrievedEvidence,
 )
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
+from telemetry_agents.shared.paths import PROJECT_ROOT
 
 
 class FakeUnsupportedClaimAdapter:
@@ -96,12 +97,12 @@ def _retrieved_evidence(
 def _output(
     *,
     retrieved_evidence: list[RetrievedEvidence] | None = None,
-    accepted_hypotheses: list[InvestigationHypothesis] | None = None,
+    validated_hypotheses: list[InvestigationHypothesis] | None = None,
 ) -> EvaluationRunOutput:
     validation_result = None
-    if accepted_hypotheses is not None:
+    if validated_hypotheses is not None:
         validation_result = HypothesisValidationResult(
-            accepted_hypotheses=accepted_hypotheses
+            validated_hypotheses=validated_hypotheses
         )
 
     return EvaluationRunOutput(
@@ -146,12 +147,33 @@ def test_expected_evidence_sources_passes_when_sources_are_present() -> None:
     assert score.missing_expected_sources == []
 
 
-def test_citation_correctness_passes_when_accepted_hypothesis_cites_retrieved_evidence() -> (
+def test_expected_evidence_sources_matches_absolute_output_to_relative_expected_path() -> None:
+    case = _eval_case()
+    output = _output(
+        retrieved_evidence=[
+            _retrieved_evidence(
+                source_file=str(PROJECT_ROOT / "sample_data/logs/checkout-api.log")
+            )
+        ]
+    )
+
+    score = score_expected_evidence_sources(case=case, output=output)
+
+    assert score.passed is True
+    assert score.matched_expected_sources == [
+        ExpectedEvidenceSourceDetail(
+            source_file="sample_data/logs/checkout-api.log", source=EvidenceSource.LOG
+        )
+    ]
+    assert score.missing_expected_sources == []
+
+
+def test_citation_correctness_passes_when_validated_hypothesis_cites_retrieved_evidence() -> (
     None
 ):
     output = _output(
         retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
-        accepted_hypotheses=[_hypothesis()],
+        validated_hypotheses=[_hypothesis()],
     )
 
     score = score_citation_correctness(output=output)
@@ -162,10 +184,10 @@ def test_citation_correctness_passes_when_accepted_hypothesis_cites_retrieved_ev
     assert score.missing_evidence_references == {}
 
 
-def test_citation_correctness_fails_when_accepted_hypothesis_has_no_citations() -> None:
+def test_citation_correctness_fails_when_validated_hypothesis_has_no_citations() -> None:
     output = _output(
         retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
-        accepted_hypotheses=[_hypothesis(supporting_evidence_ids=[])],
+        validated_hypotheses=[_hypothesis(supporting_evidence_ids=[])],
     )
 
     score = score_citation_correctness(output=output)
@@ -177,7 +199,7 @@ def test_citation_correctness_fails_when_accepted_hypothesis_has_no_citations() 
 def test_citation_correctness_fails_when_citation_is_not_retrieved() -> None:
     output = _output(
         retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
-        accepted_hypotheses=[_hypothesis(supporting_evidence_ids=["unknown-log-001"])],
+        validated_hypotheses=[_hypothesis(supporting_evidence_ids=["unknown-log-001"])],
     )
 
     score = score_citation_correctness(output=output)
@@ -191,7 +213,7 @@ def test_citation_correctness_fails_when_citation_refers_to_missing_evidence() -
     missing_evidence.strength = EvidenceStrength.MISSING
     output = _output(
         retrieved_evidence=[missing_evidence],
-        accepted_hypotheses=[
+        validated_hypotheses=[
             _hypothesis(supporting_evidence_ids=["missing-log-inc-001"])
         ],
     )
@@ -207,7 +229,7 @@ def test_citation_correctness_logs_all_defects() -> None:
     missing_evidence.strength = EvidenceStrength.MISSING
     output = _output(
         retrieved_evidence=[missing_evidence],
-        accepted_hypotheses=[
+        validated_hypotheses=[
             _hypothesis(
                 supporting_evidence_ids=["missing-log-inc-001", "unknown-log-001"]
             )
@@ -224,7 +246,7 @@ def test_citation_correctness_logs_all_defects() -> None:
 def test_citation_correctness_passes_when_validation_result_is_empty() -> None:
     output = _output(
         retrieved_evidence=[],
-        accepted_hypotheses=[],
+        validated_hypotheses=[],
     )
 
     score = score_citation_correctness(output=output)
@@ -336,7 +358,7 @@ def test_categorization_passes_when_all_hypotheses_match_category() -> None:
 
     output = EvaluationRunOutput(
         validation_result=HypothesisValidationResult(
-            accepted_hypotheses=[
+            validated_hypotheses=[
                 _hypothesis(
                     "hyp-001",
                     statement="Checkout latency is caused by database timeout errors.",
@@ -364,7 +386,7 @@ def test_categorization_passes_when_any_hypotheses_match_category() -> None:
 
     output = EvaluationRunOutput(
         validation_result=HypothesisValidationResult(
-            accepted_hypotheses=[
+            validated_hypotheses=[
                 _hypothesis(
                     "hyp-001",
                     statement="Checkout latency is caused by database timeout errors.",
@@ -389,7 +411,7 @@ def test_categorization_fails_when_none_hypotheses_match_category() -> None:
 
     output = EvaluationRunOutput(
         validation_result=HypothesisValidationResult(
-            accepted_hypotheses=[
+            validated_hypotheses=[
                 _hypothesis(
                     "hyp-001",
                     statement="Checkout latency is caused by database timeout errors.",
@@ -411,7 +433,7 @@ def test_expected_human_review_passes_when_required_review_is_expected() -> None
     output = _output()
     output.human_review_assessment = HumanReviewAssessment(
         human_review_required=True,
-        human_review_reason="Low accepted hypothesis confidence.",
+        human_review_reason="Low validated hypothesis confidence.",
     )
 
     score = score_expected_human_review(case=case, output=output)
@@ -466,7 +488,7 @@ def test_expected_human_review_fails_when_required_review_is_not_produced() -> N
 def test_unsupported_claims_passes_when_reviewer_returns_no_findings() -> None:
     output = _output(
         retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
-        accepted_hypotheses=[_hypothesis()],
+        validated_hypotheses=[_hypothesis()],
     )
     adapter = FakeUnsupportedClaimAdapter(UnsupportedClaimReviewResult())
     reviewer = GuardedUnsupportedClaimReviewer(adapter=adapter)
@@ -479,7 +501,7 @@ def test_unsupported_claims_passes_when_reviewer_returns_no_findings() -> None:
     assert adapter.requests == [
         UnsupportedClaimReviewRequest(
             evidence=output.retrieved_evidence,
-            accepted_hypotheses=output.validation_result.accepted_hypotheses,
+            vaidated_hypotheses=output.validation_result.validated_hypotheses,
         )
     ]
 
@@ -493,7 +515,7 @@ def test_unsupported_claims_fails_when_reviewer_returns_finding() -> None:
     )
     output = _output(
         retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
-        accepted_hypotheses=[_hypothesis()],
+        validated_hypotheses=[_hypothesis()],
     )
     adapter = FakeUnsupportedClaimAdapter(
         UnsupportedClaimReviewResult(findings=[finding])
@@ -515,7 +537,7 @@ def test_unsupported_claims_rejects_unknown_evidence_id_through_scoring() -> Non
     )
     output = _output(
         retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
-        accepted_hypotheses=[_hypothesis()],
+        validated_hypotheses=[_hypothesis()],
     )
     adapter = FakeUnsupportedClaimAdapter(
         UnsupportedClaimReviewResult(findings=[finding])
@@ -526,10 +548,10 @@ def test_unsupported_claims_rejects_unknown_evidence_id_through_scoring() -> Non
         score_unsupported_claims(output=output, reviewer=reviewer)
 
 
-def test_unsupported_claims_skips_reviewer_when_no_hypotheses_are_accepted() -> None:
+def test_unsupported_claims_skips_reviewer_when_no_hypotheses_are_validated() -> None:
     output = _output(
         retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
-        accepted_hypotheses=[],
+        validated_hypotheses=[],
     )
     adapter = FakeUnsupportedClaimAdapter(UnsupportedClaimReviewResult())
     reviewer = GuardedUnsupportedClaimReviewer(adapter=adapter)

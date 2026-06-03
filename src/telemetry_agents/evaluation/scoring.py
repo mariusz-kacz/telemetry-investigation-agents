@@ -1,4 +1,5 @@
 from collections import defaultdict
+from pathlib import Path
 
 from telemetry_agents.evaluation.unsupported_claim_review import (
     GuardedUnsupportedClaimReviewer,
@@ -15,6 +16,7 @@ from telemetry_agents.evaluation.models import (
     UnsupportedClaimScore,
 )
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
+from telemetry_agents.shared.paths import PROJECT_ROOT
 
 
 def score_unsupported_claims(
@@ -22,15 +24,15 @@ def score_unsupported_claims(
     output: EvaluationRunOutput,
     reviewer: GuardedUnsupportedClaimReviewer,
 ) -> UnsupportedClaimScore:
-    """Score whether accepted hypotheses contain unsupported causal claims."""
+    """Score whether validated hypotheses contain unsupported causal claims."""
     if (
         output.validation_result is None
-        or not output.validation_result.accepted_hypotheses
+        or not output.validation_result.validated_hypotheses
     ):
         return UnsupportedClaimScore(passed=True)
 
     request = UnsupportedClaimReviewRequest(
-        accepted_hypotheses=output.validation_result.accepted_hypotheses,
+        vaidated_hypotheses=output.validation_result.validated_hypotheses,
         evidence=output.retrieved_evidence,
     )
     review_result = reviewer.review(request=request)
@@ -44,7 +46,7 @@ def score_citation_correctness(
     *,
     output: EvaluationRunOutput,
 ) -> CitationCorrectnessScore:
-    """Score whether accepted hypotheses cite usable retrieved evidence."""
+    """Score whether validated hypotheses cite usable retrieved evidence."""
     if output.validation_result is None:
         return CitationCorrectnessScore(passed=True)
 
@@ -56,7 +58,7 @@ def score_citation_correctness(
         for evidence in output.retrieved_evidence
     }
 
-    for hypothesis in output.validation_result.accepted_hypotheses:
+    for hypothesis in output.validation_result.validated_hypotheses:
         if not hypothesis.supporting_evidence_ids:
             hypotheses_without_citations.append(hypothesis.hypothesis_id)
             continue
@@ -91,11 +93,16 @@ def score_expected_evidence_sources(
     output: EvaluationRunOutput,
 ) -> ExpectedEvidenceSourcesScore:
     """Score whether retrieved evidence cites the expected source files."""
+    expected_sources_by_key = {
+        (_canonical_source_file(item.source_file), item.source): item
+        for item in case.expected_evidence_sources
+    }
     expected_sources = {
-        (item.source_file, item.source) for item in case.expected_evidence_sources
+        (_canonical_source_file(item.source_file), item.source)
+        for item in case.expected_evidence_sources
     }
     output_sources = {
-        (item.citation.source_file, item.evidence.source)
+        (_canonical_source_file(item.citation.source_file), item.evidence.source)
         for item in output.retrieved_evidence
     }
 
@@ -105,14 +112,31 @@ def score_expected_evidence_sources(
     return ExpectedEvidenceSourcesScore(
         passed=not bool(missing_expected_sources),
         matched_expected_sources=[
-            ExpectedEvidenceSourceDetail(source_file=source_file, source=source)
+            ExpectedEvidenceSourceDetail(
+                source_file=expected_sources_by_key[(source_file, source)].source_file,
+                source=source,
+            )
             for (source_file, source) in matched_expected_sources
         ],
         missing_expected_sources=[
-            ExpectedEvidenceSourceDetail(source_file=source_file, source=source)
+            ExpectedEvidenceSourceDetail(
+                source_file=expected_sources_by_key[(source_file, source)].source_file,
+                source=source,
+            )
             for (source_file, source) in missing_expected_sources
         ],
     )
+
+
+def _canonical_source_file(source_file: str) -> str:
+    source_path = Path(source_file)
+    if not source_path.is_absolute():
+        return source_path.as_posix()
+
+    try:
+        return source_path.relative_to(PROJECT_ROOT).as_posix()
+    except ValueError:
+        return source_path.as_posix()
 
 
 def score_expected_category(
@@ -123,7 +147,7 @@ def score_expected_category(
     expected_category = case.expected_category
     matched_hypothesis_ids = []
     if output.validation_result:
-        for hypothesis in output.validation_result.accepted_hypotheses:
+        for hypothesis in output.validation_result.validated_hypotheses:
             if expected_category == hypothesis.category:
                 matched_hypothesis_ids.append(hypothesis.hypothesis_id)
 

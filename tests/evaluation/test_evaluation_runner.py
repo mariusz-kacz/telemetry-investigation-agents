@@ -90,7 +90,7 @@ def _evaluation_run_output(
             )
         ],
         validation_result=HypothesisValidationResult(
-            accepted_hypotheses=[
+            validated_hypotheses=[
                 InvestigationHypothesis(
                     hypothesis_id="hyp-001",
                     statement=statement,

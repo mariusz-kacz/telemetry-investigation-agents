@@ -54,7 +54,7 @@ def _hypothesis() -> InvestigationHypothesis:
 
 
 def _validation_result() -> HypothesisValidationResult:
-    return HypothesisValidationResult(accepted_hypotheses=[_hypothesis()])
+    return HypothesisValidationResult(validated_hypotheses=[_hypothesis()])
 
 
 def _retrieved_evidence() -> RetrievedEvidence:

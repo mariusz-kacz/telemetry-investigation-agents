@@ -70,7 +70,7 @@ demonstrates risk-based approval/rejection human-in-the-loop control only.
 - Escalation reasons must remain auditable and deterministic.
 - A high-impact incident can require review even when confidence is high.
 - A rejected candidate hypothesis does not by itself require human review when
-  a trustworthy accepted hypothesis remains.
+  a trustworthy validated hypothesis remains.
 - Human-review outcomes must not be represented by loosely typed dictionaries.
 - Resume payloads eventually need a typed boundary if reviewer actions grow.
 

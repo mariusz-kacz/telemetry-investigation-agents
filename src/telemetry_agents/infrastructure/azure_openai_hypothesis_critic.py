@@ -26,14 +26,14 @@ class AzureOpenAIHypothesisCritic:
                 messages=[
                     ChatCompletionSystemMessageParam(
                         content=(
-                            "Review accepted investigation hypotheses for semantic problems only. "
+                            "Review validated investigation hypotheses for semantic problems only. "
                             "Do not generate new hypotheses. Do not rewrite hypotheses. "
                             "Review whether each hypothesis category is semantically consistent "
                             "with its statement and cited evidence. Report category inconsistencies "
                             "using the existing critique finding types. "
                             "Return critique findings only when the supplied evidence suggests a "
                             "contradiction, unsupported causal leap, alternative interpretation, or "
-                            "overstated confidence. Reference only hypothesis IDs from the accepted "
+                            "overstated confidence. Reference only hypothesis IDs from the validated "
                             "hypotheses in the validation result. Reference only evidence IDs present "
                             "in the supplied evidence context. Do not cite missing evidence as support "
                             "for a critique finding. If there are no semantic concerns, return an empty "

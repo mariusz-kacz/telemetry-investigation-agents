@@ -18,7 +18,7 @@ Hypothesis generation produces typed candidate `InvestigationHypothesis` objects
 
 Hypothesis validation owns evidence policy:
 
-- every accepted hypothesis must cite supporting evidence;
+- every validated hypothesis must cite supporting evidence;
 - cited evidence IDs must exist;
 - missing evidence cannot be used as support;
 - confidence is capped according to evidence strength;

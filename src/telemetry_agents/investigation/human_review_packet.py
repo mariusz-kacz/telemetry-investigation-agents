@@ -66,7 +66,7 @@ def build_human_review_packet(
 ) -> HumanReviewPacket:
     evidence_by_id = {item.evidence.evidence_id: item for item in collected_evidence}
     mapped_hypotheses = []
-    for hypothesis in validation_result.accepted_hypotheses:
+    for hypothesis in validation_result.validated_hypotheses:
         mapped_evidence = []
         for evidence_id in hypothesis.supporting_evidence_ids:
             source_evidence = evidence_by_id[evidence_id]

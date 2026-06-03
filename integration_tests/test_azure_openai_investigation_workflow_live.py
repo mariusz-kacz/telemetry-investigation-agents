@@ -111,7 +111,7 @@ def test_azure_investigation_workflow_runs_graph_with_live_llm_adapters() -> Non
     )
     assert all(
         set(hypothesis.supporting_evidence_ids) <= known_evidence_ids
-        for hypothesis in validation_result.accepted_hypotheses
+        for hypothesis in validation_result.validated_hypotheses
     )
     assert all(
         set(finding.evidence_ids) <= known_evidence_ids for finding in critique_findings

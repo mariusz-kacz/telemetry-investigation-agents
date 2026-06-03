@@ -1,5 +1,5 @@
 from telemetry_agents.telemetry.readers import LocalFileTelemetryReader
-from paths import SAMPLE_DATA_DIR
+from telemetry_agents.shared.paths import SAMPLE_DATA_DIR
 
 
 def test_local_file_reader_reads_logs_with_source_location() -> None:

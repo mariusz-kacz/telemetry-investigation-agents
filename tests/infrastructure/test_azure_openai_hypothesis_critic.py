@@ -60,7 +60,7 @@ def _hypothesis() -> InvestigationHypothesis:
 
 def _request() -> HypothesisCritiqueRequest:
     evidence = _retrieved_evidence()
-    validation_result = HypothesisValidationResult(accepted_hypotheses=[_hypothesis()])
+    validation_result = HypothesisValidationResult(validated_hypotheses=[_hypothesis()])
     return HypothesisCritiqueRequest(
         evidence=[evidence],
         validation_result=validation_result,

@@ -73,7 +73,7 @@ def _hypothesis(
 
 
 def _validation_result() -> HypothesisValidationResult:
-    return HypothesisValidationResult(accepted_hypotheses=[_hypothesis()])
+    return HypothesisValidationResult(validated_hypotheses=[_hypothesis()])
 
 
 def _incident(impact: IncidentImpact = IncidentImpact.MEDIUM) -> Incident:
@@ -119,9 +119,9 @@ def test_requires_human_review_when_has_no_evidences() -> None:
     assert result.human_review_reason == "missing evidence"
 
 
-def test_requires_human_review_when_has_no_accepted_hypotheses() -> None:
+def test_requires_human_review_when_has_no_validated_hypotheses() -> None:
     request = HumanReviewAssessmentRequest(
-        validation_result=HypothesisValidationResult(accepted_hypotheses=[]),
+        validation_result=HypothesisValidationResult(validated_hypotheses=[]),
         critique_findings=[],
         evidence=[_retrieved_evidence()],
         incident=_incident(),
@@ -130,13 +130,13 @@ def test_requires_human_review_when_has_no_accepted_hypotheses() -> None:
     result = assess_human_review_requirement(request)
 
     assert result.human_review_required is True
-    assert result.human_review_reason == "no accepted hypotheses"
+    assert result.human_review_reason == "no validated hypotheses"
 
 
 def test_requires_human_review_when_hypothesis_has_low_confidence() -> None:
     request = HumanReviewAssessmentRequest(
         validation_result=HypothesisValidationResult(
-            accepted_hypotheses=[
+            validated_hypotheses=[
                 _hypothesis(confidence=0.4, uncertainty="Low confidence")
             ]
         ),
@@ -148,7 +148,7 @@ def test_requires_human_review_when_hypothesis_has_low_confidence() -> None:
     result = assess_human_review_requirement(request)
 
     assert result.human_review_required is True
-    assert result.human_review_reason == "low accepted hypothesis confidence"
+    assert result.human_review_reason == "low validated hypothesis confidence"
 
 
 @pytest.mark.parametrize(
@@ -163,7 +163,7 @@ def test_requires_human_review_when_weak_evidence_strength(
 ) -> None:
     request = HumanReviewAssessmentRequest(
         validation_result=HypothesisValidationResult(
-            accepted_hypotheses=[_hypothesis()]
+            validated_hypotheses=[_hypothesis()]
         ),
         critique_findings=[],
         evidence=[_retrieved_evidence(strength=strength)],
@@ -179,7 +179,7 @@ def test_requires_human_review_when_weak_evidence_strength(
 def test_human_review_not_required_when_all_criteria_met() -> None:
     request = HumanReviewAssessmentRequest(
         validation_result=HypothesisValidationResult(
-            accepted_hypotheses=[_hypothesis()]
+            validated_hypotheses=[_hypothesis()]
         ),
         critique_findings=[],
         evidence=[_retrieved_evidence()],
@@ -192,12 +192,12 @@ def test_human_review_not_required_when_all_criteria_met() -> None:
     assert not result.human_review_reason
 
 
-def test_rejected_alternative_does_not_require_review_when_accepted_hypothesis_is_strong() -> (
+def test_rejected_alternative_does_not_require_review_when_validated_hypothesis_is_strong() -> (
     None
 ):
     request = HumanReviewAssessmentRequest(
         validation_result=HypothesisValidationResult(
-            accepted_hypotheses=[_hypothesis()],
+            validated_hypotheses=[_hypothesis()],
             rejected_hypotheses=[
                 RejectedHypothesis(
                     hypothesis=_hypothesis(

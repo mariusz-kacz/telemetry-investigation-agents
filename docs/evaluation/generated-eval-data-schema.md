@@ -208,8 +208,8 @@ Rules:
 ## Insufficient-Evidence Case
 
 Do not force this case into the current golden contract yet. A correct workflow
-may return no accepted hypothesis, while the current category score expects at
-least one accepted hypothesis matching `expected_category`.
+may return no validated hypothesis, while the current category score expects at
+least one validated hypothesis matching `expected_category`.
 
 Before generating this case, decide whether the golden schema should support an
 explicit expectation such as:

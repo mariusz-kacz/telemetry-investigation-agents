@@ -32,7 +32,7 @@ class FakeUnsupportedClaimReviewAdapter:
         return self.result
 
 
-def _accepted_hypothesis(supporting_evidence_id: str) -> InvestigationHypothesis:
+def _validated_hypothesis(supporting_evidence_id: str) -> InvestigationHypothesis:
     return InvestigationHypothesis(
         hypothesis_id="hyp-001",
         statement="A DNS outage caused checkout database timeouts.",
@@ -68,8 +68,8 @@ def _request(
 ) -> UnsupportedClaimReviewRequest:
     return UnsupportedClaimReviewRequest(
         evidence=[_retrieved_evidence(evidence_strength=evidence_strength)],
-        accepted_hypotheses=[
-            _accepted_hypothesis(supporting_evidence_id=supporting_evidence_id)
+        vaidated_hypotheses=[
+            _validated_hypothesis(supporting_evidence_id=supporting_evidence_id)
         ],
     )
 

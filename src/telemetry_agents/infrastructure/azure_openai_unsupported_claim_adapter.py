@@ -20,16 +20,16 @@ class AzureOpenAIUnsupportedClaimAdapter:
         self,
         request: UnsupportedClaimReviewRequest,
     ) -> UnsupportedClaimReviewResult:
-        """Review accepted hypotheses without changing workflow state."""
+        """Review validated hypotheses without changing workflow state."""
         try:
             completion = self.client.beta.chat.completions.parse(
                 model=self.deployment_name,
                 messages=[
                     ChatCompletionSystemMessageParam(
                         content=(
-                            "Review accepted investigation hypotheses for unsupported causal claims "
-                            "only. Report findings only for the supplied accepted hypotheses. "
-                            "Reference only hypothesis IDs from the accepted hypotheses and only "
+                            "Review validated investigation hypotheses for unsupported causal claims "
+                            "only. Report findings only for the supplied validated hypotheses. "
+                            "Reference only hypothesis IDs from the validated hypotheses and only "
                             "evidence IDs from the supplied evidence context. Do not use missing "
                             "evidence as support. Do not change workflow state. If the accepted "
                             "hypotheses contain no unsupported causal claims, return an empty "

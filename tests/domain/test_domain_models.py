@@ -287,7 +287,7 @@ def test_low_confidence_report_requires_meaningful_uncertainty(
 def test_validation_result_rejects_duplicate_accepted_hypothesis_ids() -> None:
     with pytest.raises(ValidationError):
         HypothesisValidationResult(
-            accepted_hypotheses=[_hypothesis(), _hypothesis()],
+            validated_hypotheses=[_hypothesis(), _hypothesis()],
         )
 
 
@@ -304,7 +304,7 @@ def test_validation_result_rejects_duplicate_rejected_hypothesis_ids() -> None:
 def test_validation_result_rejects_duplicate_confidence_adjustments() -> None:
     with pytest.raises(ValidationError):
         HypothesisValidationResult(
-            accepted_hypotheses=[_hypothesis()],
+            validated_hypotheses=[_hypothesis()],
             confidence_adjustments=[_adjustment(), _adjustment()],
         )
 
@@ -312,7 +312,7 @@ def test_validation_result_rejects_duplicate_confidence_adjustments() -> None:
 def test_validation_result_rejects_accepted_and_rejected_same_hypothesis_id() -> None:
     with pytest.raises(ValidationError):
         HypothesisValidationResult(
-            accepted_hypotheses=[_hypothesis()],
+            validated_hypotheses=[_hypothesis()],
             rejected_hypotheses=[
                 RejectedHypothesis(
                     hypothesis=_hypothesis(),
@@ -325,7 +325,7 @@ def test_validation_result_rejects_accepted_and_rejected_same_hypothesis_id() ->
 def test_validation_result_rejects_adjustment_for_unaccepted_hypothesis() -> None:
     with pytest.raises(ValidationError):
         HypothesisValidationResult(
-            accepted_hypotheses=[_hypothesis()],
+            validated_hypotheses=[_hypothesis()],
             confidence_adjustments=[_adjustment("hyp-unknown")],
         )
 

@@ -33,7 +33,7 @@ def validate_hypotheses(
     request: HypothesisValidationRequest,
 ) -> HypothesisValidationResult:
     """Validate generated hypotheses against retrieved evidence."""
-    accepted_hypotheses: list[InvestigationHypothesis] = []
+    validated_hypotheses: list[InvestigationHypothesis] = []
     rejected_hypotheses: list[RejectedHypothesis] = []
     confidence_adjustments: list[ConfidenceAdjustment] = []
 
@@ -101,12 +101,12 @@ def validate_hypotheses(
             adjusted_hypothesis = InvestigationHypothesis.model_validate(
                 adjusted_hypothesis_data
             )
-            accepted_hypotheses.append(adjusted_hypothesis)
+            validated_hypotheses.append(adjusted_hypothesis)
         else:
-            accepted_hypotheses.append(hypothesis)
+            validated_hypotheses.append(hypothesis)
 
     return HypothesisValidationResult(
-        accepted_hypotheses=accepted_hypotheses,
+        validated_hypotheses=validated_hypotheses,
         rejected_hypotheses=rejected_hypotheses,
         confidence_adjustments=confidence_adjustments,
     )

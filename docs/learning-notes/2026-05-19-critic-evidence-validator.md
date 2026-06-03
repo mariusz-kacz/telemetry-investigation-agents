@@ -6,7 +6,7 @@ Add a deterministic validation step after hypothesis generation so generated hyp
 
 ## What I built
 
-Added a structured `HypothesisValidationResult` with accepted hypotheses, rejected hypotheses, confidence adjustments, and a placeholder for contradictions.
+Added a structured `HypothesisValidationResult` with validated hypotheses, rejected hypotheses, confidence adjustments, and a placeholder for contradictions.
 
 Added `validate_hypotheses()` as the deterministic validation boundary. It rejects hypotheses with no supporting evidence IDs, unknown evidence IDs, or missing evidence used as support. It accepts weak and medium evidence when plausible, but caps overconfident hypotheses and records confidence adjustment reasons.
 

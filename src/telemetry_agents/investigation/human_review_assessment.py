@@ -37,17 +37,17 @@ def assess_human_review_requirement(
     if not request.evidence:
         reasons.append("missing evidence")
 
-    if not request.validation_result.accepted_hypotheses:
-        reasons.append("no accepted hypotheses")
+    if not request.validation_result.validated_hypotheses:
+        reasons.append("no validated hypotheses")
 
     if (
-        request.validation_result.accepted_hypotheses
+        request.validation_result.validated_hypotheses
         and min(
-            item.confidence for item in request.validation_result.accepted_hypotheses
+            item.confidence for item in request.validation_result.validated_hypotheses
         )
         < LOW_CONFIDENCE_THRESHOLD
     ):
-        reasons.append("low accepted hypothesis confidence")
+        reasons.append("low validated hypothesis confidence")
 
     if any(
         item.strength in {EvidenceStrength.WEAK, EvidenceStrength.MISSING}

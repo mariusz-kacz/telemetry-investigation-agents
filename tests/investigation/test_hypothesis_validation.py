@@ -56,7 +56,7 @@ def test_validation_rejects_hypothesis_without_supporting_evidence() -> None:
 
     result = validate_hypotheses(request)
 
-    assert result.accepted_hypotheses == []
+    assert result.validated_hypotheses == []
     assert result.rejected_hypotheses[0].hypothesis == hypothesis
     assert (
         "Hypothesis has no supporting evidence IDs."
@@ -85,7 +85,7 @@ def test_validation_rejects_missing_evidence_as_support() -> None:
 
     result = validate_hypotheses(request)
 
-    assert result.accepted_hypotheses == []
+    assert result.validated_hypotheses == []
     assert result.rejected_hypotheses[0].hypothesis == hypothesis
     assert "missing evidence" in result.rejected_hypotheses[0].reason
 
@@ -105,7 +105,7 @@ def test_validation_rejects_unknown_evidence_reference() -> None:
 
     result = validate_hypotheses(request)
 
-    assert result.accepted_hypotheses == []
+    assert result.validated_hypotheses == []
     assert result.rejected_hypotheses[0].hypothesis == hypothesis
     assert "unknown evidence" in result.rejected_hypotheses[0].reason
 
@@ -125,7 +125,7 @@ def test_validation_rejects_mixed_known_and_unknown_evidence_references() -> Non
 
     result = validate_hypotheses(request)
 
-    assert result.accepted_hypotheses == []
+    assert result.validated_hypotheses == []
     assert result.rejected_hypotheses[0].hypothesis == hypothesis
     assert "unknown evidence" in result.rejected_hypotheses[0].reason
 
@@ -151,10 +151,10 @@ def test_validation_downgrades_weak_but_plausible_hypothesis() -> None:
 
     result = validate_hypotheses(request)
 
-    assert len(result.accepted_hypotheses) == 1
-    assert result.accepted_hypotheses[0].hypothesis_id == "hyp-weak"
-    assert result.accepted_hypotheses[0].confidence <= 0.4
-    assert result.accepted_hypotheses[0].uncertainty
+    assert len(result.validated_hypotheses) == 1
+    assert result.validated_hypotheses[0].hypothesis_id == "hyp-weak"
+    assert result.validated_hypotheses[0].confidence <= 0.4
+    assert result.validated_hypotheses[0].uncertainty
     assert result.confidence_adjustments[0].hypothesis_id == "hyp-weak"
     assert result.confidence_adjustments[0].original_confidence == 0.9
     assert result.confidence_adjustments[0].adjusted_confidence <= 0.4
@@ -180,9 +180,9 @@ def test_validation_caps_confidence_for_medium_without_strong_evidence() -> None
 
     result = validate_hypotheses(request)
 
-    assert len(result.accepted_hypotheses) == 1
-    assert result.accepted_hypotheses[0].hypothesis_id == "hyp-medium"
-    assert result.accepted_hypotheses[0].confidence <= 0.8
+    assert len(result.validated_hypotheses) == 1
+    assert result.validated_hypotheses[0].hypothesis_id == "hyp-medium"
+    assert result.validated_hypotheses[0].confidence <= 0.8
     assert result.confidence_adjustments[0].hypothesis_id == "hyp-medium"
     assert result.confidence_adjustments[0].original_confidence == 0.95
     assert result.confidence_adjustments[0].adjusted_confidence <= 0.8
@@ -208,9 +208,9 @@ def test_validation_keeps_confidence_when_strong_evidence_supports_it() -> None:
 
     result = validate_hypotheses(request)
 
-    assert len(result.accepted_hypotheses) == 1
-    assert result.accepted_hypotheses[0].hypothesis_id == "hyp-strong"
-    assert result.accepted_hypotheses[0].confidence == 0.95
+    assert len(result.validated_hypotheses) == 1
+    assert result.validated_hypotheses[0].hypothesis_id == "hyp-strong"
+    assert result.validated_hypotheses[0].confidence == 0.95
     assert len(result.confidence_adjustments) == 0
 
 
@@ -222,7 +222,7 @@ def test_validation_allows_empty_hypothesis_list() -> None:
 
     result = validate_hypotheses(request)
 
-    assert result.accepted_hypotheses == []
+    assert result.validated_hypotheses == []
     assert result.rejected_hypotheses == []
     assert result.confidence_adjustments == []
 
@@ -244,7 +244,7 @@ def test_validation_does_not_mutate_original_hypothesis_when_confidence_is_adjus
 
     result = validate_hypotheses(request)
 
-    assert result.accepted_hypotheses[0].confidence <= 0.4
+    assert result.validated_hypotheses[0].confidence <= 0.4
     assert hypothesis.confidence == 0.9
 
 
@@ -263,6 +263,6 @@ def test_validation_accepts_strong_evidence_hypothesis() -> None:
 
     result = validate_hypotheses(request)
 
-    assert result.accepted_hypotheses == [hypothesis]
+    assert result.validated_hypotheses == [hypothesis]
     assert result.rejected_hypotheses == []
     assert result.confidence_adjustments == []

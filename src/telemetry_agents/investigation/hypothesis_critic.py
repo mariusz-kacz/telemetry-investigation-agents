@@ -41,7 +41,7 @@ def critique_hypotheses(
 
     validation_result = request.validation_result
     hypothesis_ids = {
-        item.hypothesis_id for item in validation_result.accepted_hypotheses
+        item.hypothesis_id for item in validation_result.validated_hypotheses
     }
     evidence_by_id = {item.evidence.evidence_id: item for item in request.evidence}
     evidence_ids = set(evidence_by_id)

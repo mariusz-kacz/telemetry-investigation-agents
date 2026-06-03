@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from paths import SAMPLE_DATA_DIR
+from telemetry_agents.shared.paths import SAMPLE_DATA_DIR
 from telemetry_agents.investigation.evidence_retrieval import (
     EvidenceRetrievalRequest,
     EvidenceStrength,

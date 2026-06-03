@@ -6,7 +6,6 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 
-from paths import EVAL_DATA_DIR
 from telemetry_agents.domain import Incident
 from telemetry_agents.evaluation import EvalCase, evaluate_case_output, GuardedUnsupportedClaimReviewer, \
     EvaluationRunOutput
@@ -17,6 +16,7 @@ from telemetry_agents.infrastructure.azure_openai_hypothesis_generator import Az
 from telemetry_agents.infrastructure.azure_openai_unsupported_claim_adapter import AzureOpenAIUnsupportedClaimAdapter
 from telemetry_agents.investigation.evidence_retrieval import retrieve_evidence, EvidenceRetrievalRequest, \
     RetrievedEvidence
+from telemetry_agents.shared.paths import EVAL_DATA_DIR
 
 
 def _load_eval_cases() -> list[EvalCase]:

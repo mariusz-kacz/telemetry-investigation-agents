@@ -209,7 +209,7 @@ def test_report_review_interrupt_exposes_decision_material() -> None:
         "impact": "medium",
     }
     assert payload["escalation_reason"] == (
-        "critic findings present; low accepted hypothesis confidence"
+        "critic findings present; low validated hypothesis confidence"
     )
     assert payload["hypotheses"] == [
         {

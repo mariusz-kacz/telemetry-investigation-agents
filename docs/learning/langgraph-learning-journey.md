@@ -169,7 +169,7 @@ Before any phase is marked DONE:
 | 7. Evidence retrieval and citations | DONE | 2026-05-25 | Retrieval preserves citations, represents absent source files as missing evidence, and ranks merged evidence by relevance with regression tests. |
 | 8. Agentic hypothesis generation | DONE | 2026-05-18 | Bounded hypothesis generation uses a protocol-backed generator to produce typed candidate hypotheses, fake LLM tests, and a learning note. Evidence policy is owned by validation. |
 | 9. Evidence validator | DONE | 2026-05-19 | Deterministic hypothesis validator owns evidence-reference policy, structured validation result, graph node, confidence adjustment audit trail, focused tests, and learning note. Semantic contradiction detection is deferred to the LLM critic phase. |
-| 10. LLM critic for semantic review | DONE | 2026-05-21 | Separate critic node and protocol-backed adapter review accepted hypotheses for semantic issues, validate cited IDs, reject missing evidence as critique support, and safely fall back with a warning when the critic is unavailable. |
+| 10. LLM critic for semantic review | DONE | 2026-05-21 | Separate critic node and protocol-backed adapter review validated hypotheses for semantic issues, validate cited IDs, reject missing evidence as critique support, and safely fall back with a warning when the critic is unavailable. |
 | 11. Persistence, checkpointing, and interrupts | DONE | 2026-05-22 | SQLite-backed LangGraph checkpointing, app-owned run registry, state inspection, simulated resume, interrupt/resume gate, ADR, and learning note exist. |
 | 12. Human-in-the-loop review | DONE | 2026-05-25 | Risk-based review assessment, typed status, conditional interrupt/bypass routing, approval/rejection outcomes, focused tests, and learning note exist. Evidence re-entry and edited recommendations are deferred. |
 | 13. Azure OpenAI integration and graph smoke | DONE | 2026-05-28 | Azure OpenAI generator and critic adapters use Microsoft Entra ID, structured outputs, mocked adapter tests, adapter-level live smoke tests, and one graph-level live smoke run through generation, validation, critique, human review, and approval resume. |
@@ -676,7 +676,7 @@ The deterministic validator owns reference integrity, missing evidence handling,
 Create a `HypothesisCriticNode` that:
 
 - receives retrieved evidence and `HypothesisValidationResult`,
-- reviews accepted hypotheses for semantic contradictions or unsupported causal claims,
+- reviews validated hypotheses for semantic contradictions or unsupported causal claims,
 - returns structured critic findings,
 - cites evidence IDs for every contradiction or concern,
 - cannot invent hypothesis IDs or evidence IDs,
@@ -905,6 +905,101 @@ Do not use hosted agent orchestration or move deterministic evidence policy into
 ## Codex stop condition
 
 Stop after Azure OpenAI-backed graph smoke validation. Do not begin evaluation cases or prompt optimization yet.
+
+---
+
+# Design refinement between Phase 13 and Phase 14 — Critic findings to hypothesis review policy
+
+## Goal
+
+Make critic findings actionable without letting the LLM critic directly mutate validated hypotheses or confidence.
+
+The current workflow keeps deterministic validation and probabilistic critique separate. That separation is correct, but raw `critique_findings` are too blunt as a routing input because they only answer "did the critic find anything?" rather than "how should this affect hypothesis usability?"
+
+## Concepts
+
+- Post-critic hypothesis review status.
+- Deterministic policy over probabilistic critic observations.
+- Difference between evidence validation, confidence, semantic critique, and workflow usability.
+- Ranking hypotheses without changing confidence.
+- Human review routing based on reviewed hypothesis status rather than raw critic findings.
+
+## Proposed model
+
+The critic should continue to produce bounded structured findings only.
+
+A deterministic policy step should classify each validated hypothesis into a review status such as:
+
+```python
+class HypothesisReviewStatus(StrEnum):
+    ACCEPTED = "accepted"
+    DISPUTED = "disputed"
+    BLOCKED = "blocked"
+```
+
+Critic finding types map to policy categories:
+
+```python
+BLOCKED_FINDINGS = {
+    CritiqueFindingType.CONTRADICTION,
+    CritiqueFindingType.UNSUPPORTED_CAUSAL_LEAP,
+}
+
+DISPUTED_FINDINGS = {
+    CritiqueFindingType.ALTERNATIVE_INTERPRETATION,
+    CritiqueFindingType.OVERSTATED_CONFIDENCE,
+}
+```
+
+Policy precedence:
+
+```text
+BLOCKED wins over DISPUTED.
+DISPUTED wins over ACCEPTED.
+No critic findings means ACCEPTED.
+```
+
+Confidence should not be downgraded by this policy. Confidence remains the validator's evidence-support signal. Review status represents whether a hypothesis is safe to use automatically after semantic review.
+
+## Human review routing policy
+
+Human review should be triggered if:
+
+- any hypothesis is `BLOCKED`,
+- the top reviewed hypothesis is not `ACCEPTED`,
+- multiple hypotheses are `DISPUTED`,
+- any contradiction finding exists,
+- no `ACCEPTED` hypothesis exists.
+
+Define the top hypothesis deterministically as the reviewed hypothesis with the highest validation confidence. Do not let the critic change this confidence.
+
+## Architectural rule
+
+LLM critic output should not directly control routing.
+
+The preferred boundary is:
+
+```text
+validated_hypotheses
+    +
+critique_findings
+    ->
+deterministic hypothesis review policy
+    ->
+reviewed_hypotheses
+    ->
+human review assessment
+```
+
+This creates a policy seam before Phase 14 evaluations. Evals can then check whether unsupported causal leaps and contradictions are correctly blocked, rather than merely checking whether any critic finding forced review.
+
+## Deliberate non-goals
+
+- Do not merge critic findings into `HypothesisValidationResult`.
+- Do not let the critic reject hypotheses directly.
+- Do not downgrade confidence from critic findings.
+- Do not treat `DISPUTED` as the same concept as weak evidence.
+- Do not rename validated hypotheses to accepted hypotheses; accepted is a post-critic review status.
 
 ---
 
