@@ -1,0 +1,17 @@
+﻿{"timestamp":"2026-05-13T14:34:12Z","trace_id":"trace-checkout-9301","span_id":"span-9301-01","service":"checkout-api","operation":"POST /checkout","duration_ms":221,"status":"ok"}
+{"timestamp":"2026-05-13T14:34:12Z","trace_id":"trace-checkout-9301","span_id":"span-9301-02","service":"checkout-api","operation":"validate cart","duration_ms":34,"status":"ok"}
+{"timestamp":"2026-05-13T14:34:12Z","trace_id":"trace-checkout-9301","span_id":"span-9301-03","service":"checkout-api","operation":"calculate tax","duration_ms":42,"status":"ok"}
+{"timestamp":"2026-05-13T14:34:12Z","trace_id":"trace-checkout-9301","span_id":"span-9301-04","service":"orders-db","operation":"INSERT order","duration_ms":74,"status":"ok"}
+{"timestamp":"2026-05-13T14:34:12Z","trace_id":"trace-checkout-9301","span_id":"span-9301-05","service":"shipping-rate-service","operation":"GET /rates","duration_ms":88,"status":"ok"}
+{"timestamp":"2026-05-13T14:53:44Z","trace_id":"trace-checkout-9324","span_id":"span-9324-01","service":"checkout-api","operation":"POST /checkout","duration_ms":2430,"status":"error"}
+{"timestamp":"2026-05-13T14:53:44Z","trace_id":"trace-checkout-9324","span_id":"span-9324-02","service":"checkout-api","operation":"validate cart","duration_ms":39,"status":"ok"}
+{"timestamp":"2026-05-13T14:53:44Z","trace_id":"trace-checkout-9324","span_id":"span-9324-03","service":"checkout-api","operation":"calculate tax","duration_ms":46,"status":"ok"}
+{"timestamp":"2026-05-13T14:53:45Z","trace_id":"trace-checkout-9324","span_id":"span-9324-04","service":"orders-db","operation":"INSERT order","duration_ms":2100,"status":"error"}
+{"timestamp":"2026-05-13T15:01:55Z","trace_id":"trace-checkout-9334","span_id":"span-9334-01","service":"checkout-api","operation":"POST /checkout","duration_ms":2510,"status":"ok"}
+{"timestamp":"2026-05-13T15:01:55Z","trace_id":"trace-checkout-9334","span_id":"span-9334-02","service":"checkout-api","operation":"validate cart","duration_ms":36,"status":"ok"}
+{"timestamp":"2026-05-13T15:01:56Z","trace_id":"trace-checkout-9334","span_id":"span-9334-03","service":"orders-db","operation":"INSERT order","duration_ms":310,"status":"ok"}
+{"timestamp":"2026-05-13T15:01:56Z","trace_id":"trace-checkout-9334","span_id":"span-9334-04","service":"shipping-rate-service","operation":"GET /rates","duration_ms":2050,"status":"ok"}
+{"timestamp":"2026-05-13T15:03:12Z","trace_id":"trace-checkout-9338","span_id":"span-9338-01","service":"checkout-api","operation":"POST /checkout","duration_ms":3000,"status":"error"}
+{"timestamp":"2026-05-13T15:03:12Z","trace_id":"trace-checkout-9338","span_id":"span-9338-02","service":"checkout-api","operation":"validate cart","duration_ms":40,"status":"ok"}
+{"timestamp":"2026-05-13T15:03:12Z","trace_id":"trace-checkout-9338","span_id":"span-9338-03","service":"checkout-api","operation":"prepare downstream dependency calls","duration_ms":55,"status":"ok"}
+{"timestamp":"2026-05-13T15:03:15Z","trace_id":"trace-checkout-9338","span_id":"span-9338-04","service":"checkout-api","operation":"complete checkout workflow","duration_ms":2860,"status":"error"}

@@ -1,0 +1,13 @@
+2026-05-13T14:34:12Z INFO checkout-api trace_id=trace-checkout-9301 Checkout request completed in 221ms
+2026-05-13T14:36:28Z INFO checkout-api trace_id=trace-maintenance-301 Cache refresh completed for checkout promotions
+2026-05-13T14:40:05Z INFO checkout-api trace_id=trace-checkout-9307 Cart validation completed in 37ms
+2026-05-13T14:42:51Z INFO checkout-api trace_id=trace-checkout-9310 Checkout request completed in 238ms
+2026-05-13T14:47:19Z WARN checkout-api trace_id=trace-checkout-9316 Order persistence to orders-db took 1250ms during checkout
+2026-05-13T14:50:33Z INFO checkout-api trace_id=trace-checkout-9320 Tax calculation completed in 44ms
+2026-05-13T14:53:44Z WARN checkout-api trace_id=trace-checkout-9324 Order persistence to orders-db took 2100ms during checkout
+2026-05-13T14:56:08Z ERROR checkout-api trace_id=trace-checkout-9324 Checkout request timed out while waiting for orders-db
+2026-05-13T14:58:26Z INFO checkout-api trace_id=trace-checkout-9327 Inventory reservation prepared in 52ms
+2026-05-13T15:00:41Z WARN checkout-api trace_id=trace-checkout-9331 Order persistence to orders-db took 1470ms during checkout
+2026-05-13T15:01:55Z WARN checkout-api trace_id=trace-checkout-9334 Shipping rate lookup took 1750ms
+2026-05-13T15:03:12Z ERROR checkout-api trace_id=trace-checkout-9338 Checkout request exceeded client timeout
+2026-05-13T15:07:02Z INFO checkout-api trace_id=trace-checkout-9344 Checkout request completed in 260ms

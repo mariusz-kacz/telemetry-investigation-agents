@@ -1,0 +1,17 @@
+{
+  "incident_id": "inc-insufficient-evidence-001",
+  "title": "Intermittent checkout failures with sparse telemetry",
+  "service": "checkout-api",
+  "impact": "medium",
+  "reported_at": "2026-05-14T12:05:00Z",
+  "investigation_window": {
+    "start": "2026-05-14T11:40:00Z",
+    "end": "2026-05-14T12:10:00Z"
+  },
+  "retrieval": {
+    "query_terms": [
+      "timeout",
+      "checkout"
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+2026-05-14T11:43:11Z INFO checkout-api trace_id=trace-checkout-9101 Checkout request completed in 218ms
+2026-05-14T11:51:04Z INFO checkout-api trace_id=trace-maintenance-060 Cache refresh completed for checkout summary cache
+2026-05-14T11:57:22Z WARN checkout-api trace_id=trace-checkout-9118 Checkout request exceeded client timeout
+2026-05-14T12:01:38Z ERROR checkout-api trace_id=trace-checkout-9126 Checkout request terminated unexpectedly
+2026-05-14T12:04:10Z ERROR checkout-api trace_id=trace-checkout-9130 Request processing failed for checkout request
+2026-05-14T12:07:45Z INFO checkout-api trace_id=trace-maintenance-061 Inventory synchronization completed

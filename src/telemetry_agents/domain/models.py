@@ -73,6 +73,7 @@ class HypothesisCategory(StrEnum):
     CONFIGURATION_ERROR = "configuration_error"
     APPLICATION_ERROR = "application_error"
     METRIC_ANOMALY = "metric_anomaly"
+    UNCERTAIN_ROOT_CAUSE = "uncertain_root_cause"
     OTHER = "other"
     INSUFFICIENT_EVIDENCE = "insufficient_evidence"
 

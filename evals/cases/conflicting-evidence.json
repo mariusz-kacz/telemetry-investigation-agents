@@ -1,0 +1,20 @@
+{
+  "case_id": "conflicting-evidence",
+  "incident_file": "eval_data/conflicting-evidence/incident.json",
+  "expected_category": "uncertain_root_cause",
+  "expected_evidence_sources": [
+    {
+      "source": "log",
+      "source_file": "eval_data/conflicting-evidence/logs/checkout-api.log"
+    },
+    {
+      "source": "trace",
+      "source_file": "eval_data/conflicting-evidence/traces/checkout-api.jsonl"
+    },
+    {
+      "source": "metric",
+      "source_file": "eval_data/conflicting-evidence/metrics/checkout-api.jsonl"
+    }
+  ],
+  "expected_human_review_required": true
+}

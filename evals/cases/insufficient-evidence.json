@@ -1,0 +1,20 @@
+{
+  "case_id": "insufficient-evidence",
+  "incident_file": "eval_data/insufficient-evidence/incident.json",
+  "expected_category": "insufficient_evidence",
+  "expected_evidence_sources": [
+    {
+      "source": "log",
+      "source_file": "eval_data/insufficient-evidence/logs/checkout-api.log"
+    },
+    {
+      "source": "trace",
+      "source_file": "eval_data/insufficient-evidence/traces/checkout-api.jsonl"
+    },
+    {
+      "source": "metric",
+      "source_file": "eval_data/insufficient-evidence/metrics/checkout-api.jsonl"
+    }
+  ],
+  "expected_human_review_required": true
+}

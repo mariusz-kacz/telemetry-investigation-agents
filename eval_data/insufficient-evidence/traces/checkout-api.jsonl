@@ -1,0 +1,6 @@
+{"timestamp":"2026-05-14T11:43:11Z","trace_id":"trace-checkout-9101","span_id":"span-9101-01","service":"checkout-api","operation":"POST /checkout","duration_ms":218,"status":"ok"}
+{"timestamp":"2026-05-14T11:43:11Z","trace_id":"trace-checkout-9101","span_id":"span-9101-02","service":"checkout-api","operation":"validate cart","duration_ms":34,"status":"ok"}
+{"timestamp":"2026-05-14T11:43:11Z","trace_id":"trace-checkout-9101","span_id":"span-9101-03","service":"checkout-api","operation":"calculate tax","duration_ms":42,"status":"ok"}
+{"timestamp":"2026-05-14T11:57:22Z","trace_id":"trace-checkout-9118","span_id":"span-9118-01","service":"checkout-api","operation":"POST /checkout","duration_ms":341,"status":"error"}
+{"timestamp":"2026-05-14T11:57:22Z","trace_id":"trace-checkout-9118","span_id":"span-9118-02","service":"checkout-api","operation":"validate cart","duration_ms":37,"status":"ok"}
+{"timestamp":"2026-05-14T11:57:22Z","trace_id":"trace-checkout-9118","span_id":"span-9118-03","service":"checkout-api","operation":"calculate tax","duration_ms":46,"status":"ok"}

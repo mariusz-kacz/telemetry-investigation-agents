@@ -1,0 +1,12 @@
+{"timestamp":"2026-05-14T11:45:00Z","service":"checkout-api","metric_name":"checkout_p95_latency_ms","value":220}
+{"timestamp":"2026-05-14T11:45:00Z","service":"checkout-api","metric_name":"checkout_timeout_rate_percent","value":0.1}
+{"timestamp":"2026-05-14T11:45:00Z","service":"checkout-api","metric_name":"request_count","value":118}
+{"timestamp":"2026-05-14T11:45:00Z","service":"checkout-api","metric_name":"cpu_utilization_percent","value":42}
+{"timestamp":"2026-05-14T12:00:00Z","service":"checkout-api","metric_name":"checkout_p95_latency_ms","value":340}
+{"timestamp":"2026-05-14T12:00:00Z","service":"checkout-api","metric_name":"checkout_timeout_rate_percent","value":1.2}
+{"timestamp":"2026-05-14T12:00:00Z","service":"checkout-api","metric_name":"request_count","value":121}
+{"timestamp":"2026-05-14T12:00:00Z","service":"checkout-api","metric_name":"cpu_utilization_percent","value":43}
+{"timestamp":"2026-05-14T12:08:00Z","service":"checkout-api","metric_name":"checkout_p95_latency_ms","value":305}
+{"timestamp":"2026-05-14T12:08:00Z","service":"checkout-api","metric_name":"checkout_timeout_rate_percent","value":0.8}
+{"timestamp":"2026-05-14T12:08:00Z","service":"checkout-api","metric_name":"request_count","value":119}
+{"timestamp":"2026-05-14T12:08:00Z","service":"checkout-api","metric_name":"cpu_utilization_percent","value":42}

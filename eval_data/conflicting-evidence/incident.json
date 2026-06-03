@@ -1,0 +1,14 @@
+{
+  "incident_id": "inc-conflicting-evidence-001",
+  "title": "Intermittent checkout failures and increased latency",
+  "service": "checkout-api",
+  "impact": "medium",
+  "reported_at": "2026-05-13T15:05:00Z",
+  "investigation_window": {
+    "start": "2026-05-13T14:30:00Z",
+    "end": "2026-05-13T15:10:00Z"
+  },
+  "retrieval": {
+    "query_terms": ["timeout", "latency", "checkout"]
+  }
+}

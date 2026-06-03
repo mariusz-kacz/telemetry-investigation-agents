@@ -111,6 +111,7 @@ def test_hypothesis_category_taxonomy_is_explicit() -> None:
         HypothesisCategory.CONFIGURATION_ERROR,
         HypothesisCategory.APPLICATION_ERROR,
         HypothesisCategory.METRIC_ANOMALY,
+        HypothesisCategory.UNCERTAIN_ROOT_CAUSE,
         HypothesisCategory.OTHER,
         HypothesisCategory.INSUFFICIENT_EVIDENCE,
     }

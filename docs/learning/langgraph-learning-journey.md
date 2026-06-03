@@ -931,9 +931,8 @@ Make the system measurable.
 Create `/evals` with synthetic cases:
 
 - database timeout during checkout traffic,
-- auth failures after config change,
 - latency spike caused by downstream dependency,
-- flaky metric anomaly,
+- conflicting evidence with no dominant explanation,
 - insufficient evidence case.
 
 For each case define:
@@ -987,14 +986,14 @@ statistical benchmarking, dashboards, or prompt optimization in this phase.
 - [x] Add Azure OpenAI semantic reviewer adapter.
 - [x] Add mocked adapter tests and one opt-in live smoke test.
 - [x] Add semantic-review scorecard integration.
-- [ ] Add remaining golden cases.
+- [x] Add MVP golden cases.
 - [ ] Add JSON loading and batch execution.
 - [ ] Track pass/fail over time with a simple reproducible report.
 - [ ] Write ADR: “Evaluation before prompt optimization.”
 
 ## Checkpoint
 
-- [ ] At least five eval cases exist.
+- [x] At least four eval cases exist.
 - [x] Eval runner exists.
 - [x] Citation correctness is scored.
 - [ ] Unsupported claims are detected.
