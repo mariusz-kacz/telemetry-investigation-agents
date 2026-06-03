@@ -1,4 +1,5 @@
 import pytest
+from pathlib import Path
 from pydantic import ValidationError
 
 from telemetry_agents.domain import (
@@ -16,6 +17,29 @@ from telemetry_agents.domain import (
     RejectedHypothesis,
     TelemetryEvidence,
 )
+
+def _incident_payload(
+    *,
+    incident_id: str = "inc-001",
+    title: str = "Timeout",
+    service: str = "checkout-api",
+    impact: IncidentImpact = IncidentImpact.MEDIUM,
+) -> dict[str, object]:
+    return {
+        "incident_id": incident_id,
+        "title": title,
+        "service": service,
+        "impact": impact,
+        "reported_at": "2026-05-11T10:05:00Z",
+        "investigation_window": {
+            "start": "2026-05-11T09:40:00Z",
+            "end": "2026-05-11T10:10:00Z",
+        },
+        "retrieval": {
+            "query_terms": ["timeout"],
+            "trace_id": "trace-001",
+        },
+    }
 
 
 def _hypothesis(
@@ -46,32 +70,69 @@ def _adjustment(hypothesis_id: str = "hyp-001") -> ConfidenceAdjustment:
 
 def test_incident_requires_meaningful_identity_and_title() -> None:
     with pytest.raises(ValidationError):
-        Incident(
-            incident_id="",
-            title="",
-            service="checkout-api",
-            impact=IncidentImpact.MEDIUM,
-        )
+        Incident.model_validate(_incident_payload(incident_id="", title=""))
 
 
 def test_incident_requires_impact() -> None:
     with pytest.raises(ValidationError):
         Incident.model_validate(
-            {"incident_id": "inc-001", "title": "Timeout", "service": "checkout-api"}
+            {
+                key: value
+                for key, value in _incident_payload().items()
+                if key != "impact"
+            }
         )
 
 
 def test_non_empty_strings_are_stripped_before_storage() -> None:
-    incident = Incident(
-        incident_id=" inc-001 ",
-        title=" Timeout ",
-        service=" checkout-api ",
-        impact=IncidentImpact.MEDIUM,
+    incident = Incident.model_validate(
+        _incident_payload(
+            incident_id=" inc-001 ",
+            title=" Timeout ",
+            service=" checkout-api ",
+        )
     )
 
     assert incident.incident_id == "inc-001"
     assert incident.title == "Timeout"
     assert incident.service == "checkout-api"
+
+
+def test_incident_matches_eval_incident_file_contract() -> None:
+    incident = Incident.model_validate(
+        {
+            "incident_id": "inc-checkout-db-timeout-001",
+            "title": "Checkout API failures during normal checkout traffic",
+            "service": "checkout-api",
+            "impact": "medium",
+            "reported_at": "2026-05-11T10:05:00Z",
+            "investigation_window": {
+                "start": "2026-05-11T09:40:00Z",
+                "end": "2026-05-11T10:10:00Z",
+            },
+            "retrieval": {
+                "query_terms": ["timeout"],
+                "trace_id": "trace-checkout-8421",
+            },
+        }
+    )
+
+    assert incident.retrieval.query_terms == ["timeout"]
+    assert incident.retrieval.trace_id == "trace-checkout-8421"
+    assert incident.investigation_window.start.isoformat() == (
+        "2026-05-11T09:40:00+00:00"
+    )
+
+
+def test_incident_rejects_inverted_investigation_window() -> None:
+    payload = _incident_payload()
+    payload["investigation_window"] = {
+        "start": "2026-05-11T10:10:00Z",
+        "end": "2026-05-11T09:40:00Z",
+    }
+
+    with pytest.raises(ValidationError, match="end must not precede start"):
+        Incident.model_validate(payload)
 
 
 def test_telemetry_evidence_preserves_citation_metadata() -> None:

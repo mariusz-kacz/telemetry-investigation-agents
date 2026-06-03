@@ -1,6 +1,6 @@
 {
   "case_id": "downstream-dependency-latency",
-  "incident_file": "eval_data/downstream-dependency-latency/incident.json",
+  "incident_file": "downstream-dependency-latency/incident.json",
   "expected_category": "downstream_dependency_failure",
   "expected_evidence_sources": [
     {

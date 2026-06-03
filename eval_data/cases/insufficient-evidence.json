@@ -1,6 +1,6 @@
 {
   "case_id": "insufficient-evidence",
-  "incident_file": "eval_data/insufficient-evidence/incident.json",
+  "incident_file": "insufficient-evidence/incident.json",
   "expected_category": "insufficient_evidence",
   "expected_evidence_sources": [
     {

@@ -1,4 +1,5 @@
 from enum import StrEnum
+from datetime import datetime
 from typing import Annotated
 
 from pydantic import (
@@ -78,11 +79,30 @@ class HypothesisCategory(StrEnum):
     INSUFFICIENT_EVIDENCE = "insufficient_evidence"
 
 
+class IncidentInvestigationWindow(BaseModel):
+    start: datetime
+    end: datetime
+
+    @model_validator(mode="after")
+    def end_must_not_precede_start(self) -> "IncidentInvestigationWindow":
+        if self.end < self.start:
+            raise ValueError("investigation window end must not precede start")
+        return self
+
+
+class IncidentRetrievalHints(BaseModel):
+    query_terms: list[NonEmptyStr] = Field(default_factory=list)
+    trace_id: NonEmptyStr | None = None
+
+
 class Incident(BaseModel):
     incident_id: NonEmptyStr
     title: NonEmptyStr
     service: NonEmptyStr
     impact: IncidentImpact
+    reported_at: datetime
+    investigation_window: IncidentInvestigationWindow
+    retrieval: IncidentRetrievalHints
 
 
 class TelemetryEvidence(BaseModel):

@@ -1,6 +1,6 @@
 {
   "case_id": "checkout-database-timeout",
-  "incident_file": "eval_data/checkout-database-timeout/incident.json",
+  "incident_file": "checkout-database-timeout/incident.json",
   "expected_category": "database_failure",
   "expected_evidence_sources": [
     {

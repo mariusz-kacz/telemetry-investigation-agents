@@ -55,6 +55,12 @@ def _incident() -> Incident:
         title="Checkout API latency spike",
         service="checkout-api",
         impact=IncidentImpact.MEDIUM,
+        reported_at="2026-05-11T10:05:00Z",
+        investigation_window={
+            "start": "2026-05-11T09:40:00Z",
+            "end": "2026-05-11T10:10:00Z",
+        },
+        retrieval={"query_terms": ["timeout"], "trace_id": "trace-001"},
     )
 
 

@@ -1,6 +1,6 @@
 {
   "case_id": "conflicting-evidence",
-  "incident_file": "eval_data/conflicting-evidence/incident.json",
+  "incident_file": "conflicting-evidence/incident.json",
   "expected_category": "uncertain_root_cause",
   "expected_evidence_sources": [
     {

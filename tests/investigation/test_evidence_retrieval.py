@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from paths import SAMPLE_DATA_DIR
 from telemetry_agents.investigation.evidence_retrieval import (
     EvidenceRetrievalRequest,
     EvidenceStrength,
@@ -7,10 +8,6 @@ from telemetry_agents.investigation.evidence_retrieval import (
     retrieve_evidence,
 )
 from telemetry_agents.domain import EvidenceSource
-
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-SAMPLE_DATA = PROJECT_ROOT / "sample_data"
 
 
 def test_retrieved_evidence_preserves_citation_metadata() -> None:
@@ -21,7 +18,7 @@ def test_retrieved_evidence_preserves_citation_metadata() -> None:
         start_timestamp="2026-05-11T09:40:00Z",
         end_timestamp="2026-05-11T10:10:00Z",
         trace_id="trace-001",
-        data_root=str(SAMPLE_DATA),
+        data_root=str(SAMPLE_DATA_DIR),
     )
 
     evidence = retrieve_evidence(request)
@@ -55,7 +52,7 @@ def test_evidence_retrieval_ranks_strong_evidence_before_weak_evidence() -> None
         start_timestamp="2026-05-11T09:40:00Z",
         end_timestamp="2026-05-11T10:10:00Z",
         trace_id="trace-001",
-        data_root=str(SAMPLE_DATA),
+        data_root=str(SAMPLE_DATA_DIR),
     )
 
     evidence = retrieve_evidence(request)
@@ -220,7 +217,7 @@ def test_evidence_retrieval_preserves_trace_span_citation_metadata() -> None:
         start_timestamp="2026-05-11T09:40:00Z",
         end_timestamp="2026-05-11T10:10:00Z",
         trace_id="trace-001",
-        data_root=str(SAMPLE_DATA),
+        data_root=str(SAMPLE_DATA_DIR),
     )
 
     evidence = retrieve_evidence(request)
@@ -231,7 +228,7 @@ def test_evidence_retrieval_preserves_trace_span_citation_metadata() -> None:
     assert trace_evidence
     assert (
         trace_evidence[0].citation.source_file
-        == (SAMPLE_DATA / "traces" / "checkout-api.jsonl").as_posix()
+        == (SAMPLE_DATA_DIR / "traces" / "checkout-api.jsonl").as_posix()
     )
     assert trace_evidence[0].citation.line_number == 1
     assert (
@@ -248,7 +245,7 @@ def test_evidence_retrieval_preserves_metric_sample_citation_metadata() -> None:
         query_terms=[],
         start_timestamp="2026-05-11T09:40:00Z",
         end_timestamp="2026-05-11T10:10:00Z",
-        data_root=str(SAMPLE_DATA),
+        data_root=str(SAMPLE_DATA_DIR),
     )
 
     evidence = retrieve_evidence(request)
@@ -259,7 +256,7 @@ def test_evidence_retrieval_preserves_metric_sample_citation_metadata() -> None:
     assert metric_evidence
     assert (
         metric_evidence[0].citation.source_file
-        == (SAMPLE_DATA / "metrics" / "checkout-api.jsonl").as_posix()
+        == (SAMPLE_DATA_DIR / "metrics" / "checkout-api.jsonl").as_posix()
     )
     assert metric_evidence[0].citation.line_number == 1
     assert metric_evidence[0].citation.selection_reason == (
@@ -277,7 +274,7 @@ def test_missing_evidence_is_represented_explicitly() -> None:
         start_timestamp="2026-05-11T11:00:00Z",
         end_timestamp="2026-05-11T11:30:00Z",
         trace_id="missing-trace-id",
-        data_root=str(SAMPLE_DATA),
+        data_root=str(SAMPLE_DATA_DIR),
     )
 
     evidence = retrieve_evidence(request)
