@@ -41,5 +41,5 @@ __all__ = [
     "score_expected_human_review",
     "GuardedUnsupportedClaimReviewer",
     "UnsupportedClaimScore",
-    "score_unsupported_claims"
+    "score_unsupported_claims",
 ]

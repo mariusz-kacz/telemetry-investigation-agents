@@ -13,9 +13,9 @@ from telemetry_agents.investigation.evidence_scoring import (
 )
 from telemetry_agents.investigation.log_matching import (
     MatchDetail,
-    MatchedLogLine,
     MatchReason,
     get_matching_log_lines,
+    get_trace_ids_from_query_seed_logs,
 )
 from telemetry_agents.investigation.metrics_matching import (
     MatchedMetricSample,
@@ -24,6 +24,7 @@ from telemetry_agents.investigation.metrics_matching import (
 from telemetry_agents.investigation.trace_matching import (
     MatchedTraceSpan,
     get_matching_trace_spans,
+    TraceMatchReason,
 )
 from telemetry_agents.shared.time import parse_utc_timestamp
 from telemetry_agents.telemetry.readers import LocalFileTelemetryReader
@@ -52,7 +53,6 @@ class EvidenceRetrievalRequest(BaseModel):
     query_terms: list[str] = Field(default_factory=list)
     start_timestamp: str = Field(min_length=1)
     end_timestamp: str = Field(min_length=1)
-    correlation_id: str | None = None
     trace_id: str | None = None
 
 
@@ -95,10 +95,10 @@ def _format_selection_reason(
     for match_detail in match_details:
         grouped_matches[match_detail.reason].append(match_detail.value)
 
-    if correlation_ids := grouped_matches.get(MatchReason.CORRELATION_ID):
-        result_parts.append(f"incident correlation ID {correlation_ids[0]}")
-    if trace_ids := grouped_matches.get(MatchReason.TRACE_ID):
-        result_parts.append(f"trace ID {trace_ids[0]}")
+    if trace_ids := grouped_matches.get(MatchReason.REQUEST_TRACE_ID):
+        result_parts.append(f"request trace ID {trace_ids[0]}")
+    if discovered_trace_ids := grouped_matches.get(MatchReason.DISCOVERED_TRACE_ID):
+        result_parts.append(f"discovered trace ID {discovered_trace_ids[0]}")
     if query_terms := grouped_matches.get(MatchReason.QUERY_TERM):
         query_terms_text = ", ".join(query_terms)
         result_parts.append(f"query terms: {query_terms_text}")
@@ -109,34 +109,59 @@ def _format_selection_reason(
     return f"Matched {', '.join(result_parts)}."
 
 
+def _format_trace_selection_reason(
+    match_reason: TraceMatchReason, trace_id: str
+) -> str:
+    if match_reason == TraceMatchReason.REQUEST_TRACE_ID:
+        return f"Matched request trace ID {trace_id}."
+    elif match_reason == TraceMatchReason.DISCOVERED_TRACE_ID:
+        return (
+            f"Matched discovered trace ID {trace_id} from query-matched log evidence."
+        )
+    raise ValueError("Unknown match reason.")
+
+
 def _retrieve_log_evidence(
     *,
     reader: LocalFileTelemetryReader,
     start_timestamp: datetime,
     end_timestamp: datetime,
     request: EvidenceRetrievalRequest,
-) -> list[RetrievedEvidence]:
+) -> tuple[list[RetrievedEvidence], set[str]]:
     retrieved_log_evidence: list[RetrievedEvidence] = []
     source_file = Path(request.data_root) / "logs" / f"{request.service}.log"
 
     try:
-        matching_log_lines: list[MatchedLogLine] = get_matching_log_lines(
-            log_records=reader.read_logs(service=request.service),
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-            service=request.service,
-            query_terms=request.query_terms,
-            correlation_id=request.correlation_id,
-            trace_id=request.trace_id,
-        )
+        log_records = reader.read_logs(service=request.service)
     except FileNotFoundError:
-        return _missing_evidence(
-            request=request,
-            source=EvidenceSource.LOG,
-            source_file=source_file,
-            summary="Log source file is unavailable for this incident.",
-            selection_reason="Log source file was not found.",
+        return (
+            _missing_evidence(
+                request=request,
+                source=EvidenceSource.LOG,
+                source_file=source_file,
+                summary="Log source file is unavailable for this incident.",
+                selection_reason="Log source file was not found.",
+            ),
+            set(),
         )
+
+    trace_ids_from_query_seed_logs = get_trace_ids_from_query_seed_logs(
+        log_records=log_records,
+        start_timestamp=start_timestamp,
+        end_timestamp=end_timestamp,
+        service=request.service,
+        query_terms=request.query_terms,
+    )
+
+    matching_log_lines = get_matching_log_lines(
+        log_records=log_records,
+        start_timestamp=start_timestamp,
+        end_timestamp=end_timestamp,
+        service=request.service,
+        query_terms=request.query_terms,
+        trace_id=request.trace_id,
+        trace_ids_from_query_seed_logs=trace_ids_from_query_seed_logs,
+    )
 
     for matching_log_line in matching_log_lines:
         telemetry_evidence = TelemetryEvidence(
@@ -167,14 +192,17 @@ def _retrieve_log_evidence(
         )
 
     if not retrieved_log_evidence:
-        return _missing_evidence(
-            request=request,
-            source=EvidenceSource.LOG,
-            source_file=source_file,
-            summary="No matching log evidence found for the incident filters.",
-            selection_reason="No log records matched the incident time window, IDs, or query terms.",
+        return (
+            _missing_evidence(
+                request=request,
+                source=EvidenceSource.LOG,
+                source_file=source_file,
+                summary="No matching log evidence found for the incident filters.",
+                selection_reason="No log records matched the incident time window, IDs, or query terms.",
+            ),
+            set(),
         )
-    return retrieved_log_evidence
+    return retrieved_log_evidence, trace_ids_from_query_seed_logs
 
 
 def _retrieve_trace_evidence(
@@ -183,6 +211,7 @@ def _retrieve_trace_evidence(
     start_timestamp: datetime,
     end_timestamp: datetime,
     request: EvidenceRetrievalRequest,
+    trace_ids_from_query_seed_logs: set[str],
 ) -> list[RetrievedEvidence]:
     retrieved_trace_evidence: list[RetrievedEvidence] = []
     source_file = Path(request.data_root) / "traces" / f"{request.service}.jsonl"
@@ -192,8 +221,8 @@ def _retrieve_trace_evidence(
             trace_span_records=reader.read_traces(service=request.service),
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
-            service=request.service,
             trace_id=request.trace_id,
+            trace_ids_from_query_seed_logs=trace_ids_from_query_seed_logs,
         )
     except FileNotFoundError:
         return _missing_evidence(
@@ -222,10 +251,15 @@ def _retrieve_trace_evidence(
             service=matching_trace_span.trace_span.service,
             timestamp=matching_trace_span.trace_span.timestamp.isoformat(),
             record_id=None,
-            selection_reason=f"Matched trace ID {matching_trace_span.trace_span.trace_id}.",
+            selection_reason=_format_trace_selection_reason(
+                matching_trace_span.match_reason,
+                matching_trace_span.trace_span.trace_id,
+            ),
         )
 
-        (evidence_strength, relevance_score) = score_matching_trace_span()
+        (evidence_strength, relevance_score) = score_matching_trace_span(
+            matching_trace_span.match_reason
+        )
 
         retrieved_trace_evidence.append(
             RetrievedEvidence(
@@ -327,7 +361,7 @@ def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEviden
 
     reader = LocalFileTelemetryReader(Path(request.data_root))
 
-    log_evidence = _retrieve_log_evidence(
+    log_evidence, trace_ids_from_query_seed_logs = _retrieve_log_evidence(
         reader=reader,
         start_timestamp=start_timestamp,
         end_timestamp=end_timestamp,
@@ -338,6 +372,7 @@ def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEviden
         start_timestamp=start_timestamp,
         end_timestamp=end_timestamp,
         request=request,
+        trace_ids_from_query_seed_logs=trace_ids_from_query_seed_logs,
     )
 
     metric_sample_evidence = _retrieve_metric_evidence(

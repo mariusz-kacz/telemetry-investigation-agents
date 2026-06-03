@@ -8,9 +8,9 @@ from telemetry_agents.telemetry.models import ParsedLogRecord
 
 
 class MatchReason(StrEnum):
-    CORRELATION_ID = "correlation_id"
-    TRACE_ID = "trace_id"
     QUERY_TERM = "query_term"
+    REQUEST_TRACE_ID = "request_trace_id"
+    DISCOVERED_TRACE_ID = "discovered_trace_id"
 
 
 @dataclass(frozen=True)
@@ -41,6 +41,30 @@ def _get_matching_query_terms(
     return [key for key in keywords if key.lower() in normalized_message]
 
 
+def get_trace_ids_from_query_seed_logs(
+    *,
+    log_records: Iterable[SourceLog],
+    start_timestamp: datetime,
+    end_timestamp: datetime,
+    service: str,
+    query_terms: list[str],
+) -> set[str]:
+    discovered_trace_ids: set[str] = set()
+    for source_log in log_records:
+        log_line = source_log.record
+        if (
+            log_line.service == service
+            and start_timestamp <= log_line.timestamp <= end_timestamp
+        ):
+            if (
+                query_terms
+                and log_line.trace_id
+                and _get_matching_query_terms(log_line.message, keywords=query_terms)
+            ):
+                discovered_trace_ids.add(log_line.trace_id)
+    return discovered_trace_ids
+
+
 def get_matching_log_lines(
     *,
     log_records: Iterable[SourceLog],
@@ -48,8 +72,8 @@ def get_matching_log_lines(
     end_timestamp: datetime,
     service: str,
     query_terms: list[str],
-    correlation_id: str | None,
     trace_id: str | None,
+    trace_ids_from_query_seed_logs: set[str],
 ) -> list[MatchedLogLine]:
     matched_log_lines: list[MatchedLogLine] = []
     for source_log in log_records:
@@ -62,22 +86,24 @@ def get_matching_log_lines(
 
             if trace_id and log_line.trace_id == trace_id:
                 match_details.append(
-                    MatchDetail(reason=MatchReason.TRACE_ID, value=trace_id)
+                    MatchDetail(reason=MatchReason.REQUEST_TRACE_ID, value=trace_id)
                 )
 
-            if correlation_id and log_line.correlation_id == correlation_id:
+            matched_query_terms = _get_matching_query_terms(
+                log_line.message, keywords=query_terms
+            )
+
+            for query_term in matched_query_terms:
+                match_details.append(MatchDetail(MatchReason.QUERY_TERM, query_term))
+
+            if (
+                not matched_query_terms
+                and log_line.trace_id
+                and log_line.trace_id in trace_ids_from_query_seed_logs
+            ):
                 match_details.append(
-                    MatchDetail(reason=MatchReason.CORRELATION_ID, value=correlation_id)
+                    MatchDetail(MatchReason.DISCOVERED_TRACE_ID, log_line.trace_id)
                 )
-
-            if query_terms:
-                matched_query_terms = _get_matching_query_terms(
-                    log_line.message, keywords=query_terms
-                )
-                for query_term in matched_query_terms:
-                    match_details.append(
-                        MatchDetail(reason=MatchReason.QUERY_TERM, value=query_term)
-                    )
 
             if match_details:
                 matched_log_lines.append(

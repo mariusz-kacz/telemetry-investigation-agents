@@ -43,7 +43,6 @@ def test_get_matching_trace_spans_returns_strict_trace_matches_with_source_metad
         trace_span_records=[source_trace_span],
         start_timestamp=datetime(2026, 5, 11, 10, 0, tzinfo=UTC),
         end_timestamp=datetime(2026, 5, 11, 10, 5, tzinfo=UTC),
-        service="checkout-api",
         trace_id="trace-001",
     )
 
@@ -53,7 +52,7 @@ def test_get_matching_trace_spans_returns_strict_trace_matches_with_source_metad
     assert matches[0].line_number == source_trace_span.line_number
 
 
-def test_get_matching_trace_spans_requires_trace_id_service_and_time_window() -> None:
+def test_get_matching_trace_spans_requires_trace_id_and_time_window() -> None:
     wrong_trace_id = SourceTraceSpanStub(
         source_file=Path("sample_data/traces/checkout-api.jsonl"),
         line_number=1,
@@ -62,29 +61,41 @@ def test_get_matching_trace_spans_requires_trace_id_service_and_time_window() ->
             trace_id="trace-999",
         ),
     )
-    wrong_service = SourceTraceSpanStub(
-        source_file=Path("sample_data/traces/payments-api.jsonl"),
-        line_number=2,
-        record=_trace_span(
-            timestamp=datetime(2026, 5, 11, 10, 1, tzinfo=UTC),
-            service="payments-api",
-        ),
-    )
     outside_window = SourceTraceSpanStub(
         source_file=Path("sample_data/traces/checkout-api.jsonl"),
-        line_number=3,
+        line_number=2,
         record=_trace_span(timestamp=datetime(2026, 5, 11, 11, 0, tzinfo=UTC)),
     )
 
     matches = get_matching_trace_spans(
-        trace_span_records=[wrong_trace_id, wrong_service, outside_window],
+        trace_span_records=[wrong_trace_id, outside_window],
         start_timestamp=datetime(2026, 5, 11, 10, 0, tzinfo=UTC),
         end_timestamp=datetime(2026, 5, 11, 10, 5, tzinfo=UTC),
-        service="checkout-api",
         trace_id="trace-001",
     )
 
     assert matches == []
+
+
+def test_get_matching_trace_spans_includes_correlated_dependency_spans() -> None:
+    dependency_span = SourceTraceSpanStub(
+        source_file=Path("sample_data/traces/checkout-api.jsonl"),
+        line_number=2,
+        record=_trace_span(
+            timestamp=datetime(2026, 5, 11, 10, 1, tzinfo=UTC),
+            service="shipping-rate-service",
+        ),
+    )
+
+    matches = get_matching_trace_spans(
+        trace_span_records=[dependency_span],
+        start_timestamp=datetime(2026, 5, 11, 10, 0, tzinfo=UTC),
+        end_timestamp=datetime(2026, 5, 11, 10, 5, tzinfo=UTC),
+        trace_id="trace-001",
+    )
+
+    assert len(matches) == 1
+    assert matches[0].trace_span.service == "shipping-rate-service"
 
 
 def test_get_matching_trace_spans_returns_empty_when_trace_id_is_missing() -> None:
@@ -98,7 +109,6 @@ def test_get_matching_trace_spans_returns_empty_when_trace_id_is_missing() -> No
         trace_span_records=[source_trace_span],
         start_timestamp=datetime(2026, 5, 11, 10, 0, tzinfo=UTC),
         end_timestamp=datetime(2026, 5, 11, 10, 5, tzinfo=UTC),
-        service="checkout-api",
         trace_id=None,
     )
 

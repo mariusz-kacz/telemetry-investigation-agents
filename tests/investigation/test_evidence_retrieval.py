@@ -102,6 +102,109 @@ def test_evidence_retrieval_ranks_across_telemetry_sources(tmp_path: Path) -> No
     assert evidence[0].evidence.source == EvidenceSource.TRACE
 
 
+def test_evidence_retrieval_expands_all_ids_from_query_matched_seed_logs(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "traces").mkdir()
+    (tmp_path / "metrics").mkdir()
+    (tmp_path / "logs" / "checkout-api.log").write_text(
+        "2026-05-11T10:01:00Z ERROR checkout-api "
+        "correlation_id=checkout-001 trace_id=trace-001 timeout waiting for orders-db\n"
+        "2026-05-11T10:01:01Z INFO checkout-api "
+        "correlation_id=checkout-001 trace_id=trace-001 request accepted\n"
+        "2026-05-11T10:02:00Z ERROR checkout-api "
+        "correlation_id=checkout-002 trace_id=trace-002 timeout waiting for payments-api\n"
+        "2026-05-11T10:02:01Z INFO checkout-api "
+        "correlation_id=checkout-002 trace_id=trace-002 request accepted\n"
+        "2026-05-11T10:03:00Z INFO checkout-api "
+        "correlation_id=checkout-unrelated trace_id=trace-unrelated request accepted\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "traces" / "checkout-api.jsonl").write_text(
+        '{"timestamp":"2026-05-11T10:01:00Z","trace_id":"trace-001",'
+        '"span_id":"span-001","service":"orders-db","operation":"INSERT orders",'
+        '"duration_ms":1250,"status":"timeout"}\n'
+        '{"timestamp":"2026-05-11T10:02:00Z","trace_id":"trace-002",'
+        '"span_id":"span-002","service":"payments-api","operation":"authorize",'
+        '"duration_ms":1300,"status":"timeout"}\n'
+        '{"timestamp":"2026-05-11T10:03:00Z","trace_id":"trace-unrelated",'
+        '"span_id":"span-unrelated","service":"checkout-api","operation":"POST /checkout",'
+        '"duration_ms":180,"status":"ok"}\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "metrics" / "checkout-api.jsonl").write_text("", encoding="utf-8")
+    request = EvidenceRetrievalRequest(
+        incident_id="inc-query-seed-expansion",
+        service="checkout-api",
+        query_terms=["timeout"],
+        start_timestamp="2026-05-11T10:00:00Z",
+        end_timestamp="2026-05-11T10:05:00Z",
+        data_root=str(tmp_path),
+    )
+
+    evidence = retrieve_evidence(request)
+
+    log_evidence = [
+        item for item in evidence if item.evidence.source == EvidenceSource.LOG
+    ]
+    trace_evidence = [
+        item for item in evidence if item.evidence.source == EvidenceSource.TRACE
+    ]
+
+    assert {item.citation.line_number for item in log_evidence} == {1, 2, 3, 4}
+    assert {item.citation.line_number for item in trace_evidence} == {1, 2}
+    assert len({item.evidence.evidence_id for item in evidence}) == len(evidence)
+    assert all(item.citation.selection_reason for item in evidence)
+
+
+def test_evidence_retrieval_does_not_recursively_expand_ids_from_companion_logs(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "traces").mkdir()
+    (tmp_path / "metrics").mkdir()
+    (tmp_path / "logs" / "checkout-api.log").write_text(
+        "2026-05-11T10:01:00Z ERROR checkout-api "
+        "correlation_id=checkout-001 trace_id=trace-001 timeout waiting for orders-db\n"
+        "2026-05-11T10:01:01Z INFO checkout-api "
+        "correlation_id=checkout-001 trace_id=trace-001 request accepted\n"
+        "2026-05-11T10:01:02Z INFO checkout-api "
+        "correlation_id=checkout-bridge trace_id=trace-bridge unrelated request accepted\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "traces" / "checkout-api.jsonl").write_text(
+        '{"timestamp":"2026-05-11T10:01:00Z","trace_id":"trace-001",'
+        '"span_id":"span-001","service":"orders-db","operation":"INSERT orders",'
+        '"duration_ms":1250,"status":"timeout"}\n'
+        '{"timestamp":"2026-05-11T10:01:02Z","trace_id":"trace-bridge",'
+        '"span_id":"span-bridge","service":"checkout-api","operation":"POST /checkout",'
+        '"duration_ms":180,"status":"ok"}\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "metrics" / "checkout-api.jsonl").write_text("", encoding="utf-8")
+    request = EvidenceRetrievalRequest(
+        incident_id="inc-query-seed-bounded-expansion",
+        service="checkout-api",
+        query_terms=["timeout"],
+        start_timestamp="2026-05-11T10:00:00Z",
+        end_timestamp="2026-05-11T10:05:00Z",
+        data_root=str(tmp_path),
+    )
+
+    evidence = retrieve_evidence(request)
+
+    log_evidence = [
+        item for item in evidence if item.evidence.source == EvidenceSource.LOG
+    ]
+    trace_evidence = [
+        item for item in evidence if item.evidence.source == EvidenceSource.TRACE
+    ]
+
+    assert {item.citation.line_number for item in log_evidence} == {1, 2}
+    assert {item.citation.line_number for item in trace_evidence} == {1}
+
+
 def test_evidence_retrieval_preserves_trace_span_citation_metadata() -> None:
     request = EvidenceRetrievalRequest(
         incident_id="inc-checkout-db-timeout-001",

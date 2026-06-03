@@ -1,6 +1,7 @@
 from enum import StrEnum
 
 from telemetry_agents.investigation.log_matching import MatchedLogLine, MatchReason
+from telemetry_agents.investigation.trace_matching import TraceMatchReason
 
 
 class EvidenceStrength(StrEnum):
@@ -18,42 +19,26 @@ LOG_CLASSIFICATION_RULES: tuple[ClassificationRule, ...] = (
         frozenset(
             {
                 MatchReason.QUERY_TERM,
-                MatchReason.CORRELATION_ID,
-                MatchReason.TRACE_ID,
+                MatchReason.REQUEST_TRACE_ID,
             }
         ),
         EvidenceStrength.STRONG,
         1.0,
     ),
     (
-        frozenset({MatchReason.QUERY_TERM, MatchReason.CORRELATION_ID}),
-        EvidenceStrength.STRONG,
+        frozenset({MatchReason.REQUEST_TRACE_ID}),
+        EvidenceStrength.MEDIUM,
         0.8,
     ),
     (
-        frozenset({MatchReason.QUERY_TERM, MatchReason.TRACE_ID}),
-        EvidenceStrength.STRONG,
-        0.8,
-    ),
-    (
-        frozenset({MatchReason.CORRELATION_ID, MatchReason.TRACE_ID}),
+        frozenset({MatchReason.QUERY_TERM}),
         EvidenceStrength.MEDIUM,
         0.6,
     ),
     (
-        frozenset({MatchReason.CORRELATION_ID}),
+        frozenset({MatchReason.DISCOVERED_TRACE_ID}),
         EvidenceStrength.MEDIUM,
-        0.4,
-    ),
-    (
-        frozenset({MatchReason.TRACE_ID}),
-        EvidenceStrength.MEDIUM,
-        0.4,
-    ),
-    (
-        frozenset({MatchReason.QUERY_TERM}),
-        EvidenceStrength.WEAK,
-        0.2,
+        0.6,
     ),
 )
 
@@ -70,8 +55,15 @@ def score_matching_log_line(
     raise ValueError("matched log line has no match reasons")
 
 
-def score_matching_trace_span() -> tuple[EvidenceStrength, float]:
-    return EvidenceStrength.STRONG, 1.0
+def score_matching_trace_span(
+    match_reason: TraceMatchReason,
+) -> tuple[EvidenceStrength, float]:
+    if match_reason == TraceMatchReason.REQUEST_TRACE_ID:
+        return EvidenceStrength.STRONG, 1.0
+    if match_reason == TraceMatchReason.DISCOVERED_TRACE_ID:
+        return EvidenceStrength.MEDIUM, 0.6
+
+    raise ValueError("matched trace has no match reasons")
 
 
 def score_matching_metric_sample() -> tuple[EvidenceStrength, float]:

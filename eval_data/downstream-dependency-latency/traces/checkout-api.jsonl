@@ -1,0 +1,10 @@
+{"timestamp":"2026-05-12T13:51:08Z","trace_id":"trace-checkout-7702","span_id":"span-7702-01","service":"checkout-api","operation":"POST /checkout","duration_ms":214,"status":"ok"}
+{"timestamp":"2026-05-12T13:51:08Z","trace_id":"trace-checkout-7702","span_id":"span-7702-02","service":"shipping-rate-service","operation":"GET /rates","duration_ms":92,"status":"ok"}
+{"timestamp":"2026-05-12T13:58:16Z","trace_id":"trace-checkout-7814","span_id":"span-7814-01","service":"checkout-api","operation":"POST /checkout","duration_ms":1548,"status":"ok"}
+{"timestamp":"2026-05-12T13:58:16Z","trace_id":"trace-checkout-7814","span_id":"span-7814-02","service":"checkout-api","operation":"validate cart","duration_ms":39,"status":"ok"}
+{"timestamp":"2026-05-12T13:58:16Z","trace_id":"trace-checkout-7814","span_id":"span-7814-03","service":"shipping-rate-service","operation":"GET /rates","duration_ms":1420,"status":"ok"}
+{"timestamp":"2026-05-12T14:03:14Z","trace_id":"trace-checkout-7842","span_id":"span-7842-01","service":"checkout-api","operation":"POST /checkout","duration_ms":2702,"status":"error"}
+{"timestamp":"2026-05-12T14:03:14Z","trace_id":"trace-checkout-7842","span_id":"span-7842-02","service":"checkout-api","operation":"validate cart","duration_ms":42,"status":"ok"}
+{"timestamp":"2026-05-12T14:03:14Z","trace_id":"trace-checkout-7842","span_id":"span-7842-03","service":"checkout-api","operation":"calculate tax","duration_ms":47,"status":"ok"}
+{"timestamp":"2026-05-12T14:03:15Z","trace_id":"trace-checkout-7842","span_id":"span-7842-04","service":"checkout-api","operation":"prepare inventory reservation","duration_ms":51,"status":"ok"}
+{"timestamp":"2026-05-12T14:03:15Z","trace_id":"trace-checkout-7842","span_id":"span-7842-05","service":"shipping-rate-service","operation":"GET /rates","duration_ms":2500,"status":"error"}

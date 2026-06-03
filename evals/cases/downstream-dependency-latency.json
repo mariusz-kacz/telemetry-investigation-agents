@@ -1,0 +1,20 @@
+{
+  "case_id": "downstream-dependency-latency",
+  "incident_file": "eval_data/downstream-dependency-latency/incident.json",
+  "expected_category": "downstream_dependency_failure",
+  "expected_evidence_sources": [
+    {
+      "source": "log",
+      "source_file": "eval_data/downstream-dependency-latency/logs/checkout-api.log"
+    },
+    {
+      "source": "trace",
+      "source_file": "eval_data/downstream-dependency-latency/traces/checkout-api.jsonl"
+    },
+    {
+      "source": "metric",
+      "source_file": "eval_data/downstream-dependency-latency/metrics/checkout-api.jsonl"
+    }
+  ],
+  "expected_human_review_required": false
+}

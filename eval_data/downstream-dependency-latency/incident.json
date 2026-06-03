@@ -1,0 +1,16 @@
+{
+  "incident_id": "inc-checkout-downstream-latency-001",
+  "title": "Checkout API latency spike during checkout traffic",
+  "service": "checkout-api",
+  "impact": "medium",
+  "reported_at": "2026-05-12T14:10:00Z",
+  "investigation_window": {
+    "start": "2026-05-12T13:50:00Z",
+    "end": "2026-05-12T14:15:00Z"
+  },
+  "retrieval": {
+    "query_terms": ["timeout", "shipping-rate-service"],
+    "correlation_id": "checkout-7842",
+    "trace_id": "trace-checkout-7842"
+  }
+}

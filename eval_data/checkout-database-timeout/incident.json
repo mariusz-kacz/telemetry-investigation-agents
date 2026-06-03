@@ -1,11 +1,16 @@
 {
   "incident_id": "inc-checkout-db-timeout-001",
-  "title": "Checkout API latency and database timeout errors",
+  "title": "Checkout API failures during normal checkout traffic",
   "service": "checkout-api",
+  "impact": "medium",
   "reported_at": "2026-05-11T10:05:00Z",
   "investigation_window": {
     "start": "2026-05-11T09:40:00Z",
     "end": "2026-05-11T10:10:00Z"
   },
-  "known_root_cause": "Checkout API requests to the orders database exceeded the retry timeout threshold."
+  "retrieval": {
+    "query_terms": ["timeout"],
+    "correlation_id": "checkout-8421",
+    "trace_id": "trace-checkout-8421"
+  }
 }

@@ -32,8 +32,9 @@ evals/
 Telemetry files may be omitted intentionally when a source is unavailable. The
 retrieval layer represents an omitted file as missing evidence.
 
-Use the same `<service>` value in `incident.json`, telemetry records, and
-telemetry filenames.
+Use the same primary `<service>` value in `incident.json`, telemetry filenames,
+logs, and metrics. Trace records may identify downstream emitting services when
+they share a correlated trace ID.
 
 ## Runtime Incident Input
 
@@ -120,7 +121,7 @@ Required fields:
 | `timestamp` | ISO 8601 timestamp with timezone. |
 | `trace_id` | Non-empty string. |
 | `span_id` | Non-empty string, unique within the trace. |
-| `service` | Non-empty string matching the primary service when the span should be retrieved. |
+| `service` | Non-empty emitting service name. A correlated trace may include the primary service and downstream dependency services. |
 | `operation` | Non-empty operation name. |
 | `duration_ms` | Integer greater than or equal to zero. |
 | `status` | Non-empty string such as `ok` or `error`. |
@@ -192,7 +193,8 @@ Rules:
 
 - Use one coherent UTC timeline per case.
 - Place relevant telemetry inside the investigation window.
-- Use stable service names across incident input, filenames, and records.
+- Use stable service names across incident input and filenames. Trace records may
+  identify downstream emitting services when they share the correlated trace ID.
 - Reuse `trace_id` across logs and trace spans when trace correlation matters.
 - Reuse `correlation_id` across related log lines when log correlation matters.
 - Add only enough records to express the scenario, usually three to six records

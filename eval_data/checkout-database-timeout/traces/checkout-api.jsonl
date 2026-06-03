@@ -1,1 +1,10 @@
-{"trace_id":"trace-001","span_id":"span-001","service":"checkout-api","operation":"POST /checkout","duration_ms":2420,"status":"error","timestamp":"2026-05-11T10:01:13Z"}
+{"timestamp":"2026-05-11T09:46:35Z","trace_id":"trace-checkout-8394","span_id":"span-8394-01","service":"checkout-api","operation":"POST /checkout","duration_ms":201,"status":"ok"}
+{"timestamp":"2026-05-11T09:46:35Z","trace_id":"trace-checkout-8394","span_id":"span-8394-02","service":"orders-db","operation":"INSERT orders","duration_ms":74,"status":"ok"}
+{"timestamp":"2026-05-11T09:57:48Z","trace_id":"trace-checkout-8412","span_id":"span-8412-01","service":"checkout-api","operation":"POST /checkout","duration_ms":1941,"status":"ok"}
+{"timestamp":"2026-05-11T09:57:48Z","trace_id":"trace-checkout-8412","span_id":"span-8412-02","service":"checkout-api","operation":"validate cart","duration_ms":39,"status":"ok"}
+{"timestamp":"2026-05-11T09:57:48Z","trace_id":"trace-checkout-8412","span_id":"span-8412-03","service":"orders-db","operation":"INSERT orders","duration_ms":1850,"status":"ok"}
+{"timestamp":"2026-05-11T10:03:06Z","trace_id":"trace-checkout-8421","span_id":"span-8421-01","service":"checkout-api","operation":"POST /checkout","duration_ms":2587,"status":"error"}
+{"timestamp":"2026-05-11T10:03:06Z","trace_id":"trace-checkout-8421","span_id":"span-8421-02","service":"checkout-api","operation":"validate cart","duration_ms":41,"status":"ok"}
+{"timestamp":"2026-05-11T10:03:06Z","trace_id":"trace-checkout-8421","span_id":"span-8421-03","service":"checkout-api","operation":"calculate tax","duration_ms":44,"status":"ok"}
+{"timestamp":"2026-05-11T10:03:06Z","trace_id":"trace-checkout-8421","span_id":"span-8421-04","service":"orders-db","operation":"INSERT orders attempt 1","duration_ms":1230,"status":"error"}
+{"timestamp":"2026-05-11T10:03:07Z","trace_id":"trace-checkout-8421","span_id":"span-8421-05","service":"orders-db","operation":"INSERT orders attempt 2","duration_ms":1250,"status":"timeout"}

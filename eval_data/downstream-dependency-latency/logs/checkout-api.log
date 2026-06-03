@@ -1,0 +1,30 @@
+2026-05-12T13:50:12Z INFO checkout-api correlation_id=checkout-7701 trace_id=trace-checkout-7701 Checkout request completed in 184ms
+2026-05-12T13:51:08Z INFO checkout-api correlation_id=checkout-7702 trace_id=trace-checkout-7702 Shipping rate lookup completed in 92ms
+2026-05-12T13:52:21Z INFO checkout-api correlation_id=checkout-7703 trace_id=trace-checkout-7703 Checkout request completed in 201ms
+2026-05-12T13:53:33Z INFO checkout-api correlation_id=maintenance-201 trace_id=trace-maintenance-201 Cache refresh completed for delivery zones
+2026-05-12T13:54:42Z INFO checkout-api correlation_id=checkout-7705 trace_id=trace-checkout-7705 Shipping rate lookup completed in 101ms
+2026-05-12T13:55:14Z INFO checkout-api correlation_id=checkout-7706 trace_id=trace-checkout-7706 Checkout request completed in 196ms
+2026-05-12T13:56:04Z WARN checkout-api correlation_id=checkout-7810 trace_id=trace-checkout-7810 Shipping rate lookup took 680ms
+2026-05-12T13:56:47Z INFO checkout-api correlation_id=sync-302 trace_id=trace-sync-302 Inventory synchronization batch completed
+2026-05-12T13:57:09Z INFO checkout-api correlation_id=checkout-7812 trace_id=trace-checkout-7812 Cart validation completed in 39ms
+2026-05-12T13:58:16Z WARN checkout-api correlation_id=checkout-7814 trace_id=trace-checkout-7814 Shipping rate lookup took 1420ms
+2026-05-12T13:58:52Z INFO checkout-api correlation_id=checkout-7815 trace_id=trace-checkout-7815 Tax calculation completed in 44ms
+2026-05-12T13:59:18Z WARN checkout-api correlation_id=maintenance-303 trace_id=trace-maintenance-303 Cache miss rate increased to 8 percent during refresh
+2026-05-12T13:59:56Z WARN checkout-api correlation_id=checkout-7817 trace_id=trace-checkout-7817 Shipping rate lookup took 2180ms
+2026-05-12T14:00:24Z INFO checkout-api correlation_id=checkout-7818 trace_id=trace-checkout-7818 Checkout request completed in 215ms
+2026-05-12T14:01:37Z ERROR checkout-api correlation_id=checkout-7820 trace_id=trace-checkout-7820 Request timed out while waiting for shipping-rate-service
+2026-05-12T14:02:11Z INFO checkout-api correlation_id=checkout-7821 trace_id=trace-checkout-7821 Inventory preparation completed in 52ms
+2026-05-12T14:02:49Z INFO checkout-api correlation_id=maintenance-304 trace_id=trace-maintenance-304 Cache refresh completed for tax rules
+2026-05-12T14:03:14Z INFO checkout-api correlation_id=checkout-7842 trace_id=trace-checkout-7842 Checkout request accepted
+2026-05-12T14:03:14Z INFO checkout-api correlation_id=checkout-7842 trace_id=trace-checkout-7842 Cart validation completed in 42ms
+2026-05-12T14:03:14Z INFO checkout-api correlation_id=checkout-7842 trace_id=trace-checkout-7842 Tax calculation completed in 47ms
+2026-05-12T14:03:15Z INFO checkout-api correlation_id=checkout-7842 trace_id=trace-checkout-7842 Inventory preparation completed in 51ms
+2026-05-12T14:03:18Z ERROR checkout-api correlation_id=checkout-7842 trace_id=trace-checkout-7842 Shipping rate lookup exceeded client timeout
+2026-05-12T14:03:18Z WARN checkout-api correlation_id=checkout-7842 trace_id=trace-checkout-7842 Checkout request aborted after timeout waiting for dependency
+2026-05-12T14:04:39Z ERROR checkout-api correlation_id=checkout-7826 trace_id=trace-checkout-7826 Request timed out while waiting for shipping-rate-service
+2026-05-12T14:05:12Z INFO checkout-api correlation_id=checkout-7827 trace_id=trace-checkout-7827 Tax calculation completed in 46ms
+2026-05-12T14:06:01Z WARN checkout-api correlation_id=checkout-7828 trace_id=trace-checkout-7828 Shipping rate lookup took 1940ms
+2026-05-12T14:07:13Z INFO checkout-api correlation_id=sync-305 trace_id=trace-sync-305 Inventory synchronization checkpoint completed
+2026-05-12T14:08:27Z INFO checkout-api correlation_id=checkout-7830 trace_id=trace-checkout-7830 Cart validation completed in 36ms
+2026-05-12T14:10:19Z WARN checkout-api correlation_id=checkout-7831 trace_id=trace-checkout-7831 Shipping rate lookup took 980ms
+2026-05-12T14:12:45Z INFO checkout-api correlation_id=checkout-7832 trace_id=trace-checkout-7832 Shipping rate lookup completed in 188ms

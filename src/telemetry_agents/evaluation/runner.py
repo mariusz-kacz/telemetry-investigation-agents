@@ -1,4 +1,6 @@
-from telemetry_agents.evaluation.unsupported_claim_review import GuardedUnsupportedClaimReviewer
+from telemetry_agents.evaluation.unsupported_claim_review import (
+    GuardedUnsupportedClaimReviewer,
+)
 from telemetry_agents.evaluation.scoring import (
     score_expected_evidence_sources,
     score_expected_category,
