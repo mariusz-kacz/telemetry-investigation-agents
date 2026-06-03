@@ -6,6 +6,7 @@ import pytest
 from telemetry_agents.investigation.evidence_scoring import (
     EvidenceStrength,
     score_matching_log_line,
+    score_matching_trace_span,
 )
 from telemetry_agents.investigation.log_matching import (
     MatchDetail,
@@ -14,6 +15,7 @@ from telemetry_agents.investigation.log_matching import (
 )
 
 from telemetry_agents.telemetry.models import ParsedLogRecord
+from telemetry_agents.investigation.trace_matching import TraceMatchReason
 
 
 def _matched_log_line(match_reasons: list[MatchReason]) -> MatchedLogLine:
@@ -23,7 +25,6 @@ def _matched_log_line(match_reasons: list[MatchReason]) -> MatchedLogLine:
             level="ERROR",
             service="checkout-api",
             message="DatabaseTimeoutException while calling orders-db",
-            correlation_id="cart-123",
             trace_id="trace-001",
         ),
         source_file=Path("sample_data/logs/checkout-api.log"),
@@ -40,23 +41,22 @@ def _matched_log_line(match_reasons: list[MatchReason]) -> MatchedLogLine:
         (
             [
                 MatchReason.QUERY_TERM,
-                MatchReason.CORRELATION_ID,
-                MatchReason.TRACE_ID,
+                MatchReason.REQUEST_TRACE_ID,
             ],
             EvidenceStrength.STRONG,
             1.0,
         ),
         (
-            [MatchReason.QUERY_TERM, MatchReason.CORRELATION_ID],
-            EvidenceStrength.STRONG,
+            [MatchReason.REQUEST_TRACE_ID],
+            EvidenceStrength.MEDIUM,
             0.8,
         ),
         (
-            [MatchReason.CORRELATION_ID, MatchReason.TRACE_ID],
+            [MatchReason.QUERY_TERM],
             EvidenceStrength.MEDIUM,
             0.6,
         ),
-        ([MatchReason.QUERY_TERM], EvidenceStrength.WEAK, 0.2),
+        ([MatchReason.DISCOVERED_TRACE_ID], EvidenceStrength.MEDIUM, 0.6),
     ],
 )
 def test_score_matching_log_line_uses_strongest_matching_rule(
@@ -75,3 +75,21 @@ def test_score_matching_log_line_uses_strongest_matching_rule(
 def test_score_matching_log_line_rejects_match_without_reasons() -> None:
     with pytest.raises(ValueError, match="no match reasons"):
         score_matching_log_line(_matched_log_line([]))
+
+
+@pytest.mark.parametrize(
+    ("match_reason", "expected_strength", "expected_score"),
+    [
+        (TraceMatchReason.REQUEST_TRACE_ID, EvidenceStrength.STRONG, 1.0),
+        (TraceMatchReason.DISCOVERED_TRACE_ID, EvidenceStrength.MEDIUM, 0.6),
+    ],
+)
+def test_score_matching_trace_span_uses_trace_match_reason(
+    match_reason: TraceMatchReason,
+    expected_strength: EvidenceStrength,
+    expected_score: float,
+) -> None:
+    strength, relevance_score = score_matching_trace_span(match_reason)
+
+    assert strength == expected_strength
+    assert relevance_score == expected_score

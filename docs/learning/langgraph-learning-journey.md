@@ -457,13 +457,13 @@ Build deterministic parsing and normalization before using LLM reasoning.
 - Normalization.
 - Error signatures.
 - Time-window filtering.
-- Correlation IDs.
+- Trace IDs as the current correlation key.
 
 ## Implementation tasks
 
 Create parsers for synthetic data:
 
-- logs: timestamp, level, service, message, correlation ID, exception type.
+- logs: timestamp, level, service, message, trace ID, exception type.
 - traces: trace ID, span ID, service, operation, duration, status.
 - metrics: timestamp, service, metric name, value.
 
@@ -477,7 +477,7 @@ Create parsers for synthetic data:
 
 - [x] Parsers exist.
 - [x] Time-window filtering works.
-- [x] Correlation ID filtering works.
+- [x] Trace ID filtering works.
 - [x] Synthetic incident data exists.
 - [x] Tests cover normal and malformed inputs.
 
@@ -526,7 +526,7 @@ Each evidence item should preserve citation metadata:
 
 ## Learning tasks
 
-- Implement simple keyword/time/correlation retrieval before vector search.
+- Implement simple keyword/time/trace-correlation retrieval before vector search.
 - Write “insufficient evidence” behavior.
 - Add tests proving every evidence item has citation metadata.
 
@@ -1022,7 +1022,7 @@ Make the agentic workflow inspectable like a production system.
 - Tool latency.
 - LLM latency/cost.
 - Error telemetry.
-- Correlation IDs.
+- Trace IDs and run IDs.
 - OpenTelemetry.
 - Debuggability of agent workflows.
 
@@ -1050,7 +1050,7 @@ Add observability for:
 ## Checkpoint
 
 - [ ] Structured logging exists.
-- [ ] Graph run has correlation ID.
+- [ ] Graph run has a run ID.
 - [ ] Nodes emit useful telemetry.
 - [ ] Tool failures are observable.
 - [ ] LLM calls are traceable through adapter.

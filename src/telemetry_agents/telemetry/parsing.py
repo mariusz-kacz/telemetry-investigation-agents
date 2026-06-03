@@ -38,7 +38,7 @@ def parse_log_line(line: str) -> ParsedLogRecord:
     if len(tokens) < 6:
         raise ValueError("Log line could not be parsed")
 
-    # Synthetic logs use: timestamp level service key=value key=value message...
+    # Synthetic logs use: timestamp level service key=value message...
     timestamp_text = tokens[0]
     log_level = tokens[1]
     service = tokens[2]
@@ -63,14 +63,12 @@ def parse_log_line(line: str) -> ParsedLogRecord:
     exception_match = EXCEPTION_PATTERN.search(message)
     exception_type = exception_match.group(1) if exception_match else None
 
-    correlation_id = _required_string(metadata, "correlation_id")
     trace_id = _required_string(metadata, "trace_id")
 
     return ParsedLogRecord(
         timestamp=timestamp,
         level=log_level,
         service=service,
-        correlation_id=correlation_id,
         trace_id=trace_id,
         exception_type=exception_type,
         message=message,

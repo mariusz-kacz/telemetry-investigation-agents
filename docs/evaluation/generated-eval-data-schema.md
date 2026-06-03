@@ -53,7 +53,6 @@ File: `eval_data/<case-id>/incident.json`
   },
   "retrieval": {
     "query_terms": ["timeout", "database"],
-    "correlation_id": "cart-123",
     "trace_id": "trace-001"
   }
 }
@@ -71,8 +70,7 @@ Required fields:
 | `investigation_window.start` | ISO 8601 timestamp with timezone. |
 | `investigation_window.end` | ISO 8601 timestamp with timezone, not earlier than `start`. |
 | `retrieval.query_terms` | List of concrete terms expected to occur in relevant log messages. |
-| `retrieval.correlation_id` | Optional non-empty string. |
-| `retrieval.trace_id` | Optional non-empty string. Required when trace evidence should be retrieved. |
+| `retrieval.trace_id` | Optional non-empty string. When omitted, trace evidence can still be retrieved from trace IDs discovered in query-matched logs. |
 
 The future eval loader will translate these fields into the existing domain
 `Incident` and `EvidenceRetrievalRequest` models. This loader does not exist yet.
@@ -84,25 +82,28 @@ File: `eval_data/<case-id>/logs/<service>.log`
 Format: one plain-text record per line.
 
 ```text
-<timestamp> <level> <service> correlation_id=<id> trace_id=<id> <message>
+<timestamp> <level> <service> trace_id=<id> <message>
 ```
 
 Example:
 
 ```text
-2026-05-11T10:01:13Z ERROR checkout-api correlation_id=cart-123 trace_id=trace-001 DatabaseTimeoutException while calling orders-db
+2026-05-11T10:01:13Z ERROR checkout-api trace_id=trace-001 DatabaseTimeoutException while calling orders-db
 ```
 
 Rules:
 
-- Every non-empty line must contain at least six whitespace-separated tokens.
+- Every non-empty line must contain at least five whitespace-separated tokens.
 - `timestamp`, `level`, and `service` are the first three tokens.
-- Every line must include non-empty `correlation_id=<id>` and `trace_id=<id>`.
+- Every line must include non-empty `trace_id=<id>`.
 - The remaining non-metadata tokens form the message.
 - Exception names should end with `Exception` when exception extraction matters.
 - Relevant records must fall inside the investigation window.
-- Include a retrieval query term, matching correlation ID, or matching trace ID
-  when a record should become evidence.
+- Include a retrieval query term or matching trace ID when a record should become
+  evidence.
+- Query-matched log records may seed one-hop trace ID expansion. Companion logs
+  sharing a discovered trace ID may become evidence even when they do not contain
+  the query term.
 
 ## Trace File
 
@@ -126,7 +127,8 @@ Required fields:
 | `duration_ms` | Integer greater than or equal to zero. |
 | `status` | Non-empty string such as `ok` or `error`. |
 
-Trace retrieval currently requires `retrieval.trace_id` in `incident.json`.
+Trace retrieval uses `retrieval.trace_id` when present and also uses trace IDs
+discovered from query-matched log evidence.
 
 ## Metric File
 
@@ -196,7 +198,8 @@ Rules:
 - Use stable service names across incident input and filenames. Trace records may
   identify downstream emitting services when they share the correlated trace ID.
 - Reuse `trace_id` across logs and trace spans when trace correlation matters.
-- Reuse `correlation_id` across related log lines when log correlation matters.
+- When relying on query-only retrieval, include at least one query-matched seed
+  log with the trace ID that should be expanded.
 - Add only enough records to express the scenario, usually three to six records
   per telemetry file.
 - Include ordinary or weakly relevant records when needed to prove filtering.

@@ -12,40 +12,23 @@ from telemetry_agents.telemetry.parsing import (
 def test_parse_log_line_normalizes_structured_log_fields() -> None:
     record = parse_log_line(
         "2026-05-11T10:01:13Z ERROR checkout-api "
-        "correlation_id=cart-123 trace_id=trace-001 "
+        "trace_id=trace-001 "
         "DatabaseTimeoutException while calling orders-db"
     )
 
     assert record.timestamp == datetime(2026, 5, 11, 10, 1, 13, tzinfo=UTC)
     assert record.level == "ERROR"
     assert record.service == "checkout-api"
-    assert record.correlation_id == "cart-123"
     assert record.trace_id == "trace-001"
     assert record.exception_type == "DatabaseTimeoutException"
     assert record.message == "DatabaseTimeoutException while calling orders-db"
-
-
-def test_parse_log_line_rejects_missing_correlation_id() -> None:
-    with pytest.raises(ValueError):
-        parse_log_line(
-            "2026-05-11T10:01:13Z ERROR checkout-api "
-            "trace_id=trace-001 DatabaseTimeoutException while calling orders-db"
-        )
-
-
-def test_parse_log_line_rejects_empty_correlation_id() -> None:
-    with pytest.raises(ValueError):
-        parse_log_line(
-            "2026-05-11T10:01:13Z ERROR checkout-api "
-            "correlation_id= trace_id=trace-001 DatabaseTimeoutException while calling orders-db"
-        )
 
 
 def test_parse_log_line_rejects_missing_trace_id() -> None:
     with pytest.raises(ValueError):
         parse_log_line(
             "2026-05-11T10:01:13Z ERROR checkout-api "
-            "correlation_id=cart-123 DatabaseTimeoutException while calling orders-db"
+            "DatabaseTimeoutException while calling orders-db"
         )
 
 
@@ -53,14 +36,14 @@ def test_parse_log_line_rejects_empty_trace_id() -> None:
     with pytest.raises(ValueError):
         parse_log_line(
             "2026-05-11T10:01:13Z ERROR checkout-api "
-            "correlation_id=cart-123 trace_id= DatabaseTimeoutException while calling orders-db"
+            "trace_id= DatabaseTimeoutException while calling orders-db"
         )
 
 
 def test_parse_log_line_rejects_invalid_timestamp() -> None:
     with pytest.raises(ValueError):
         parse_log_line(
-            "not-a-timestamp ERROR checkout-api correlation_id=cart-123 "
+            "not-a-timestamp ERROR checkout-api "
             "trace_id=trace-001 DatabaseTimeoutException while calling orders-db"
         )
 
@@ -68,7 +51,7 @@ def test_parse_log_line_rejects_invalid_timestamp() -> None:
 def test_parse_log_line_allows_message_without_exception() -> None:
     record = parse_log_line(
         "2026-05-11T10:01:13Z INFO checkout-api "
-        "correlation_id=cart-123 trace_id=trace-001 request completed successfully"
+        "trace_id=trace-001 request completed successfully"
     )
 
     assert record.exception_type is None

@@ -3,7 +3,8 @@ from pathlib import Path
 from telemetry_agents.telemetry.readers import LocalFileTelemetryReader
 
 
-SAMPLE_DATA = Path("sample_data")
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SAMPLE_DATA = PROJECT_ROOT / "sample_data"
 
 
 def test_local_file_reader_reads_logs_with_source_location() -> None:
@@ -15,7 +16,7 @@ def test_local_file_reader_reads_logs_with_source_location() -> None:
     assert logs[0].source_file == SAMPLE_DATA / "logs" / "checkout-api.log"
     assert logs[0].line_number == 1
     assert logs[0].record.service == "checkout-api"
-    assert logs[0].record.correlation_id == "cart-123"
+    assert logs[0].record.trace_id == "trace-001"
 
 
 def test_local_file_reader_reads_traces_with_source_location() -> None:

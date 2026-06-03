@@ -32,8 +32,10 @@ def get_matching_trace_spans(
     start_timestamp: datetime,
     end_timestamp: datetime,
     trace_id: str | None,
-    trace_ids_from_query_seed_logs: set[str],
+    trace_ids_from_query_seed_logs: set[str] | None = None,
 ) -> list[MatchedTraceSpan]:
+    trace_ids_from_query_seed_logs = trace_ids_from_query_seed_logs or set()
+
     if trace_id is None and not trace_ids_from_query_seed_logs:
         return []
 

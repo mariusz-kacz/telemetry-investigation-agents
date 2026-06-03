@@ -24,7 +24,7 @@ The distinction between matching and retrieval mattered: matching returns record
 
 ## Tradeoffs noticed
 
-Metric samples matched only by service and time window are weaker than trace ID or correlation ID evidence, so they should not be treated as strong evidence.
+Metric samples matched only by service and time window are weaker than trace ID evidence, so they should not be treated as strong evidence.
 
 ## Production concerns
 

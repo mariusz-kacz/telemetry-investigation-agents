@@ -10,7 +10,7 @@
   },
   "retrieval": {
     "query_terms": ["timeout", "shipping-rate-service"],
-    "correlation_id": "checkout-7842",
     "trace_id": "trace-checkout-7842"
   }
 }
+

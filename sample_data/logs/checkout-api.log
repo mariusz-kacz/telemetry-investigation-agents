@@ -1,1 +1,2 @@
-2026-05-11T10:01:13Z ERROR checkout-api correlation_id=cart-123 trace_id=trace-001 DatabaseTimeoutException while calling orders-db
+2026-05-11T10:01:13Z ERROR checkout-api trace_id=trace-001 DatabaseTimeoutException while calling orders-db
+

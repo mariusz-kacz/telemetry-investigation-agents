@@ -13,7 +13,6 @@ class ParsedLogRecord(BaseModel):
     level: str = Field(min_length=1)
     service: str = Field(min_length=1)
     message: str = Field(min_length=1)
-    correlation_id: str | None = None
     trace_id: str | None = None
     exception_type: str | None = None
 

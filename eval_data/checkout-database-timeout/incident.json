@@ -10,7 +10,7 @@
   },
   "retrieval": {
     "query_terms": ["timeout"],
-    "correlation_id": "checkout-8421",
     "trace_id": "trace-checkout-8421"
   }
 }
+

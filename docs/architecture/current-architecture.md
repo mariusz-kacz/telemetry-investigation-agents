@@ -2,14 +2,14 @@
 
 ## Scope
 
-This document describes the architecture during Phase 11: persistence,
-checkpointing, and interrupts.
+This document describes the current architecture during Phase 14: evaluation
+framework work and golden-case expansion.
 
 The system is still intentionally incomplete. It has deterministic telemetry
 parsing, matching, scoring, cited evidence retrieval, bounded hypothesis
 generation, deterministic hypothesis validation, LLM critic review, and
-SQLite-backed checkpointing for workflow state. It does not yet include
-interrupts, human review routing, evaluation runners, observability, or an
+SQLite-backed checkpointing for workflow state, human review routing, and early
+evaluation scoring. It does not yet include production observability or an
 external API.
 
 ## Module Boundaries
@@ -49,6 +49,7 @@ Current responsibilities:
 - trace span matching,
 - metric sample matching,
 - log evidence classification,
+- bounded trace ID expansion from query-matched seed logs,
 - shared evidence strength vocabulary,
 - retrieval of cited evidence,
 - bounded hypothesis generation through an adapter protocol,
@@ -163,11 +164,20 @@ local sample files
 
 Current source-specific matching:
 
-- logs: service, time window, query terms, correlation ID, trace ID;
-- traces: service, time window, exact trace ID;
+- logs: service, time window, query terms, request trace ID, discovered trace IDs;
+- traces: time window, request trace ID, discovered trace IDs;
 - metrics: service and time window.
 
-Matching returns matched records only. Retrieval decides whether to create actual evidence or explicit missing evidence. If the expected file for a source is absent, retrieval emits missing evidence for that source rather than crashing the investigation.
+Log retrieval uses a bounded two-pass flow. First, query-matched seed logs
+discover trace IDs. Second, matching includes logs that match query terms, the
+request trace ID, or trace IDs discovered from seed logs. Trace retrieval then
+matches spans by request trace ID or discovered trace IDs. Expansion stops after
+that one hop; companion logs do not discover more trace IDs.
+
+Matching returns matched records only. Retrieval decides whether to create actual
+evidence or explicit missing evidence. If the expected file for a source is
+absent, retrieval emits missing evidence for that source rather than crashing the
+investigation.
 
 ## Citation Contract
 
@@ -237,7 +247,9 @@ CREATE TABLE investigation_runs (
 Evidence strength is intentionally conservative.
 
 - Exact trace ID evidence can be strong.
-- Log evidence can be strong, medium, or weak depending on match reasons.
+- Request trace ID evidence is stronger than trace IDs discovered from
+  query-matched seed logs.
+- Log evidence can be strong or medium depending on match reasons.
 - Metric evidence is currently medium because service + time-window matching alone is not a strong relevance signal.
 - Missing evidence is represented explicitly.
 
@@ -260,3 +272,5 @@ These are later learning phases, not accidental omissions.
 - Should evidence retrieval helpers remain in one module, or split into source-specific modules if the file grows?
 - Should graph state eventually rename raw `hypotheses` to `candidate_hypotheses` to make trust boundaries clearer?
 - Should missing evidence be included in prompts, or only in validator/reporting context?
+- Should a business correlation ID be reintroduced later for async or multi-trace
+  scenarios?

@@ -1,11 +1,12 @@
-2026-05-11T09:43:12Z INFO checkout-api correlation_id=checkout-8390 trace_id=trace-checkout-8390 Checkout request completed in 188ms
-2026-05-11T09:46:35Z INFO checkout-api correlation_id=checkout-8394 trace_id=trace-checkout-8394 Checkout request completed in 201ms
-2026-05-11T09:49:04Z INFO checkout-api correlation_id=maintenance-051 trace_id=trace-maintenance-051 Cache refresh completed for checkout promotions
-2026-05-11T09:53:17Z INFO checkout-api correlation_id=checkout-8402 trace_id=trace-checkout-8402 Cart validation completed in 38ms
-2026-05-11T09:55:26Z WARN checkout-api correlation_id=checkout-8407 trace_id=trace-checkout-8407 Order persistence to orders-db took 920ms
-2026-05-11T09:57:48Z WARN checkout-api correlation_id=checkout-8412 trace_id=trace-checkout-8412 Order persistence to orders-db took 1850ms
-2026-05-11T09:59:14Z INFO checkout-api correlation_id=checkout-8416 trace_id=trace-checkout-8416 Tax calculation completed in 43ms
-2026-05-11T10:03:06Z INFO checkout-api correlation_id=checkout-8421 trace_id=trace-checkout-8421 Checkout request accepted
-2026-05-11T10:03:06Z INFO checkout-api correlation_id=checkout-8421 trace_id=trace-checkout-8421 Cart validation completed in 41ms
-2026-05-11T10:03:09Z ERROR checkout-api correlation_id=checkout-8421 trace_id=trace-checkout-8421 Request timed out while waiting for orders-db
-2026-05-11T10:03:09Z ERROR checkout-api correlation_id=checkout-8421 trace_id=trace-checkout-8421 Checkout request aborted after timeout waiting for orders-db
+2026-05-11T09:43:12Z INFO checkout-api trace_id=trace-checkout-8390 Checkout request completed in 188ms
+2026-05-11T09:46:35Z INFO checkout-api trace_id=trace-checkout-8394 Checkout request completed in 201ms
+2026-05-11T09:49:04Z INFO checkout-api trace_id=trace-maintenance-051 Cache refresh completed for checkout promotions
+2026-05-11T09:53:17Z INFO checkout-api trace_id=trace-checkout-8402 Cart validation completed in 38ms
+2026-05-11T09:55:26Z WARN checkout-api trace_id=trace-checkout-8407 Order persistence to orders-db took 920ms
+2026-05-11T09:57:48Z WARN checkout-api trace_id=trace-checkout-8412 Order persistence to orders-db took 1850ms
+2026-05-11T09:59:14Z INFO checkout-api trace_id=trace-checkout-8416 Tax calculation completed in 43ms
+2026-05-11T10:03:06Z INFO checkout-api trace_id=trace-checkout-8421 Checkout request accepted
+2026-05-11T10:03:06Z INFO checkout-api trace_id=trace-checkout-8421 Cart validation completed in 41ms
+2026-05-11T10:03:09Z ERROR checkout-api trace_id=trace-checkout-8421 Request timed out while waiting for orders-db
+2026-05-11T10:03:09Z ERROR checkout-api trace_id=trace-checkout-8421 Checkout request aborted after timeout waiting for orders-db
+
