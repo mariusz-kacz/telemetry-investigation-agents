@@ -20,7 +20,9 @@ class UnsupportedClaimFinding(BaseModel):
 
 class UnsupportedClaimReviewRequest(BaseModel):
     evidence: list[RetrievedEvidence] = Field(default_factory=list)
-    vaidated_hypotheses: list[InvestigationHypothesis] = Field(default_factory=list)
+    reviewed_accepted_hypotheses: list[InvestigationHypothesis] = Field(
+        default_factory=list
+    )
 
 
 class UnsupportedClaimReviewResult(BaseModel):
@@ -55,7 +57,9 @@ def validate_unsupported_claim_review(
     *, request: UnsupportedClaimReviewRequest, result: UnsupportedClaimReviewResult
 ) -> None:
     """Run semantic unsupported-claim review and enforce result guardrails."""
-    hypothesis_ids = {item.hypothesis_id for item in request.vaidated_hypotheses}
+    hypothesis_ids = {
+        item.hypothesis_id for item in request.reviewed_accepted_hypotheses
+    }
     evidence_by_id = {item.evidence.evidence_id: item for item in request.evidence}
     evidence_ids = set(evidence_by_id)
 

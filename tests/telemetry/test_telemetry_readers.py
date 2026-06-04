@@ -2,6 +2,27 @@ from telemetry_agents.telemetry.readers import LocalFileTelemetryReader
 from telemetry_agents.shared.paths import SAMPLE_DATA_DIR
 
 
+def test_local_file_reader_reads_utf8_bom_trace_file(tmp_path) -> None:
+    traces_dir = tmp_path / "traces"
+    traces_dir.mkdir()
+    (traces_dir / "checkout-api.jsonl").write_text(
+        '\ufeff{"timestamp":"2026-05-13T14:34:12Z",'
+        '"trace_id":"trace-checkout-9301",'
+        '"span_id":"span-9301-01",'
+        '"service":"checkout-api",'
+        '"operation":"POST /checkout",'
+        '"duration_ms":221,'
+        '"status":"ok"}\n',
+        encoding="utf-8",
+    )
+
+    reader = LocalFileTelemetryReader(tmp_path)
+
+    traces = reader.read_traces(service="checkout-api")
+
+    assert traces[0].record.trace_id == "trace-checkout-9301"
+
+
 def test_local_file_reader_reads_logs_with_source_location() -> None:
     reader = LocalFileTelemetryReader(SAMPLE_DATA_DIR)
 

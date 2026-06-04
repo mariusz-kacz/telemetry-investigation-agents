@@ -10,6 +10,7 @@ from telemetry_agents.graph.human_review_assessment import (
 )
 from telemetry_agents.graph.hypothesis_critic import make_hypothesis_critic_node
 from telemetry_agents.graph.hypothesis_generation import make_hypothesis_generation_node
+from telemetry_agents.graph.hypothesis_review import make_hypothesis_review_node
 from telemetry_agents.graph.hypothesis_validation import make_hypothesis_validation_node
 from telemetry_agents.graph.investigation_state import InvestigationGraphState
 from telemetry_agents.graph.human_review_not_required_marker import (
@@ -48,6 +49,10 @@ def build_investigation_workflow(
         _node(make_hypothesis_critic_node(critic=critic)),
     )
     builder.add_node(
+        "hypothesis_review",
+        _node(make_hypothesis_review_node()),
+    )
+    builder.add_node(
         "human_review_assessment",
         _node(make_human_review_assessment_node()),
     )
@@ -64,7 +69,8 @@ def build_investigation_workflow(
     builder.add_edge(START, "hypothesis_generation")
     builder.add_edge("hypothesis_generation", "hypothesis_validation")
     builder.add_edge("hypothesis_validation", "hypothesis_critic")
-    builder.add_edge("hypothesis_critic", "human_review_assessment")
+    builder.add_edge("hypothesis_critic", "hypothesis_review")
+    builder.add_edge("hypothesis_review", "human_review_assessment")
     builder.add_conditional_edges(
         "human_review_assessment",
         _requires_human_review_route,

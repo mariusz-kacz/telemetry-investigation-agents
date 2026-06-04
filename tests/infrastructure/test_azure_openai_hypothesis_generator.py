@@ -137,6 +137,12 @@ def test_generate_passes_system_prompt_to_model() -> None:
     assert system_message is not None
     assert "category" in system_message
     assert "coarse" in system_message
+    assert "DATABASE_FAILURE" in system_message
+    assert "DOWNSTREAM_DEPENDENCY_FAILURE" in system_message
+    assert "orders-db" in system_message
+    assert "non-database external services or APIs" in system_message
+    assert "timeout or retry policy problems" in system_message
+    assert "configuration was too aggressive or changed" in system_message
 
 
 def test_generate_raises_value_error_from_empty_response() -> None:

@@ -1,6 +1,7 @@
 from collections import defaultdict
 from pathlib import Path
 
+from telemetry_agents.domain import HypothesisReviewStatus
 from telemetry_agents.evaluation.unsupported_claim_review import (
     GuardedUnsupportedClaimReviewer,
     UnsupportedClaimReviewRequest,
@@ -24,15 +25,18 @@ def score_unsupported_claims(
     output: EvaluationRunOutput,
     reviewer: GuardedUnsupportedClaimReviewer,
 ) -> UnsupportedClaimScore:
-    """Score whether validated hypotheses contain unsupported causal claims."""
-    if (
-        output.validation_result is None
-        or not output.validation_result.validated_hypotheses
-    ):
+    """Score whether accepted hypotheses contain unsupported causal claims."""
+    reviewed_accepted_hypotheses = [
+        h.hypothesis
+        for h in output.review_result.reviewed_hypotheses
+        if h.status == HypothesisReviewStatus.ACCEPTED
+    ]
+
+    if not reviewed_accepted_hypotheses:
         return UnsupportedClaimScore(passed=True)
 
     request = UnsupportedClaimReviewRequest(
-        vaidated_hypotheses=output.validation_result.validated_hypotheses,
+        reviewed_accepted_hypotheses=reviewed_accepted_hypotheses,
         evidence=output.retrieved_evidence,
     )
     review_result = reviewer.review(request=request)
@@ -146,10 +150,10 @@ def score_expected_category(
 ) -> ExpectedHypothesisCategoryScore:
     expected_category = case.expected_category
     matched_hypothesis_ids = []
-    if output.validation_result:
-        for hypothesis in output.validation_result.validated_hypotheses:
-            if expected_category == hypothesis.category:
-                matched_hypothesis_ids.append(hypothesis.hypothesis_id)
+    accepted_reviewed_hypothesis = [h for h in output.review_result.reviewed_hypotheses if h.status == HypothesisReviewStatus.ACCEPTED]
+    for accepted_hypothesis in accepted_reviewed_hypothesis:
+        if expected_category == accepted_hypothesis.hypothesis.category:
+            matched_hypothesis_ids.append(accepted_hypothesis.hypothesis.hypothesis_id)
 
     return ExpectedHypothesisCategoryScore(
         passed=bool(matched_hypothesis_ids),

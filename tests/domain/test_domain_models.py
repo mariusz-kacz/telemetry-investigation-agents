@@ -18,6 +18,7 @@ from telemetry_agents.domain import (
     TelemetryEvidence,
 )
 
+
 def _incident_payload(
     *,
     incident_id: str = "inc-001",

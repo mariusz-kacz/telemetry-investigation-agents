@@ -4,9 +4,11 @@ from telemetry_agents.domain import (
     HypothesisCritiqueFinding,
     CritiqueFindingType,
     HypothesisValidationResult,
+    HypothesisReviewStatus,
     Incident,
     IncidentImpact,
     RejectedHypothesis,
+    ReviewedHypothesis,
     EvidenceSource,
     InvestigationHypothesis,
     TelemetryEvidence,
@@ -76,6 +78,17 @@ def _validation_result() -> HypothesisValidationResult:
     return HypothesisValidationResult(validated_hypotheses=[_hypothesis()])
 
 
+def _reviewed_hypothesis(
+    hypothesis: InvestigationHypothesis | None = None,
+    *,
+    status: HypothesisReviewStatus = HypothesisReviewStatus.ACCEPTED,
+) -> ReviewedHypothesis:
+    return ReviewedHypothesis(
+        hypothesis=hypothesis or _hypothesis(),
+        status=status,
+    )
+
+
 def _incident(impact: IncidentImpact = IncidentImpact.MEDIUM) -> Incident:
     return Incident(
         incident_id="inc-001",
@@ -91,24 +104,25 @@ def _incident(impact: IncidentImpact = IncidentImpact.MEDIUM) -> Incident:
     )
 
 
-def test_requires_human_review_when_has_critic_findings() -> None:
+def test_raw_critic_findings_do_not_directly_trigger_human_review() -> None:
     request = HumanReviewAssessmentRequest(
         validation_result=_validation_result(),
         critique_findings=[_critique_finding()],
+        reviewed_hypotheses=[_reviewed_hypothesis()],
         evidence=[_retrieved_evidence()],
         incident=_incident(),
     )
 
     result = assess_human_review_requirement(request)
 
-    assert result.human_review_required is True
-    assert result.human_review_reason == "critic findings present"
+    assert result.human_review_required is False
+    assert result.human_review_reason is None
 
 
 def test_requires_human_review_when_has_no_evidences() -> None:
     request = HumanReviewAssessmentRequest(
         validation_result=_validation_result(),
-        critique_findings=[],
+        reviewed_hypotheses=[_reviewed_hypothesis()],
         evidence=[],
         incident=_incident(),
     )
@@ -122,7 +136,6 @@ def test_requires_human_review_when_has_no_evidences() -> None:
 def test_requires_human_review_when_has_no_validated_hypotheses() -> None:
     request = HumanReviewAssessmentRequest(
         validation_result=HypothesisValidationResult(validated_hypotheses=[]),
-        critique_findings=[],
         evidence=[_retrieved_evidence()],
         incident=_incident(),
     )
@@ -140,7 +153,11 @@ def test_requires_human_review_when_hypothesis_has_low_confidence() -> None:
                 _hypothesis(confidence=0.4, uncertainty="Low confidence")
             ]
         ),
-        critique_findings=[],
+        reviewed_hypotheses=[
+            _reviewed_hypothesis(
+                _hypothesis(confidence=0.4, uncertainty="Low confidence")
+            )
+        ],
         evidence=[_retrieved_evidence()],
         incident=_incident(),
     )
@@ -165,7 +182,7 @@ def test_requires_human_review_when_weak_evidence_strength(
         validation_result=HypothesisValidationResult(
             validated_hypotheses=[_hypothesis()]
         ),
-        critique_findings=[],
+        reviewed_hypotheses=[_reviewed_hypothesis()],
         evidence=[_retrieved_evidence(strength=strength)],
         incident=_incident(),
     )
@@ -181,7 +198,7 @@ def test_human_review_not_required_when_all_criteria_met() -> None:
         validation_result=HypothesisValidationResult(
             validated_hypotheses=[_hypothesis()]
         ),
-        critique_findings=[],
+        reviewed_hypotheses=[_reviewed_hypothesis()],
         evidence=[_retrieved_evidence()],
         incident=_incident(),
     )
@@ -209,7 +226,7 @@ def test_rejected_alternative_does_not_require_review_when_validated_hypothesis_
                 )
             ],
         ),
-        critique_findings=[],
+        reviewed_hypotheses=[_reviewed_hypothesis()],
         evidence=[_retrieved_evidence()],
         incident=_incident(),
     )
@@ -223,7 +240,7 @@ def test_rejected_alternative_does_not_require_review_when_validated_hypothesis_
 def test_collects_multiple_review_reasons() -> None:
     request = HumanReviewAssessmentRequest(
         validation_result=_validation_result(),
-        critique_findings=[_critique_finding()],
+        reviewed_hypotheses=[_reviewed_hypothesis()],
         evidence=[_retrieved_evidence(strength=EvidenceStrength.WEAK)],
         incident=_incident(),
     )
@@ -231,15 +248,13 @@ def test_collects_multiple_review_reasons() -> None:
     result = assess_human_review_requirement(request)
 
     assert result.human_review_required is True
-    assert result.human_review_reason == (
-        "critic findings present; missing or weak evidence strength"
-    )
+    assert result.human_review_reason == "missing or weak evidence strength"
 
 
 def test_requires_human_review_when_incident_impact_is_high() -> None:
     request = HumanReviewAssessmentRequest(
         validation_result=_validation_result(),
-        critique_findings=[],
+        reviewed_hypotheses=[_reviewed_hypothesis()],
         evidence=[_retrieved_evidence()],
         incident=_incident(IncidentImpact.HIGH),
     )
@@ -254,7 +269,7 @@ def test_requires_human_review_when_has_warnings() -> None:
     request = HumanReviewAssessmentRequest(
         warnings=["Hypothesis critic was unavailable; semantic review was skipped."],
         validation_result=_validation_result(),
-        critique_findings=[],
+        reviewed_hypotheses=[_reviewed_hypothesis()],
         evidence=[_retrieved_evidence()],
         incident=_incident(),
     )
@@ -268,7 +283,7 @@ def test_requires_human_review_when_has_warnings() -> None:
 def test_medium_impact_does_not_require_review_when_other_conditions_are_safe() -> None:
     request = HumanReviewAssessmentRequest(
         validation_result=_validation_result(),
-        critique_findings=[],
+        reviewed_hypotheses=[_reviewed_hypothesis()],
         evidence=[_retrieved_evidence()],
         incident=_incident(IncidentImpact.MEDIUM),
     )
@@ -277,3 +292,229 @@ def test_medium_impact_does_not_require_review_when_other_conditions_are_safe() 
 
     assert result.human_review_required is False
     assert result.human_review_reason is None
+
+
+def test_top_disputed_hypothesis_triggers_human_review() -> None:
+    top_hypothesis = _hypothesis("hyp-top", confidence=0.95)
+    lower_hypothesis = _hypothesis("hyp-lower", confidence=0.9)
+    request = HumanReviewAssessmentRequest(
+        validation_result=HypothesisValidationResult(
+            validated_hypotheses=[top_hypothesis, lower_hypothesis]
+        ),
+        reviewed_hypotheses=[
+            _reviewed_hypothesis(
+                top_hypothesis,
+                status=HypothesisReviewStatus.DISPUTED,
+            ),
+            _reviewed_hypothesis(lower_hypothesis),
+        ],
+        evidence=[_retrieved_evidence()],
+        incident=_incident(),
+    )
+
+    result = assess_human_review_requirement(request)
+
+    assert result.human_review_required is True
+    assert "top reviewed hypothesis is blocked or disputed" in (
+        result.human_review_reason or ""
+    )
+
+
+def test_top_blocked_hypothesis_triggers_human_review() -> None:
+    top_hypothesis = _hypothesis("hyp-top", confidence=0.95)
+    lower_hypothesis = _hypothesis("hyp-lower", confidence=0.9)
+    request = HumanReviewAssessmentRequest(
+        validation_result=HypothesisValidationResult(
+            validated_hypotheses=[top_hypothesis, lower_hypothesis]
+        ),
+        reviewed_hypotheses=[
+            _reviewed_hypothesis(
+                top_hypothesis,
+                status=HypothesisReviewStatus.BLOCKED,
+            ),
+            _reviewed_hypothesis(lower_hypothesis),
+        ],
+        evidence=[_retrieved_evidence()],
+        incident=_incident(),
+    )
+
+    result = assess_human_review_requirement(request)
+
+    assert result.human_review_required is True
+    assert "top reviewed hypothesis is blocked or disputed" in (
+        result.human_review_reason or ""
+    )
+
+
+def test_no_accepted_hypothesis_triggers_human_review() -> None:
+    disputed_hypothesis = _hypothesis("hyp-disputed", confidence=0.95)
+    blocked_hypothesis = _hypothesis("hyp-blocked", confidence=0.9)
+    request = HumanReviewAssessmentRequest(
+        validation_result=HypothesisValidationResult(
+            validated_hypotheses=[disputed_hypothesis, blocked_hypothesis]
+        ),
+        reviewed_hypotheses=[
+            _reviewed_hypothesis(
+                disputed_hypothesis,
+                status=HypothesisReviewStatus.DISPUTED,
+            ),
+            _reviewed_hypothesis(
+                blocked_hypothesis,
+                status=HypothesisReviewStatus.BLOCKED,
+            ),
+        ],
+        evidence=[_retrieved_evidence()],
+        incident=_incident(),
+    )
+
+    result = assess_human_review_requirement(request)
+
+    assert result.human_review_required is True
+    assert "no accepted hypothesis exists" in (result.human_review_reason or "")
+
+
+def test_multiple_disputed_without_dominant_accepted_triggers_human_review() -> None:
+    accepted_hypothesis = _hypothesis("hyp-accepted", confidence=0.9)
+    disputed_hypothesis = _hypothesis("hyp-disputed-001", confidence=0.82)
+    other_disputed_hypothesis = _hypothesis("hyp-disputed-002", confidence=0.81)
+    request = HumanReviewAssessmentRequest(
+        validation_result=HypothesisValidationResult(
+            validated_hypotheses=[
+                accepted_hypothesis,
+                disputed_hypothesis,
+                other_disputed_hypothesis,
+            ]
+        ),
+        reviewed_hypotheses=[
+            _reviewed_hypothesis(accepted_hypothesis),
+            _reviewed_hypothesis(
+                disputed_hypothesis,
+                status=HypothesisReviewStatus.DISPUTED,
+            ),
+            _reviewed_hypothesis(
+                other_disputed_hypothesis,
+                status=HypothesisReviewStatus.DISPUTED,
+            ),
+        ],
+        evidence=[_retrieved_evidence()],
+        incident=_incident(),
+    )
+
+    result = assess_human_review_requirement(request)
+
+    assert result.human_review_required is True
+    assert (
+        "multiple disputed hypotheses exist and no dominant accepted hypothesis exists"
+        in (result.human_review_reason or "")
+    )
+
+
+def test_multiple_disputed_with_dominant_accepted_does_not_trigger_human_review() -> (
+    None
+):
+    accepted_hypothesis = _hypothesis("hyp-accepted", confidence=0.99)
+    disputed_hypothesis = _hypothesis("hyp-disputed-001", confidence=0.83)
+    other_disputed_hypothesis = _hypothesis("hyp-disputed-002", confidence=0.82)
+    request = HumanReviewAssessmentRequest(
+        validation_result=HypothesisValidationResult(
+            validated_hypotheses=[
+                accepted_hypothesis,
+                disputed_hypothesis,
+                other_disputed_hypothesis,
+            ]
+        ),
+        reviewed_hypotheses=[
+            _reviewed_hypothesis(accepted_hypothesis),
+            _reviewed_hypothesis(
+                disputed_hypothesis,
+                status=HypothesisReviewStatus.DISPUTED,
+            ),
+            _reviewed_hypothesis(
+                other_disputed_hypothesis,
+                status=HypothesisReviewStatus.DISPUTED,
+            ),
+        ],
+        evidence=[_retrieved_evidence()],
+        incident=_incident(),
+    )
+
+    result = assess_human_review_requirement(request)
+
+    assert result.human_review_required is False
+    assert result.human_review_reason is None
+
+
+def test_non_top_disputed_alone_does_not_trigger_human_review_when_top_accepted_is_dominant() -> (
+    None
+):
+    accepted_hypothesis = _hypothesis("hyp-accepted", confidence=0.99)
+    disputed_hypothesis = _hypothesis("hyp-disputed", confidence=0.83)
+    request = HumanReviewAssessmentRequest(
+        validation_result=HypothesisValidationResult(
+            validated_hypotheses=[accepted_hypothesis, disputed_hypothesis]
+        ),
+        reviewed_hypotheses=[
+            _reviewed_hypothesis(accepted_hypothesis),
+            _reviewed_hypothesis(
+                disputed_hypothesis,
+                status=HypothesisReviewStatus.DISPUTED,
+            ),
+        ],
+        evidence=[_retrieved_evidence()],
+        incident=_incident(),
+    )
+
+    result = assess_human_review_requirement(request)
+
+    assert result.human_review_required is False
+    assert result.human_review_reason is None
+
+
+def test_blocked_hypothesis_near_top_accepted_hypothesis_triggers_human_review() -> (
+    None
+):
+    accepted_hypothesis = _hypothesis("hyp-accepted", confidence=0.95)
+    blocked_hypothesis = _hypothesis("hyp-blocked", confidence=0.90)
+    request = HumanReviewAssessmentRequest(
+        validation_result=HypothesisValidationResult(
+            validated_hypotheses=[accepted_hypothesis, blocked_hypothesis]
+        ),
+        reviewed_hypotheses=[
+            _reviewed_hypothesis(accepted_hypothesis),
+            _reviewed_hypothesis(
+                blocked_hypothesis,
+                status=HypothesisReviewStatus.BLOCKED,
+            ),
+        ],
+        evidence=[_retrieved_evidence()],
+        incident=_incident(),
+    )
+
+    result = assess_human_review_requirement(request)
+
+    assert result.human_review_required is True
+    assert (
+        "blocked hypothesis is within DOMINANCE_MARGIN of the top accepted hypothesis"
+        in (result.human_review_reason or "")
+    )
+
+
+def test_zero_confidence_accepted_hypothesis_still_counts_as_accepted_present() -> None:
+    accepted_hypothesis = _hypothesis(
+        "hyp-zero-confidence",
+        confidence=0.0,
+        uncertainty="Evidence support is effectively absent.",
+    )
+    request = HumanReviewAssessmentRequest(
+        validation_result=HypothesisValidationResult(
+            validated_hypotheses=[accepted_hypothesis]
+        ),
+        reviewed_hypotheses=[_reviewed_hypothesis(accepted_hypothesis)],
+        evidence=[_retrieved_evidence()],
+        incident=_incident(),
+    )
+
+    result = assess_human_review_requirement(request)
+
+    assert result.human_review_required is True
+    assert result.human_review_reason == "low validated hypothesis confidence"

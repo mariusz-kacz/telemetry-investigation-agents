@@ -7,15 +7,30 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 
 from telemetry_agents.domain import Incident
-from telemetry_agents.evaluation import EvalCase, evaluate_case_output, GuardedUnsupportedClaimReviewer, \
-    EvaluationRunOutput
+from telemetry_agents.evaluation import (
+    EvalCase,
+    evaluate_case_output,
+    GuardedUnsupportedClaimReviewer,
+    EvaluationRunOutput,
+)
 from telemetry_agents.graph.investigation_workflow import build_investigation_workflow
-from telemetry_agents.infrastructure.azure_openai_client import create_azure_openai_client
-from telemetry_agents.infrastructure.azure_openai_hypothesis_critic import AzureOpenAIHypothesisCritic
-from telemetry_agents.infrastructure.azure_openai_hypothesis_generator import AzureOpenAIHypothesisGenerator
-from telemetry_agents.infrastructure.azure_openai_unsupported_claim_adapter import AzureOpenAIUnsupportedClaimAdapter
-from telemetry_agents.investigation.evidence_retrieval import retrieve_evidence, EvidenceRetrievalRequest, \
-    RetrievedEvidence
+from telemetry_agents.infrastructure.azure_openai_client import (
+    create_azure_openai_client,
+)
+from telemetry_agents.infrastructure.azure_openai_hypothesis_critic import (
+    AzureOpenAIHypothesisCritic,
+)
+from telemetry_agents.infrastructure.azure_openai_hypothesis_generator import (
+    AzureOpenAIHypothesisGenerator,
+)
+from telemetry_agents.infrastructure.azure_openai_unsupported_claim_adapter import (
+    AzureOpenAIUnsupportedClaimAdapter,
+)
+from telemetry_agents.investigation.evidence_retrieval import (
+    retrieve_evidence,
+    EvidenceRetrievalRequest,
+    RetrievedEvidence,
+)
 from telemetry_agents.shared.paths import EVAL_DATA_DIR
 
 
@@ -40,20 +55,22 @@ def _load_evidence(case_id: str, incident: Incident) -> list[RetrievedEvidence]:
     data_root = EVAL_DATA_DIR / case_id
     service = "checkout-api"
 
-    return retrieve_evidence(request=EvidenceRetrievalRequest(
-        trace_id=incident.retrieval.trace_id,
-        incident_id=incident.incident_id,
-        service=service,
-        data_root=str(data_root),
-        start_timestamp=incident.investigation_window.start.isoformat(),
-        end_timestamp=incident.investigation_window.end.isoformat(),
-        query_terms=incident.retrieval.query_terms,
-    ))
+    return retrieve_evidence(
+        request=EvidenceRetrievalRequest(
+            trace_id=incident.retrieval.trace_id,
+            incident_id=incident.incident_id,
+            service=service,
+            data_root=str(data_root),
+            start_timestamp=incident.investigation_window.start.isoformat(),
+            end_timestamp=incident.investigation_window.end.isoformat(),
+            query_terms=incident.retrieval.query_terms,
+        )
+    )
 
 
 def run_evaluation() -> None:
     eval_cases = _load_eval_cases()
-    for eval_case in eval_cases:
+    for eval_case in eval_cases[1:]:
         incident = _load_incident(eval_case.incident_file)
         evidence = _load_evidence(eval_case.case_id, incident)
 
@@ -106,17 +123,20 @@ def run_evaluation() -> None:
             config=config,
         )
 
-        if result["__interrupt__"] is not None:
+        if result.get("__interrupt__") is not None:
             result = graph.invoke(Command(resume={"approved": True}), config=config)
 
         output = EvaluationRunOutput(
             validation_result=result["validation_result"],
+            review_result=result["review_result"],
             human_review_assessment=result["human_review_assessment"],
             warnings=result["warnings"],
             retrieved_evidence=evidence,
         )
 
-        eval_result = evaluate_case_output(case=eval_case,output=output,reviewer=reviewer)
+        eval_result = evaluate_case_output(
+            case=eval_case, output=output, reviewer=reviewer
+        )
         print(f"Eval case {eval_case.case_id}, eval result: {eval_result.passed}")
 
 

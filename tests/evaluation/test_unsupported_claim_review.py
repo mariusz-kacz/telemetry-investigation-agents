@@ -68,7 +68,7 @@ def _request(
 ) -> UnsupportedClaimReviewRequest:
     return UnsupportedClaimReviewRequest(
         evidence=[_retrieved_evidence(evidence_strength=evidence_strength)],
-        vaidated_hypotheses=[
+        reviewed_accepted_hypotheses=[
             _validated_hypothesis(supporting_evidence_id=supporting_evidence_id)
         ],
     )

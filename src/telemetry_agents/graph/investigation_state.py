@@ -10,6 +10,7 @@ from telemetry_agents.domain.models import (
     HypothesisCritiqueFinding,
     HumanReviewAssessment,
     HumanReviewStatus,
+    HypothesisReviewResult,
 )
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 
@@ -26,6 +27,7 @@ class InvestigationGraphState(TypedDict, total=False):
     hypotheses: list[InvestigationHypothesis]
     validation_result: HypothesisValidationResult
     critique_findings: list[HypothesisCritiqueFinding]
+    review_result: HypothesisReviewResult
     human_review_assessment: HumanReviewAssessment
     human_review_status: HumanReviewStatus
     report_ready: bool

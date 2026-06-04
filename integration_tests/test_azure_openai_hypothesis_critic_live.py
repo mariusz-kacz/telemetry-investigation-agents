@@ -57,7 +57,8 @@ def test_live_azure_critic_returns_evidence_bounded_findings() -> None:
     result = critic.critique(request)
 
     known_hypothesis_ids = {
-        hypothesis.hypothesis_id for hypothesis in validation_result.validated_hypotheses
+        hypothesis.hypothesis_id
+        for hypothesis in validation_result.validated_hypotheses
     }
     known_evidence_ids = {evidence.evidence.evidence_id}
 

@@ -5,6 +5,7 @@ from telemetry_agents.domain import (
     HumanReviewAssessment,
     HypothesisCategory,
     HypothesisValidationResult,
+    HypothesisReviewResult,
 )
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 from telemetry_agents.evaluation.unsupported_claim_review import UnsupportedClaimFinding
@@ -26,8 +27,9 @@ class EvalCase(BaseModel):
 
 class EvaluationRunOutput(BaseModel):
     retrieved_evidence: list[RetrievedEvidence] = Field(default_factory=list)
-    validation_result: HypothesisValidationResult | None = None
-    human_review_assessment: HumanReviewAssessment | None = None
+    validation_result: HypothesisValidationResult
+    review_result: HypothesisReviewResult
+    human_review_assessment: HumanReviewAssessment
     warnings: list[str] = Field(default_factory=list)
 
 

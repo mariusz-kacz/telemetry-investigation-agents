@@ -965,13 +965,25 @@ Confidence should not be downgraded by this policy. Confidence remains the valid
 
 Human review should be triggered if:
 
-- any hypothesis is `BLOCKED`,
-- the top reviewed hypothesis is not `ACCEPTED`,
-- multiple hypotheses are `DISPUTED`,
-- any contradiction finding exists,
-- no `ACCEPTED` hypothesis exists.
+- the top reviewed hypothesis is `BLOCKED` or `DISPUTED`,
+- no `ACCEPTED` hypothesis exists,
+- multiple hypotheses are `DISPUTED` and no dominant `ACCEPTED` hypothesis exists.
 
 Define the top hypothesis deterministically as the reviewed hypothesis with the highest validation confidence. Do not let the critic change this confidence.
+
+Define a dominant `ACCEPTED` hypothesis deterministically as the highest-confidence
+`ACCEPTED` hypothesis leading every `DISPUTED` hypothesis by a configured margin,
+for example:
+
+```python
+DOMINANCE_MARGIN = 0.15
+```
+
+This policy intentionally does not escalate merely because a non-top hypothesis is
+`DISPUTED` or `BLOCKED`. The workflow may proceed when the leading accepted
+hypothesis is clearly dominant, while still escalating when the top explanation is
+unsafe, no accepted explanation exists, or disputed alternatives create meaningful
+ambiguity.
 
 ## Architectural rule
 

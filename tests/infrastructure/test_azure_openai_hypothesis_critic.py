@@ -128,6 +128,9 @@ def test_critic_passes_system_prompt_to_model() -> None:
     assert system_message is not None
     assert "category" in system_message
     assert "statement" in system_message
+    assert "Causal mechanism" in system_message
+    assert "timeout or retry configuration" in system_message
+    assert "configuration, change-log, deployment, code, or explicit log evidence" in system_message
 
 
 def test_critic_raises_value_error_from_empty_response() -> None:

@@ -40,7 +40,7 @@ class LocalFileTelemetryReader:
         file_path = self.data_root / "logs" / f"{service}.log"
         records: list[SourceLogRecord] = []
 
-        with file_path.open("r", encoding="utf-8") as file:
+        with file_path.open("r", encoding="utf-8-sig") as file:
             for line_number, line in enumerate(file, start=1):
                 cleaned_line = line.strip()
                 if not cleaned_line:
@@ -60,7 +60,7 @@ class LocalFileTelemetryReader:
         file_path = self.data_root / "traces" / f"{service}.jsonl"
         records: list[SourceTraceSpan] = []
 
-        with file_path.open("r", encoding="utf-8") as file:
+        with file_path.open("r", encoding="utf-8-sig") as file:
             for line_number, line in enumerate(file, start=1):
                 cleaned_line = line.strip()
                 if not cleaned_line:
@@ -80,7 +80,7 @@ class LocalFileTelemetryReader:
         file_path = self.data_root / "metrics" / f"{service}.jsonl"
         records: list[SourceMetricSample] = []
 
-        with file_path.open("r", encoding="utf-8") as file:
+        with file_path.open("r", encoding="utf-8-sig") as file:
             for line_number, line in enumerate(file, start=1):
                 cleaned_line = line.strip()
                 if not cleaned_line:

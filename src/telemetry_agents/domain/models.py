@@ -79,6 +79,12 @@ class HypothesisCategory(StrEnum):
     INSUFFICIENT_EVIDENCE = "insufficient_evidence"
 
 
+class HypothesisReviewStatus(StrEnum):
+    ACCEPTED = "accepted"
+    DISPUTED = "disputed"
+    BLOCKED = "blocked"
+
+
 class IncidentInvestigationWindow(BaseModel):
     start: datetime
     end: datetime
@@ -194,6 +200,16 @@ class HypothesisCritiqueFinding(BaseModel):
 
 class HypothesisCritiqueResult(BaseModel):
     critique_findings: list[HypothesisCritiqueFinding] = Field(default_factory=list)
+
+
+class ReviewedHypothesis(BaseModel):
+    hypothesis: InvestigationHypothesis
+    status: HypothesisReviewStatus
+    critique_findings: list[HypothesisCritiqueFinding] = Field(default_factory=list)
+
+
+class HypothesisReviewResult(BaseModel):
+    reviewed_hypotheses: list[ReviewedHypothesis] = Field(default_factory=list)
 
 
 class HumanReviewAssessment(BaseModel):

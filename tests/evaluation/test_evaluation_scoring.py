@@ -6,7 +6,10 @@ from telemetry_agents.domain import (
     TelemetryEvidence,
     InvestigationHypothesis,
     HypothesisValidationResult,
+    HypothesisReviewResult,
+    HypothesisReviewStatus,
     HypothesisCategory,
+    ReviewedHypothesis,
 )
 from telemetry_agents.evaluation import (
     EvalCase,
@@ -98,16 +101,37 @@ def _output(
     *,
     retrieved_evidence: list[RetrievedEvidence] | None = None,
     validated_hypotheses: list[InvestigationHypothesis] | None = None,
+    reviewed_hypotheses: list[ReviewedHypothesis] | None = None,
+    human_review_assessment: HumanReviewAssessment | None = None,
 ) -> EvaluationRunOutput:
-    validation_result = None
-    if validated_hypotheses is not None:
-        validation_result = HypothesisValidationResult(
-            validated_hypotheses=validated_hypotheses
+    if validated_hypotheses is None:
+        validated_hypotheses = []
+
+    validation_result = HypothesisValidationResult(
+        validated_hypotheses=validated_hypotheses
+    )
+
+    if reviewed_hypotheses is not None:
+        review_result = HypothesisReviewResult(
+            reviewed_hypotheses=reviewed_hypotheses
+        )
+    else:
+        review_result = HypothesisReviewResult(
+            reviewed_hypotheses=[
+                ReviewedHypothesis(
+                    hypothesis=hypothesis,
+                    status=HypothesisReviewStatus.ACCEPTED,
+                )
+                for hypothesis in validated_hypotheses
+            ]
         )
 
     return EvaluationRunOutput(
         retrieved_evidence=retrieved_evidence or [],
         validation_result=validation_result,
+        review_result=review_result,
+        human_review_assessment=human_review_assessment
+        or HumanReviewAssessment(human_review_required=False),
     )
 
 
@@ -147,7 +171,9 @@ def test_expected_evidence_sources_passes_when_sources_are_present() -> None:
     assert score.missing_expected_sources == []
 
 
-def test_expected_evidence_sources_matches_absolute_output_to_relative_expected_path() -> None:
+def test_expected_evidence_sources_matches_absolute_output_to_relative_expected_path() -> (
+    None
+):
     case = _eval_case()
     output = _output(
         retrieved_evidence=[
@@ -184,7 +210,9 @@ def test_citation_correctness_passes_when_validated_hypothesis_cites_retrieved_e
     assert score.missing_evidence_references == {}
 
 
-def test_citation_correctness_fails_when_validated_hypothesis_has_no_citations() -> None:
+def test_citation_correctness_fails_when_validated_hypothesis_has_no_citations() -> (
+    None
+):
     output = _output(
         retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
         validated_hypotheses=[_hypothesis(supporting_evidence_ids=[])],
@@ -247,18 +275,6 @@ def test_citation_correctness_passes_when_validation_result_is_empty() -> None:
     output = _output(
         retrieved_evidence=[],
         validated_hypotheses=[],
-    )
-
-    score = score_citation_correctness(output=output)
-
-    assert score.passed is True
-    assert score.missing_evidence_references == {}
-    assert score.unknown_evidence_references == {}
-
-
-def test_citation_correctness_passes_when_validation_result_is_missing() -> None:
-    output = _output(
-        retrieved_evidence=[],
     )
 
     score = score_citation_correctness(output=output)
@@ -356,16 +372,16 @@ def test_categorization_passes_when_all_hypotheses_match_category() -> None:
         ]
     )
 
-    output = EvaluationRunOutput(
-        validation_result=HypothesisValidationResult(
-            validated_hypotheses=[
-                _hypothesis(
-                    "hyp-001",
-                    statement="Checkout latency is caused by database timeout errors.",
-                ),
-                _hypothesis("hyp-002", statement="Db thrown timeout exception"),
-            ]
-        )
+    first_hypothesis = _hypothesis(
+        "hyp-001",
+        statement="Checkout latency is caused by database timeout errors.",
+    )
+    second_hypothesis = _hypothesis(
+        "hyp-002",
+        statement="Db thrown timeout exception",
+    )
+    output = _output(
+        validated_hypotheses=[first_hypothesis, second_hypothesis],
     )
 
     score = score_expected_category(case=case, output=output)
@@ -384,20 +400,17 @@ def test_categorization_passes_when_any_hypotheses_match_category() -> None:
         ]
     )
 
-    output = EvaluationRunOutput(
-        validation_result=HypothesisValidationResult(
-            validated_hypotheses=[
-                _hypothesis(
-                    "hyp-001",
-                    statement="Checkout latency is caused by database timeout errors.",
-                ),
-                _hypothesis(
-                    "hyp-002",
-                    statement="Downstream system unresponsive.",
-                    category=HypothesisCategory.DOWNSTREAM_DEPENDENCY_FAILURE,
-                ),
-            ]
-        )
+    database_hypothesis = _hypothesis(
+        "hyp-001",
+        statement="Checkout latency is caused by database timeout errors.",
+    )
+    downstream_hypothesis = _hypothesis(
+        "hyp-002",
+        statement="Downstream system unresponsive.",
+        category=HypothesisCategory.DOWNSTREAM_DEPENDENCY_FAILURE,
+    )
+    output = _output(
+        validated_hypotheses=[database_hypothesis, downstream_hypothesis],
     )
 
     score = score_expected_category(case=case, output=output)
@@ -409,16 +422,14 @@ def test_categorization_passes_when_any_hypotheses_match_category() -> None:
 def test_categorization_fails_when_none_hypotheses_match_category() -> None:
     case = _eval_case(expected_category=HypothesisCategory.METRIC_ANOMALY)
 
-    output = EvaluationRunOutput(
-        validation_result=HypothesisValidationResult(
-            validated_hypotheses=[
-                _hypothesis(
-                    "hyp-001",
-                    statement="Checkout latency is caused by database timeout errors.",
-                ),
-                _hypothesis("hyp-002", statement="Downstream system unresponsive."),
-            ]
-        )
+    output = _output(
+        validated_hypotheses=[
+            _hypothesis(
+                "hyp-001",
+                statement="Checkout latency is caused by database timeout errors.",
+            ),
+            _hypothesis("hyp-002", statement="Downstream system unresponsive."),
+        ],
     )
 
     score = score_expected_category(case=case, output=output)
@@ -430,10 +441,11 @@ def test_categorization_fails_when_none_hypotheses_match_category() -> None:
 def test_expected_human_review_passes_when_required_review_is_expected() -> None:
     case = _eval_case()
     case.expected_human_review_required = True
-    output = _output()
-    output.human_review_assessment = HumanReviewAssessment(
-        human_review_required=True,
-        human_review_reason="Low validated hypothesis confidence.",
+    output = _output(
+        human_review_assessment=HumanReviewAssessment(
+            human_review_required=True,
+            human_review_reason="Low validated hypothesis confidence.",
+        )
     )
 
     score = score_expected_human_review(case=case, output=output)
@@ -446,9 +458,10 @@ def test_expected_human_review_passes_when_required_review_is_expected() -> None
 def test_expected_human_review_passes_when_required_review_is_not_expected() -> None:
     case = _eval_case()
     case.expected_human_review_required = False
-    output = _output()
-    output.human_review_assessment = HumanReviewAssessment(
-        human_review_required=False,
+    output = _output(
+        human_review_assessment=HumanReviewAssessment(
+            human_review_required=False,
+        )
     )
 
     score = score_expected_human_review(case=case, output=output)
@@ -458,24 +471,13 @@ def test_expected_human_review_passes_when_required_review_is_not_expected() -> 
     assert score.actual_human_review_required is False
 
 
-def test_expected_human_review_fails_when_human_review_assessment_is_missing() -> None:
-    case = _eval_case()
-    case.expected_human_review_required = True
-    output = _output()
-
-    score = score_expected_human_review(case=case, output=output)
-
-    assert score.passed is False
-    assert score.expected_human_review_required is True
-    assert score.actual_human_review_required is None
-
-
 def test_expected_human_review_fails_when_required_review_is_not_produced() -> None:
     case = _eval_case()
     case.expected_human_review_required = True
-    output = _output()
-    output.human_review_assessment = HumanReviewAssessment(
-        human_review_required=False,
+    output = _output(
+        human_review_assessment=HumanReviewAssessment(
+            human_review_required=False,
+        )
     )
 
     score = score_expected_human_review(case=case, output=output)
@@ -486,9 +488,10 @@ def test_expected_human_review_fails_when_required_review_is_not_produced() -> N
 
 
 def test_unsupported_claims_passes_when_reviewer_returns_no_findings() -> None:
+    hypothesis = _hypothesis()
     output = _output(
         retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
-        validated_hypotheses=[_hypothesis()],
+        validated_hypotheses=[hypothesis],
     )
     adapter = FakeUnsupportedClaimAdapter(UnsupportedClaimReviewResult())
     reviewer = GuardedUnsupportedClaimReviewer(adapter=adapter)
@@ -501,7 +504,7 @@ def test_unsupported_claims_passes_when_reviewer_returns_no_findings() -> None:
     assert adapter.requests == [
         UnsupportedClaimReviewRequest(
             evidence=output.retrieved_evidence,
-            vaidated_hypotheses=output.validation_result.validated_hypotheses,
+            reviewed_accepted_hypotheses=[hypothesis],
         )
     ]
 
@@ -513,9 +516,10 @@ def test_unsupported_claims_fails_when_reviewer_returns_finding() -> None:
         reason="The cited log reports a timeout but does not support a DNS outage.",
         evidence_ids=["log-001"],
     )
+    hypothesis = _hypothesis()
     output = _output(
         retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
-        validated_hypotheses=[_hypothesis()],
+        validated_hypotheses=[hypothesis],
     )
     adapter = FakeUnsupportedClaimAdapter(
         UnsupportedClaimReviewResult(findings=[finding])
@@ -535,9 +539,10 @@ def test_unsupported_claims_rejects_unknown_evidence_id_through_scoring() -> Non
         reason="The cited evidence does not support the claim.",
         evidence_ids=["log-unknown"],
     )
+    hypothesis = _hypothesis()
     output = _output(
         retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
-        validated_hypotheses=[_hypothesis()],
+        validated_hypotheses=[hypothesis],
     )
     adapter = FakeUnsupportedClaimAdapter(
         UnsupportedClaimReviewResult(findings=[finding])
@@ -561,3 +566,55 @@ def test_unsupported_claims_skips_reviewer_when_no_hypotheses_are_validated() ->
     assert score.passed is True
     assert score.findings == []
     assert adapter.requests == []
+
+
+def test_unsupported_claims_skips_reviewer_when_no_hypotheses_are_accepted() -> None:
+    hypothesis = _hypothesis()
+    output = _output(
+        retrieved_evidence=[_retrieved_evidence(evidence_id="log-001")],
+        validated_hypotheses=[hypothesis],
+        reviewed_hypotheses=[
+            ReviewedHypothesis(
+                hypothesis=hypothesis,
+                status=HypothesisReviewStatus.BLOCKED,
+            )
+        ],
+    )
+    adapter = FakeUnsupportedClaimAdapter(UnsupportedClaimReviewResult())
+    reviewer = GuardedUnsupportedClaimReviewer(adapter=adapter)
+
+    score = score_unsupported_claims(output=output, reviewer=reviewer)
+
+    assert score.passed is True
+    assert score.findings == []
+    assert adapter.requests == []
+
+
+def test_categorization_fails_when_only_blocked_hypothesis_matches_category() -> None:
+    case = _eval_case(expected_category=HypothesisCategory.DATABASE_FAILURE)
+    blocked_database_hypothesis = _hypothesis("hyp-blocked")
+    accepted_downstream_hypothesis = _hypothesis(
+        "hyp-accepted",
+        category=HypothesisCategory.DOWNSTREAM_DEPENDENCY_FAILURE,
+    )
+    output = _output(
+        validated_hypotheses=[
+            blocked_database_hypothesis,
+            accepted_downstream_hypothesis,
+        ],
+        reviewed_hypotheses=[
+            ReviewedHypothesis(
+                hypothesis=blocked_database_hypothesis,
+                status=HypothesisReviewStatus.BLOCKED,
+            ),
+            ReviewedHypothesis(
+                hypothesis=accepted_downstream_hypothesis,
+                status=HypothesisReviewStatus.ACCEPTED,
+            ),
+        ],
+    )
+
+    score = score_expected_category(case=case, output=output)
+
+    assert score.passed is False
+    assert score.matched_hypothesis_ids == []

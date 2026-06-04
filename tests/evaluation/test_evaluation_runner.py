@@ -1,10 +1,13 @@
 from telemetry_agents.domain import (
     EvidenceSource,
     HypothesisValidationResult,
+    HypothesisReviewResult,
+    HypothesisReviewStatus,
     InvestigationHypothesis,
     TelemetryEvidence,
     HumanReviewAssessment,
     HypothesisCategory,
+    ReviewedHypothesis,
 )
 from telemetry_agents.evaluation import (
     EvalCase,
@@ -69,6 +72,13 @@ def _evaluation_run_output(
     supporting_evidence_id: str = "log-checkout-api-1",
     human_review_required: bool = False,
 ) -> EvaluationRunOutput:
+    hypothesis = InvestigationHypothesis(
+        hypothesis_id="hyp-001",
+        statement=statement,
+        category=category,
+        supporting_evidence_ids=[supporting_evidence_id],
+        confidence=0.9,
+    )
     return EvaluationRunOutput(
         retrieved_evidence=[
             RetrievedEvidence(
@@ -90,13 +100,13 @@ def _evaluation_run_output(
             )
         ],
         validation_result=HypothesisValidationResult(
-            validated_hypotheses=[
-                InvestigationHypothesis(
-                    hypothesis_id="hyp-001",
-                    statement=statement,
-                    category=category,
-                    supporting_evidence_ids=[supporting_evidence_id],
-                    confidence=0.9,
+            validated_hypotheses=[hypothesis]
+        ),
+        review_result=HypothesisReviewResult(
+            reviewed_hypotheses=[
+                ReviewedHypothesis(
+                    hypothesis=hypothesis,
+                    status=HypothesisReviewStatus.ACCEPTED,
                 )
             ]
         ),

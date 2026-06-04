@@ -16,5 +16,5 @@
 {"timestamp":"2026-05-12T14:04:00Z","service":"checkout-api","metric_name":"cpu_utilization_percent","value":46}
 {"timestamp":"2026-05-12T14:13:00Z","service":"checkout-api","metric_name":"p95_latimeout_rate_percenttency_ms","value":314}
 {"timestamp":"2026-05-12T14:13:00Z","service":"checkout-api","metric_name":"request_count","value":122}
-{"timestamp":"2026-05-12T14:13:00Z","service":"checkout-api","metric_name":"","value":0.8}
+{"timestamp":"2026-05-12T14:13:00Z","service":"checkout-api","metric_name":"timeout_rate_percent","value":0.8}
 {"timestamp":"2026-05-12T14:13:00Z","service":"checkout-api","metric_name":"cpu_utilization_percent","value":43}

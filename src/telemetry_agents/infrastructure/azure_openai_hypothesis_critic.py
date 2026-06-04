@@ -37,7 +37,16 @@ class AzureOpenAIHypothesisCritic:
                             "hypotheses in the validation result. Reference only evidence IDs present "
                             "in the supplied evidence context. Do not cite missing evidence as support "
                             "for a critique finding. If there are no semantic concerns, return an empty "
-                            "critique_findings list."
+                            "critique_findings list. "
+                            "Distinguish between: "
+                            "1. Observed fact: directly shown by logs/traces/metrics. "
+                            "2. Reasonable interpretation: plausible but not directly proven. "
+                            "3. Causal mechanism: requires direct supporting evidence. "
+                            "Only accept causal mechanisms when evidence directly supports the mechanism. "
+                            "If a hypothesis attributes failure to timeout or retry configuration, changed "
+                            "settings, deployment, feature flags, or code behavior, require direct "
+                            "configuration, change-log, deployment, code, or explicit log evidence. "
+                            "Otherwise emit UNSUPPORTED_CAUSAL_LEAP or OVERSTATED_CONFIDENCE."
                         ),
                         role="system",
                     ),

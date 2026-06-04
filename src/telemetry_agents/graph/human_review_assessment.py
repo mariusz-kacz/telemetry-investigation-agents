@@ -11,6 +11,12 @@ def make_human_review_assessment_node() -> Callable[
     [InvestigationGraphState], InvestigationGraphState
 ]:
     def node(state: InvestigationGraphState) -> InvestigationGraphState:
+        incident = state.get("normalized_incident")
+        if incident is None:
+            raise ValueError(
+                "normalized_incident is required before decision if human should review investigation"
+            )
+
         collected_evidence = state.get("collected_evidence")
         if collected_evidence is None:
             raise ValueError(
@@ -23,16 +29,10 @@ def make_human_review_assessment_node() -> Callable[
                 "validation_result is required before decision if human should review investigation"
             )
 
-        incident = state.get("normalized_incident")
-        if incident is None:
+        review_result = state.get("review_result")
+        if review_result is None:
             raise ValueError(
-                "normalized_incident is required before decision if human should review investigation"
-            )
-
-        critique_findings = state.get("critique_findings")
-        if critique_findings is None:
-            raise ValueError(
-                "critique_findings is required before decision if human should review investigation"
+                "review_result is required before decision if human should review investigation"
             )
 
         assessment = assess_human_review_requirement(
@@ -41,7 +41,7 @@ def make_human_review_assessment_node() -> Callable[
                 evidence=collected_evidence,
                 validation_result=validation_result,
                 incident=incident,
-                critique_findings=critique_findings,
+                reviewed_hypotheses=review_result.reviewed_hypotheses,
             )
         )
 
