@@ -78,6 +78,9 @@ Refusal to hallucinate unsupported root causes.
 
 - Runtime incident input must not contain the known root cause.
 - Query terms represent weak initial retrieval signals, not the answer.
+- Retrieval should preserve incident-window `WARN`/`ERROR`/`CRITICAL` logs even
+  when they do not match the initial query terms, so competing causal evidence is
+  not hidden by incomplete incident wording.
 - Trace IDs should preferably be discovered from retrieved logs rather than hardcoded in incident input.
 - Logs should describe symptoms, not conclusions.
 - Traces should provide timing and causality.

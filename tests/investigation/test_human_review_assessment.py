@@ -63,11 +63,12 @@ def _hypothesis(
     hypothesis_id: str = "hyp-001",
     confidence: float = 0.9,
     uncertainty: str | None = None,
+    category: HypothesisCategory = HypothesisCategory.DATABASE_FAILURE,
 ) -> InvestigationHypothesis:
     return InvestigationHypothesis(
         hypothesis_id=hypothesis_id,
         statement="Checkout latency is caused by database timeout errors.",
-        category=HypothesisCategory.DATABASE_FAILURE,
+        category=category,
         supporting_evidence_ids=["log-001"],
         confidence=confidence,
         uncertainty=uncertainty,
@@ -146,7 +147,7 @@ def test_requires_human_review_when_has_no_validated_hypotheses() -> None:
     assert result.human_review_reason == "no validated hypotheses"
 
 
-def test_requires_human_review_when_hypothesis_has_low_confidence() -> None:
+def test_low_confidence_alone_does_not_trigger_human_review() -> None:
     request = HumanReviewAssessmentRequest(
         validation_result=HypothesisValidationResult(
             validated_hypotheses=[
@@ -164,8 +165,33 @@ def test_requires_human_review_when_hypothesis_has_low_confidence() -> None:
 
     result = assess_human_review_requirement(request)
 
+    assert result.human_review_required is False
+    assert result.human_review_reason is None
+
+
+def test_accepted_insufficient_evidence_hypothesis_triggers_human_review() -> None:
+    insufficient_evidence_hypothesis = _hypothesis(
+        "hyp-insufficient",
+        confidence=0.4,
+        uncertainty="Evidence shows symptoms but does not identify a root cause.",
+        category=HypothesisCategory.INSUFFICIENT_EVIDENCE,
+    )
+    request = HumanReviewAssessmentRequest(
+        validation_result=HypothesisValidationResult(
+            validated_hypotheses=[insufficient_evidence_hypothesis]
+        ),
+        reviewed_hypotheses=[_reviewed_hypothesis(insufficient_evidence_hypothesis)],
+        evidence=[_retrieved_evidence()],
+        incident=_incident(),
+    )
+
+    result = assess_human_review_requirement(request)
+
     assert result.human_review_required is True
-    assert result.human_review_reason == "low validated hypothesis confidence"
+    assert (
+        result.human_review_reason
+        == "accepted hypothesis indicates insufficient evidence"
+    )
 
 
 @pytest.mark.parametrize(
@@ -516,5 +542,5 @@ def test_zero_confidence_accepted_hypothesis_still_counts_as_accepted_present() 
 
     result = assess_human_review_requirement(request)
 
-    assert result.human_review_required is True
-    assert result.human_review_reason == "low validated hypothesis confidence"
+    assert result.human_review_required is False
+    assert result.human_review_reason is None

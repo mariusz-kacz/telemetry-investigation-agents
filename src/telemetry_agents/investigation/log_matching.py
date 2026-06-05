@@ -11,6 +11,7 @@ class MatchReason(StrEnum):
     QUERY_TERM = "query_term"
     REQUEST_TRACE_ID = "request_trace_id"
     DISCOVERED_TRACE_ID = "discovered_trace_id"
+    SEVERITY = "severity"
 
 
 @dataclass(frozen=True)
@@ -41,7 +42,11 @@ def _get_matching_query_terms(
     return [key for key in keywords if key.lower() in normalized_message]
 
 
-def get_trace_ids_from_query_seed_logs(
+def _log_line_severity_high(level: str):
+    return level in {"WARN", "ERROR", "CRITICAL"}
+
+
+def get_trace_ids_from_seed_logs(
     *,
     log_records: Iterable[SourceLog],
     start_timestamp: datetime,
@@ -56,12 +61,13 @@ def get_trace_ids_from_query_seed_logs(
             log_line.service == service
             and start_timestamp <= log_line.timestamp <= end_timestamp
         ):
-            if (
-                query_terms
-                and log_line.trace_id
-                and _get_matching_query_terms(log_line.message, keywords=query_terms)
-            ):
-                discovered_trace_ids.add(log_line.trace_id)
+            if log_line.trace_id:
+                if query_terms and _get_matching_query_terms(
+                    log_line.message, keywords=query_terms
+                ):
+                    discovered_trace_ids.add(log_line.trace_id)
+                elif _log_line_severity_high(log_line.level):
+                    discovered_trace_ids.add(log_line.trace_id)
     return discovered_trace_ids
 
 
@@ -96,8 +102,12 @@ def get_matching_log_lines(
             for query_term in matched_query_terms:
                 match_details.append(MatchDetail(MatchReason.QUERY_TERM, query_term))
 
+            if _log_line_severity_high(log_line.level):
+                match_details.append(MatchDetail(MatchReason.SEVERITY, log_line.level))
+
             if (
-                not matched_query_terms
+                not _log_line_severity_high(log_line.level)
+                and not matched_query_terms
                 and log_line.trace_id
                 and log_line.trace_id in trace_ids_from_query_seed_logs
             ):

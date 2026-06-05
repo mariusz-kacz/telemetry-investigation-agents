@@ -47,9 +47,22 @@ def _matched_log_line(match_reasons: list[MatchReason]) -> MatchedLogLine:
             1.0,
         ),
         (
+            [
+                MatchReason.QUERY_TERM,
+                MatchReason.SEVERITY,
+            ],
+            EvidenceStrength.STRONG,
+            0.8,
+        ),
+        (
             [MatchReason.REQUEST_TRACE_ID],
             EvidenceStrength.MEDIUM,
             0.8,
+        ),
+        (
+            [MatchReason.SEVERITY],
+            EvidenceStrength.MEDIUM,
+            0.6,
         ),
         (
             [MatchReason.QUERY_TERM],

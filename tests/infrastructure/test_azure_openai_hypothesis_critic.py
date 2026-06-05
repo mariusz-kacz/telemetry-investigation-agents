@@ -130,7 +130,24 @@ def test_critic_passes_system_prompt_to_model() -> None:
     assert "statement" in system_message
     assert "Causal mechanism" in system_message
     assert "timeout or retry configuration" in system_message
-    assert "configuration, change-log, deployment, code, or explicit log evidence" in system_message
+    assert (
+        "configuration, change-log, deployment, code, or explicit log evidence"
+        in system_message
+    )
+    assert "Copy hypothesis IDs and evidence IDs exactly as supplied" in system_message
+    assert "do not rename, normalize, reformat, translate" in system_message
+    assert "change hyphens and underscores in IDs" in system_message
+    assert "materially different competing cause" in system_message
+    assert "ALTERNATIVE_INTERPRETATION" in system_message
+    assert "plausible alternative" in system_message
+    assert "temporal correlation" in system_message
+    assert "UNSUPPORTED_CAUSAL_LEAP" in system_message
+    assert "correlation, not causation" in system_message
+    assert "direct causal path" in system_message
+    assert (
+        "UNCERTAIN_ROOT_CAUSE hypothesis lists possible root causes" in system_message
+    )
+    assert "speculative possibilities" in system_message
 
 
 def test_critic_raises_value_error_from_empty_response() -> None:

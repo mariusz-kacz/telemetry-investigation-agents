@@ -150,7 +150,11 @@ def score_expected_category(
 ) -> ExpectedHypothesisCategoryScore:
     expected_category = case.expected_category
     matched_hypothesis_ids = []
-    accepted_reviewed_hypothesis = [h for h in output.review_result.reviewed_hypotheses if h.status == HypothesisReviewStatus.ACCEPTED]
+    accepted_reviewed_hypothesis = [
+        h
+        for h in output.review_result.reviewed_hypotheses
+        if h.status == HypothesisReviewStatus.ACCEPTED
+    ]
     for accepted_hypothesis in accepted_reviewed_hypothesis:
         if expected_category == accepted_hypothesis.hypothesis.category:
             matched_hypothesis_ids.append(accepted_hypothesis.hypothesis.hypothesis_id)

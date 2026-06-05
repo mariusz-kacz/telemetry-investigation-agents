@@ -143,6 +143,16 @@ def test_generate_passes_system_prompt_to_model() -> None:
     assert "non-database external services or APIs" in system_message
     assert "timeout or retry policy problems" in system_message
     assert "configuration was too aggressive or changed" in system_message
+    assert "UNCERTAIN_ROOT_CAUSE" in system_message
+    assert "multiple materially different root-cause directions" in system_message
+    assert "Do not force a single concrete category" in system_message
+    assert "INSUFFICIENT_EVIDENCE" in system_message
+    assert "symptoms, correlation, or elevated metrics" in system_message
+    assert "does not directly support a root-cause mechanism" in system_message
+    assert "shows the causal path" in system_message
+    assert "exactly one INSUFFICIENT_EVIDENCE hypothesis" in system_message
+    assert "do not generate competing concrete causal hypotheses" in system_message
+    assert "not list speculative root causes" in system_message
 
 
 def test_generate_raises_value_error_from_empty_response() -> None:

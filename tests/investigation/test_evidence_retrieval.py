@@ -209,6 +209,57 @@ def test_evidence_retrieval_does_not_recursively_expand_ids_from_companion_logs(
     assert {item.citation.line_number for item in trace_evidence} == {1}
 
 
+def test_evidence_retrieval_expands_trace_ids_from_severity_seed_logs(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "traces").mkdir()
+    (tmp_path / "metrics").mkdir()
+    (tmp_path / "logs" / "checkout-api.log").write_text(
+        "2026-05-11T10:01:00Z WARN checkout-api "
+        "trace_id=trace-shipping Shipping rate lookup took 1750ms\n"
+        "2026-05-11T10:02:00Z INFO checkout-api "
+        "trace_id=trace-info Checkout request completed\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "traces" / "checkout-api.jsonl").write_text(
+        '{"timestamp":"2026-05-11T10:01:00Z","trace_id":"trace-shipping",'
+        '"span_id":"span-001","service":"checkout-api","operation":"POST /checkout",'
+        '"duration_ms":2510,"status":"ok"}\n'
+        '{"timestamp":"2026-05-11T10:01:01Z","trace_id":"trace-shipping",'
+        '"span_id":"span-002","service":"shipping-rate-service","operation":"GET /rates",'
+        '"duration_ms":2050,"status":"ok"}\n'
+        '{"timestamp":"2026-05-11T10:02:00Z","trace_id":"trace-info",'
+        '"span_id":"span-info","service":"checkout-api","operation":"POST /checkout",'
+        '"duration_ms":180,"status":"ok"}\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "metrics" / "checkout-api.jsonl").write_text("", encoding="utf-8")
+    request = EvidenceRetrievalRequest(
+        incident_id="inc-severity-seed-expansion",
+        service="checkout-api",
+        query_terms=["database"],
+        start_timestamp="2026-05-11T10:00:00Z",
+        end_timestamp="2026-05-11T10:05:00Z",
+        data_root=str(tmp_path),
+    )
+
+    evidence = retrieve_evidence(request)
+
+    log_evidence = [
+        item for item in evidence if item.evidence.source == EvidenceSource.LOG
+    ]
+    trace_evidence = [
+        item for item in evidence if item.evidence.source == EvidenceSource.TRACE
+    ]
+
+    assert {item.citation.line_number for item in log_evidence} == {1}
+    assert {item.citation.line_number for item in trace_evidence} == {1, 2}
+    assert {item.citation.selection_reason for item in trace_evidence} == {
+        "Matched discovered trace ID trace-shipping from query-matched log evidence."
+    }
+
+
 def test_evidence_retrieval_preserves_trace_span_citation_metadata() -> None:
     request = EvidenceRetrievalRequest(
         incident_id="inc-checkout-db-timeout-001",

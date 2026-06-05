@@ -554,7 +554,7 @@ wheels = [
 [[package]]
 name = "langgraph-sandox"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "azure-identity" },
     { name = "langgraph" },

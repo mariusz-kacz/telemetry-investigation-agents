@@ -8,6 +8,7 @@ from telemetry_agents.domain import (
     IncidentImpact,
     ReviewedHypothesis,
     HypothesisReviewStatus,
+    HypothesisCategory,
 )
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
@@ -109,6 +110,17 @@ def assess_human_review_requirement(
 
     if not request.validation_result.validated_hypotheses:
         reasons.append("no validated hypotheses")
+
+    if any(
+        item.status is HypothesisReviewStatus.ACCEPTED
+        and item.hypothesis.category
+        in {
+            HypothesisCategory.INSUFFICIENT_EVIDENCE,
+            HypothesisCategory.UNCERTAIN_ROOT_CAUSE,
+        }
+        for item in request.reviewed_hypotheses
+    ):
+        reasons.append("accepted hypothesis indicates insufficient evidence")
 
     reasons.extend(
         _human_review_reasons_for_hypotheses(

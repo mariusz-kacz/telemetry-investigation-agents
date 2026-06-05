@@ -26,9 +26,28 @@ LOG_CLASSIFICATION_RULES: tuple[ClassificationRule, ...] = (
         1.0,
     ),
     (
+        frozenset(
+            {
+                MatchReason.QUERY_TERM,
+                MatchReason.SEVERITY,
+            }
+        ),
+        EvidenceStrength.STRONG,
+        0.8,
+    ),
+    (
         frozenset({MatchReason.REQUEST_TRACE_ID}),
         EvidenceStrength.MEDIUM,
         0.8,
+    ),
+    (
+        frozenset(
+            {
+                MatchReason.SEVERITY,
+            }
+        ),
+        EvidenceStrength.MEDIUM,
+        0.6,
     ),
     (
         frozenset({MatchReason.QUERY_TERM}),

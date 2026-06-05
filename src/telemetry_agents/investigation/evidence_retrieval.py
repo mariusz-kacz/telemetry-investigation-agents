@@ -15,7 +15,7 @@ from telemetry_agents.investigation.log_matching import (
     MatchDetail,
     MatchReason,
     get_matching_log_lines,
-    get_trace_ids_from_query_seed_logs,
+    get_trace_ids_from_seed_logs,
 )
 from telemetry_agents.investigation.metrics_matching import (
     MatchedMetricSample,
@@ -102,7 +102,8 @@ def _format_selection_reason(
     if query_terms := grouped_matches.get(MatchReason.QUERY_TERM):
         query_terms_text = ", ".join(query_terms)
         result_parts.append(f"query terms: {query_terms_text}")
-
+    if severity := grouped_matches.get(MatchReason.SEVERITY):
+        result_parts.append(f"discovered logs with severity {', '.join(severity)}")
     if not result_parts:
         raise ValueError("selection reason requires at least one match detail")
 
@@ -145,7 +146,7 @@ def _retrieve_log_evidence(
             set(),
         )
 
-    trace_ids_from_query_seed_logs = get_trace_ids_from_query_seed_logs(
+    trace_ids_from_query_seed_logs = get_trace_ids_from_seed_logs(
         log_records=log_records,
         start_timestamp=start_timestamp,
         end_timestamp=end_timestamp,
@@ -198,7 +199,7 @@ def _retrieve_log_evidence(
                 source=EvidenceSource.LOG,
                 source_file=source_file,
                 summary="No matching log evidence found for the incident filters.",
-                selection_reason="No log records matched the incident time window, IDs, or query terms.",
+                selection_reason="No log records matched the incident time window, IDs, severity or query terms.",
             ),
             set(),
         )

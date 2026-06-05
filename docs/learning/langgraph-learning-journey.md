@@ -173,7 +173,7 @@ Before any phase is marked DONE:
 | 11. Persistence, checkpointing, and interrupts | DONE | 2026-05-22 | SQLite-backed LangGraph checkpointing, app-owned run registry, state inspection, simulated resume, interrupt/resume gate, ADR, and learning note exist. |
 | 12. Human-in-the-loop review | DONE | 2026-05-25 | Risk-based review assessment, typed status, conditional interrupt/bypass routing, approval/rejection outcomes, focused tests, and learning note exist. Evidence re-entry and edited recommendations are deferred. |
 | 13. Azure OpenAI integration and graph smoke | DONE | 2026-05-28 | Azure OpenAI generator and critic adapters use Microsoft Entra ID, structured outputs, mocked adapter tests, adapter-level live smoke tests, and one graph-level live smoke run through generation, validation, critique, human review, and approval resume. |
-| 14. Evaluation framework | IN_PROGRESS |  | Deterministic scorecard, citation-correctness invariant scoring, and protocol-backed semantic unsupported-claim review guardrails exist. Azure reviewer integration, golden-case expansion, batch execution, reproducible reporting, ADR, and learning note remain. |
+| 14. Evaluation framework | DONE | 2026-06-06 | Golden cases load from JSON and run through `uv run telemetry-evals`; deterministic and semantic scorecard dimensions, accepted-reviewed-hypothesis scoring, readable reporting, severity retrieval coverage, prompt guardrails, and ADR exist. |
 | 15. Observability and tracing | TODO |  |  |
 | 16. API / CLI interface | TODO |  |  |
 | 17. Portfolio skeleton hardening | TODO |  |  |
@@ -967,7 +967,9 @@ Human review should be triggered if:
 
 - the top reviewed hypothesis is `BLOCKED` or `DISPUTED`,
 - no `ACCEPTED` hypothesis exists,
-- multiple hypotheses are `DISPUTED` and no dominant `ACCEPTED` hypothesis exists.
+- multiple hypotheses are `DISPUTED` and no dominant `ACCEPTED` hypothesis exists,
+- a `BLOCKED` hypothesis is close enough to the top accepted hypothesis to remain a meaningful competing explanation,
+- an accepted hypothesis represents `INSUFFICIENT_EVIDENCE` or `UNCERTAIN_ROOT_CAUSE`.
 
 Define the top hypothesis deterministically as the reviewed hypothesis with the highest validation confidence. Do not let the critic change this confidence.
 
@@ -984,6 +986,11 @@ This policy intentionally does not escalate merely because a non-top hypothesis 
 hypothesis is clearly dominant, while still escalating when the top explanation is
 unsafe, no accepted explanation exists, or disputed alternatives create meaningful
 ambiguity.
+
+Low confidence alone should not be a human-review trigger over all validated
+hypotheses. Review routing should use post-critic `reviewed_hypotheses`, so a
+low-confidence blocked or disputed alternative does not force escalation when a
+dominant accepted hypothesis exists.
 
 ## Architectural rule
 
@@ -1070,6 +1077,39 @@ may use similar inputs and structural guardrails as the workflow critic, but it
 must not call the workflow critic or influence graph state. Evaluation measures
 whether unsupported causal claims passed through the workflow controls.
 
+Evaluation output represents a post-review workflow result. Therefore
+`EvaluationRunOutput` should include mandatory `validation_result`,
+`review_result`, and `human_review_assessment`.
+
+Expected-category scoring should inspect accepted reviewed hypotheses only. A
+blocked or disputed hypothesis must not make a category score pass.
+
+Unsupported-claim scoring should inspect accepted reviewed hypotheses only. The
+reviewer should not score blocked or disputed hypotheses because those are not
+auto-usable workflow conclusions.
+
+Provider prompts should encode the learned category and evidence-boundary rules:
+
+- database/datastore operations and DB-specific metrics classify as
+  `DATABASE_FAILURE`, not generic `DOWNSTREAM_DEPENDENCY_FAILURE`;
+- timeout, retry, deployment, feature-flag, configuration, or code-causality
+  claims require direct config, change-log, deployment, code, or explicit log
+  evidence;
+- when evidence supports multiple materially different causes and no cause
+  clearly dominates, the generator should produce `UNCERTAIN_ROOT_CAUSE`;
+- the critic should treat supported competing causes as
+  `ALTERNATIVE_INTERPRETATION`, not as `UNSUPPORTED_CAUSAL_LEAP`.
+
+Evidence retrieval should not depend only on user-provided query terms. Query
+terms are weak retrieval seeds, not the whole answer. Log retrieval should also
+include incident-window `WARN`/`ERROR`/`CRITICAL` logs for the incident service,
+with a `SEVERITY` match reason. Scoring can then treat `SEVERITY` as the
+deterministic invariant "matched because the log level met the incident-relevant
+threshold."
+
+Telemetry readers should tolerate UTF-8 BOM-prefixed JSONL files by reading local
+telemetry with `utf-8-sig`.
+
 Keep the MVP constrained:
 
 - add one Azure OpenAI reviewer adapter,
@@ -1094,18 +1134,23 @@ statistical benchmarking, dashboards, or prompt optimization in this phase.
 - [x] Add mocked adapter tests and one opt-in live smoke test.
 - [x] Add semantic-review scorecard integration.
 - [x] Add MVP golden cases.
-- [ ] Add JSON loading and batch execution.
-- [ ] Track pass/fail over time with a simple reproducible report.
-- [ ] Write ADR: “Evaluation before prompt optimization.”
+- [x] Score expected category and unsupported claims from accepted reviewed
+  hypotheses only.
+- [x] Add severity-based log retrieval and scoring coverage.
+- [x] Add prompt boundaries for category precedence, configuration claims, and
+  competing-cause uncertainty.
+- [x] Add JSON loading and batch execution.
+- [x] Track pass/fail over time with a simple reproducible report.
+- [x] Write ADR: “Evaluation before prompt optimization.”
 
 ## Checkpoint
 
 - [x] At least four eval cases exist.
 - [x] Eval runner exists.
 - [x] Citation correctness is scored.
-- [ ] Unsupported claims are detected.
-- [ ] Results are reproducible.
-- [ ] ADR exists.
+- [x] Unsupported claims are detected.
+- [x] Results are reproducible.
+- [x] ADR exists.
 
 ## Codex stop condition
 

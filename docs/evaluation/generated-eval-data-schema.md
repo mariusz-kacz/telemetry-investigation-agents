@@ -128,7 +128,8 @@ Required fields:
 | `status` | Non-empty string such as `ok` or `error`. |
 
 Trace retrieval uses `retrieval.trace_id` when present and also uses trace IDs
-discovered from query-matched log evidence.
+discovered from query-matched log evidence. Retrieval may also discover trace IDs
+from incident-window `WARN`/`ERROR`/`CRITICAL` logs selected by severity.
 
 ## Metric File
 
@@ -200,6 +201,9 @@ Rules:
 - Reuse `trace_id` across logs and trace spans when trace correlation matters.
 - When relying on query-only retrieval, include at least one query-matched seed
   log with the trace ID that should be expanded.
+- When relying on severity-based retrieval, use `WARN`, `ERROR`, or `CRITICAL`
+  log levels for incident-relevant symptoms. Severity-selected logs should still
+  describe symptoms, not reveal the known root cause.
 - Add only enough records to express the scenario, usually three to six records
   per telemetry file.
 - Include ordinary or weakly relevant records when needed to prove filtering.

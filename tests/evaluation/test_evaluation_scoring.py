@@ -112,9 +112,7 @@ def _output(
     )
 
     if reviewed_hypotheses is not None:
-        review_result = HypothesisReviewResult(
-            reviewed_hypotheses=reviewed_hypotheses
-        )
+        review_result = HypothesisReviewResult(reviewed_hypotheses=reviewed_hypotheses)
     else:
         review_result = HypothesisReviewResult(
             reviewed_hypotheses=[

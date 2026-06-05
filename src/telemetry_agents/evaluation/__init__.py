@@ -15,7 +15,6 @@ from telemetry_agents.evaluation.models import (
     ExpectedHypothesisCategoryScore,
     UnsupportedClaimScore,
 )
-from telemetry_agents.evaluation.runner import evaluate_case_output
 from telemetry_agents.evaluation.scoring import (
     score_citation_correctness,
     score_expected_evidence_sources,
@@ -34,7 +33,6 @@ __all__ = [
     "EvaluationScorecard",
     "EvaluationRunOutput",
     "ExpectedHypothesisCategoryScore",
-    "evaluate_case_output",
     "score_citation_correctness",
     "score_expected_evidence_sources",
     "score_expected_category",

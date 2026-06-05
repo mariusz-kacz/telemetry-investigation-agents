@@ -47,7 +47,7 @@ def _request() -> UnsupportedClaimReviewRequest:
                 relevance_score=1.0,
             )
         ],
-        validated_hypotheses=[
+        reviewed_accepted_hypotheses=[
             InvestigationHypothesis(
                 hypothesis_id="hyp-001",
                 statement="A DNS outage caused checkout database timeouts.",
@@ -113,6 +113,9 @@ def test_review_passes_bounded_system_prompt_to_model() -> None:
     assert "unsupported causal claims" in system_message
     assert "only hypothesis IDs" in system_message
     assert "only evidence IDs" in system_message
+    assert "Copy hypothesis IDs and evidence IDs exactly as supplied" in system_message
+    assert "do not rename, normalize, reformat, translate" in system_message
+    assert "change hyphens and underscores in IDs" in system_message
     assert "Do not change workflow state" in system_message
 
 

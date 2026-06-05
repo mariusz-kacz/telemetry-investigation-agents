@@ -13,8 +13,8 @@ from telemetry_agents.evaluation import (
     EvalCase,
     EvalExpectedEvidenceSource,
     EvaluationRunOutput,
-    evaluate_case_output,
 )
+from telemetry_agents.evaluation.evaluator import evaluate_case_output
 from telemetry_agents.evaluation.unsupported_claim_review import (
     UnsupportedClaimReviewResult,
     UnsupportedClaimReviewRequest,
@@ -99,9 +99,7 @@ def _evaluation_run_output(
                 relevance_score=1.0,
             )
         ],
-        validation_result=HypothesisValidationResult(
-            validated_hypotheses=[hypothesis]
-        ),
+        validation_result=HypothesisValidationResult(validated_hypotheses=[hypothesis]),
         review_result=HypothesisReviewResult(
             reviewed_hypotheses=[
                 ReviewedHypothesis(

@@ -1,17 +1,15 @@
-from telemetry_agents.evaluation.unsupported_claim_review import (
+from typing import Callable
+
+from telemetry_agents.evaluation import (
+    EvalCase,
     GuardedUnsupportedClaimReviewer,
-)
-from telemetry_agents.evaluation.scoring import (
+    EvaluationRunOutput,
+    EvaluationScorecard,
     score_expected_evidence_sources,
     score_expected_category,
     score_expected_human_review,
     score_citation_correctness,
     score_unsupported_claims,
-)
-from telemetry_agents.evaluation.models import (
-    EvalCase,
-    EvaluationRunOutput,
-    EvaluationScorecard,
 )
 
 
@@ -40,3 +38,20 @@ def evaluate_case_output(
         citation_correctness_score=correctness_score,
         unsupported_claim_score=unsupported_claim_score,
     )
+
+
+def run_batch_evaluation(
+    *,
+    cases: list[EvalCase],
+    run_case: Callable[[EvalCase], EvaluationRunOutput],
+    reviewer: GuardedUnsupportedClaimReviewer,
+) -> list[EvaluationScorecard]:
+    eval_results: list[EvaluationScorecard] = []
+
+    for case in cases:
+        output = run_case(case)
+        eval_results.append(
+            evaluate_case_output(case=case, output=output, reviewer=reviewer)
+        )
+
+    return eval_results
