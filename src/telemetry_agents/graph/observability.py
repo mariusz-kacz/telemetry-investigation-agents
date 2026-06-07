@@ -54,3 +54,11 @@ def observe_graph_node(
         return result
 
     return observed_node
+
+
+def graph_correlation_fields(state: InvestigationGraphState) -> dict[str, str | None]:
+    incident = state.get("normalized_incident")
+    return {
+        "run_id": state.get("run_id"),
+        "incident_id": incident.incident_id if incident is not None else None,
+    }

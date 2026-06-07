@@ -1,9 +1,14 @@
 from typing import Callable
 
 from telemetry_agents.graph.investigation_state import InvestigationGraphState
+from telemetry_agents.graph.observability import graph_correlation_fields
 from telemetry_agents.investigation.human_review_assessment import (
     assess_human_review_requirement,
     HumanReviewAssessmentRequest,
+)
+from telemetry_agents.shared.observability import (
+    EVENT_HUMAN_REVIEW_ROUTING_DECIDED,
+    emit_event,
 )
 
 
@@ -43,6 +48,13 @@ def make_human_review_assessment_node() -> Callable[
                 incident=incident,
                 reviewed_hypotheses=review_result.reviewed_hypotheses,
             )
+        )
+
+        emit_event(
+            EVENT_HUMAN_REVIEW_ROUTING_DECIDED,
+            **graph_correlation_fields(state),
+            human_review_required=assessment.human_review_required,
+            reason=assessment.human_review_reason,
         )
 
         return {
