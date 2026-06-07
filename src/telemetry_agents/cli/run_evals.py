@@ -33,16 +33,14 @@ def print_report(scorecards: list[EvaluationScorecard]) -> None:
         )
         print(f"  category: {_status(scorecard.expected_category_score.passed)}")
         print(
-            "  human review: "
-            f"{_status(scorecard.expected_human_review_score.passed)}"
+            f"  human review: {_status(scorecard.expected_human_review_score.passed)}"
         )
         print(
             "  citation correctness: "
             f"{_status(scorecard.citation_correctness_score.passed)}"
         )
         print(
-            "  unsupported claims: "
-            f"{_status(scorecard.unsupported_claim_score.passed)}"
+            f"  unsupported claims: {_status(scorecard.unsupported_claim_score.passed)}"
         )
 
         _print_failure_details(scorecard)

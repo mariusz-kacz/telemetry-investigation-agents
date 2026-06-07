@@ -78,7 +78,9 @@ def test_print_report_outputs_failure_details(
     output = capsys.readouterr().out
     assert "Evaluation summary: 0/1 passed" in output
     assert "[FAIL] case-1" in output
-    assert "missing evidence sources: log:eval_data/case/logs/checkout-api.log" in output
+    assert (
+        "missing evidence sources: log:eval_data/case/logs/checkout-api.log" in output
+    )
     assert "expected category: database_failure" in output
     assert "expected human review: True, actual: False" in output
     assert "hypotheses without citations: hyp-1" in output

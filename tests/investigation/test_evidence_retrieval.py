@@ -12,6 +12,7 @@ from telemetry_agents.domain import EvidenceSource
 
 def test_retrieved_evidence_preserves_citation_metadata() -> None:
     request = EvidenceRetrievalRequest(
+        run_id="run-test",
         incident_id="inc-checkout-db-timeout-001",
         service="checkout-api",
         query_terms=["timeout", "database"],
@@ -46,6 +47,7 @@ def test_retrieved_evidence_preserves_citation_metadata() -> None:
 
 def test_evidence_retrieval_ranks_strong_evidence_before_weak_evidence() -> None:
     request = EvidenceRetrievalRequest(
+        run_id="run-test",
         incident_id="inc-checkout-db-timeout-001",
         service="checkout-api",
         query_terms=["timeout", "database"],
@@ -82,6 +84,7 @@ def test_evidence_retrieval_ranks_across_telemetry_sources(tmp_path: Path) -> No
         encoding="utf-8",
     )
     request = EvidenceRetrievalRequest(
+        run_id="run-test",
         incident_id="inc-ranking-regression",
         service="checkout-api",
         query_terms=["timeout"],
@@ -133,6 +136,7 @@ def test_evidence_retrieval_expands_all_ids_from_query_matched_seed_logs(
     )
     (tmp_path / "metrics" / "checkout-api.jsonl").write_text("", encoding="utf-8")
     request = EvidenceRetrievalRequest(
+        run_id="run-test",
         incident_id="inc-query-seed-expansion",
         service="checkout-api",
         query_terms=["timeout"],
@@ -188,6 +192,7 @@ def test_evidence_retrieval_does_not_recursively_expand_ids_from_companion_logs(
     )
     (tmp_path / "metrics" / "checkout-api.jsonl").write_text("", encoding="utf-8")
     request = EvidenceRetrievalRequest(
+        run_id="run-test",
         incident_id="inc-query-seed-bounded-expansion",
         service="checkout-api",
         query_terms=["timeout"],
@@ -236,6 +241,7 @@ def test_evidence_retrieval_expands_trace_ids_from_severity_seed_logs(
     )
     (tmp_path / "metrics" / "checkout-api.jsonl").write_text("", encoding="utf-8")
     request = EvidenceRetrievalRequest(
+        run_id="run-test",
         incident_id="inc-severity-seed-expansion",
         service="checkout-api",
         query_terms=["database"],
@@ -262,6 +268,7 @@ def test_evidence_retrieval_expands_trace_ids_from_severity_seed_logs(
 
 def test_evidence_retrieval_preserves_trace_span_citation_metadata() -> None:
     request = EvidenceRetrievalRequest(
+        run_id="run-test",
         incident_id="inc-checkout-db-timeout-001",
         service="checkout-api",
         query_terms=[],
@@ -291,6 +298,7 @@ def test_evidence_retrieval_preserves_trace_span_citation_metadata() -> None:
 
 def test_evidence_retrieval_preserves_metric_sample_citation_metadata() -> None:
     request = EvidenceRetrievalRequest(
+        run_id="run-test",
         incident_id="inc-checkout-db-timeout-001",
         service="checkout-api",
         query_terms=[],
@@ -319,6 +327,7 @@ def test_evidence_retrieval_preserves_metric_sample_citation_metadata() -> None:
 
 def test_missing_evidence_is_represented_explicitly() -> None:
     request = EvidenceRetrievalRequest(
+        run_id="run-test",
         incident_id="inc-no-matching-evidence",
         service="checkout-api",
         query_terms=["cache-poisoning"],
@@ -339,6 +348,7 @@ def test_missing_source_files_are_represented_as_missing_evidence(
     tmp_path: Path,
 ) -> None:
     request = EvidenceRetrievalRequest(
+        run_id="run-test",
         incident_id="inc-no-source-files",
         service="checkout-api",
         query_terms=["timeout"],

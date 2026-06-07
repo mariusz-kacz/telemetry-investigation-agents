@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 
 from langgraph.constants import START, END
 from langgraph.graph.state import CompiledStateGraph, StateGraph
@@ -13,6 +13,7 @@ from telemetry_agents.graph.hypothesis_generation import make_hypothesis_generat
 from telemetry_agents.graph.hypothesis_review import make_hypothesis_review_node
 from telemetry_agents.graph.hypothesis_validation import make_hypothesis_validation_node
 from telemetry_agents.graph.investigation_state import InvestigationGraphState
+from telemetry_agents.graph.observability import observe_graph_node
 from telemetry_agents.graph.human_review_not_required_marker import (
     make_human_review_not_required_marker_node,
 )
@@ -26,9 +27,10 @@ from telemetry_agents.investigation.hypothesis_generation import HypothesisGener
 
 
 def _node(
+    node_name: str,
     action: Callable[[InvestigationGraphState], InvestigationGraphState],
 ) -> Any:
-    return cast(Any, action)
+    return observe_graph_node(node_name, action)
 
 
 def build_investigation_workflow(
@@ -41,29 +43,45 @@ def build_investigation_workflow(
 
     builder.add_node(
         "hypothesis_generation",
-        _node(make_hypothesis_generation_node(generator=generator)),
+        _node(
+            "hypothesis_generation",
+            make_hypothesis_generation_node(generator=generator),
+        ),
     )
-    builder.add_node("hypothesis_validation", _node(make_hypothesis_validation_node()))
+    builder.add_node(
+        "hypothesis_validation",
+        _node("hypothesis_validation", make_hypothesis_validation_node()),
+    )
     builder.add_node(
         "hypothesis_critic",
-        _node(make_hypothesis_critic_node(critic=critic)),
+        _node("hypothesis_critic", make_hypothesis_critic_node(critic=critic)),
     )
     builder.add_node(
         "hypothesis_review",
-        _node(make_hypothesis_review_node()),
+        _node("hypothesis_review", make_hypothesis_review_node()),
     )
     builder.add_node(
         "human_review_assessment",
-        _node(make_human_review_assessment_node()),
+        _node("human_review_assessment", make_human_review_assessment_node()),
     )
     builder.add_node(
         "human_review_not_required_marker",
-        _node(make_human_review_not_required_marker_node()),
+        _node(
+            "human_review_not_required_marker",
+            make_human_review_not_required_marker_node(),
+        ),
     )
-    builder.add_node("report_review_gate", _node(make_report_review_gate_node()))
-    builder.add_node("report_ready_marker", _node(make_report_ready_marker_node()))
     builder.add_node(
-        "report_rejected_marker", _node(make_report_rejected_marker_node())
+        "report_review_gate",
+        _node("report_review_gate", make_report_review_gate_node()),
+    )
+    builder.add_node(
+        "report_ready_marker",
+        _node("report_ready_marker", make_report_ready_marker_node()),
+    )
+    builder.add_node(
+        "report_rejected_marker",
+        _node("report_rejected_marker", make_report_rejected_marker_node()),
     )
 
     builder.add_edge(START, "hypothesis_generation")

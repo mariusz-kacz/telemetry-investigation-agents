@@ -1,3 +1,6 @@
+import json
+import logging
+
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
@@ -27,6 +30,7 @@ from telemetry_agents.investigation.hypothesis_critic import (
 from telemetry_agents.investigation.hypothesis_generation import (
     HypothesisGenerationRequest,
 )
+from telemetry_agents.shared.observability import LOGGER_NAME
 
 
 class FakeHypothesisGenerator:
@@ -209,7 +213,7 @@ def test_report_review_interrupt_exposes_decision_material() -> None:
         "impact": "medium",
     }
     assert payload["escalation_reason"] == (
-        "low validated hypothesis confidence; top reviewed hypothesis is blocked or disputed; no accepted hypothesis exists"
+        "top reviewed hypothesis is blocked or disputed; no accepted hypothesis exists"
     )
     assert payload["hypotheses"] == [
         {
@@ -308,3 +312,32 @@ def test_safe_investigation_bypasses_human_review() -> None:
     assert not result.get("__interrupt__")
     assert result["human_review_status"] is HumanReviewStatus.NOT_REQUIRED
     assert result["report_ready"] is True
+
+
+def test_graph_run_emits_correlatable_node_telemetry(
+    caplog,
+) -> None:
+    caplog.set_level(logging.INFO, logger=LOGGER_NAME)
+    graph = build_memory_investigation_workflow_graph([_supported_hypothesis()])
+    config: RunnableConfig = {"configurable": {"thread_id": "run-observable"}}
+
+    result = graph.invoke(
+        {
+            "normalized_incident": _incident(),
+            "collected_evidence": [_retrieved_evidence()],
+        },
+        config=config,
+    )
+
+    events = [json.loads(record.message) for record in caplog.records]
+    completed_generation_events = [
+        event
+        for event in events
+        if event["event"] == "graph.node.completed"
+        and event["node_name"] == "hypothesis_generation"
+    ]
+
+    assert result["run_id"]
+    assert completed_generation_events
+    assert completed_generation_events[0]["run_id"] == result["run_id"]
+    assert completed_generation_events[0]["incident_id"] == "inc-001"

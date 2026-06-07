@@ -26,6 +26,10 @@ from telemetry_agents.investigation.trace_matching import (
     get_matching_trace_spans,
     TraceMatchReason,
 )
+from telemetry_agents.shared.observability import (
+    emit_event,
+    EVENT_EVIDENCE_RETRIEVAL_COMPLETED,
+)
 from telemetry_agents.shared.time import parse_utc_timestamp
 from telemetry_agents.telemetry.readers import LocalFileTelemetryReader
 
@@ -47,6 +51,7 @@ class RetrievedEvidence(BaseModel):
 
 
 class EvidenceRetrievalRequest(BaseModel):
+    run_id: str = Field(min_length=1)
     data_root: str = Field(min_length=1)
     incident_id: str = Field(min_length=1)
     service: str = Field(min_length=1)
@@ -384,8 +389,45 @@ def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEviden
     )
 
     retrieved_evidence = log_evidence + trace_span_evidence + metric_sample_evidence
+
+    _emit_evidence_retrieval_completed_event(
+        run_id=request.run_id,
+        incident_id=request.incident_id,
+        log_evidence_len=len(log_evidence),
+        metric_sample_evidence_len=len(metric_sample_evidence),
+        trace_span_evidence_len=len(trace_span_evidence),
+        retrieved_evidence=retrieved_evidence,
+    )
     return sorted(
         retrieved_evidence,
         key=lambda item: item.relevance_score,
         reverse=True,
+    )
+
+
+def _emit_evidence_retrieval_completed_event(
+    run_id: str,
+    incident_id: str,
+    log_evidence_len: int,
+    metric_sample_evidence_len: int,
+    trace_span_evidence_len: int,
+    retrieved_evidence: list[RetrievedEvidence],
+) -> None:
+    emit_event(
+        EVENT_EVIDENCE_RETRIEVAL_COMPLETED,
+        run_id=run_id,
+        incident_id=incident_id,
+        log_count=log_evidence_len,
+        trace_count=trace_span_evidence_len,
+        metric_count=metric_sample_evidence_len,
+        strong_count=sum(
+            e.strength == EvidenceStrength.STRONG for e in retrieved_evidence
+        ),
+        medium_count=sum(
+            e.strength == EvidenceStrength.MEDIUM for e in retrieved_evidence
+        ),
+        weak_count=sum(e.strength == EvidenceStrength.WEAK for e in retrieved_evidence),
+        missing_count=sum(
+            e.strength == EvidenceStrength.MISSING for e in retrieved_evidence
+        ),
     )

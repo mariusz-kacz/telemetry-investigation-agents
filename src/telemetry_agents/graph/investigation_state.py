@@ -20,6 +20,7 @@ def append(existing: list[str], new: list[str]) -> list[str]:
 
 
 class InvestigationGraphState(TypedDict, total=False):
+    run_id: str
     incident_input: str
     normalized_incident: Incident
     collected_evidence: list[RetrievedEvidence]
