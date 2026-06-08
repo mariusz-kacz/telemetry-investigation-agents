@@ -31,7 +31,6 @@ from telemetry_agents.investigation.hypothesis_critic import (
 from telemetry_agents.shared.observability import LOGGER_NAME
 
 
-
 def _retrieved_evidence() -> RetrievedEvidence:
     return RetrievedEvidence(
         evidence=TelemetryEvidence(
@@ -91,7 +90,6 @@ def _critique_result() -> HypothesisCritiqueResult:
 
 def _observability_events(caplog: pytest.LogCaptureFixture) -> list[dict[str, object]]:
     return [json.loads(record.message) for record in caplog.records]
-
 
 
 def test_critique_returns_findings_from_parsed_structured_response() -> None:
@@ -276,4 +274,3 @@ def test_critic_translates_provider_connection_failure_to_unavailable(
     }
     assert isinstance(events[1]["duration_ms"], float)
     assert events[1]["duration_ms"] >= 0
-

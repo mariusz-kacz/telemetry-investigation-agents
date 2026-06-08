@@ -9,6 +9,7 @@ from telemetry_agents.shared.observability import (
     emit_event,
     new_run_id,
 )
+from telemetry_agents.shared.tracing import get_tracer
 
 
 def observe_graph_node(
@@ -22,36 +23,43 @@ def observe_graph_node(
         incident = state.get("normalized_incident")
         incident_id = incident.incident_id if incident is not None else None
 
-        emit_event(
-            EVENT_NODE_STARTED,
-            run_id=run_id,
-            incident_id=incident_id,
-            node_name=node_name,
-        )
+        tracer = get_tracer()
+        with tracer.start_as_current_span(f"graph.node.{node_name}") as node_span:
+            node_span.set_attribute("node_name", node_name)
+            node_span.set_attribute("run_id", run_id)
+            if incident_id is not None:
+                node_span.set_attribute("incident_id", incident_id)
 
-        started_at = perf_counter()
-        try:
-            result = action(state)
-        except Exception as exc:
             emit_event(
-                EVENT_NODE_FAILED,
+                EVENT_NODE_STARTED,
+                run_id=run_id,
+                incident_id=incident_id,
+                node_name=node_name,
+            )
+
+            started_at = perf_counter()
+            try:
+                result = action(state)
+            except Exception as exc:
+                emit_event(
+                    EVENT_NODE_FAILED,
+                    run_id=run_id,
+                    incident_id=incident_id,
+                    node_name=node_name,
+                    duration_ms=round((perf_counter() - started_at) * 1000, 3),
+                    error_type=type(exc).__name__,
+                )
+                raise
+
+            result.setdefault("run_id", run_id)
+            emit_event(
+                EVENT_NODE_COMPLETED,
                 run_id=run_id,
                 incident_id=incident_id,
                 node_name=node_name,
                 duration_ms=round((perf_counter() - started_at) * 1000, 3),
-                error_type=type(exc).__name__,
             )
-            raise
-
-        result.setdefault("run_id", run_id)
-        emit_event(
-            EVENT_NODE_COMPLETED,
-            run_id=run_id,
-            incident_id=incident_id,
-            node_name=node_name,
-            duration_ms=round((perf_counter() - started_at) * 1000, 3),
-        )
-        return result
+            return result
 
     return observed_node
 

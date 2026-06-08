@@ -174,7 +174,7 @@ Before any phase is marked DONE:
 | 12. Human-in-the-loop review | DONE | 2026-05-25 | Risk-based review assessment, typed status, conditional interrupt/bypass routing, approval/rejection outcomes, focused tests, and learning note exist. Evidence re-entry and edited recommendations are deferred. |
 | 13. Azure OpenAI integration and graph smoke | DONE | 2026-05-28 | Azure OpenAI generator and critic adapters use Microsoft Entra ID, structured outputs, mocked adapter tests, adapter-level live smoke tests, and one graph-level live smoke run through generation, validation, critique, human review, and approval resume. |
 | 14. Evaluation framework | DONE | 2026-06-06 | Golden cases load from JSON and run through `uv run telemetry-evals`; deterministic and semantic scorecard dimensions, accepted-reviewed-hypothesis scoring, readable reporting, severity retrieval coverage, prompt guardrails, and ADR exist. |
-| 15. Observability and tracing | TODO |  |  |
+| 15. Observability and tracing | DONE | 2026-06-08 | Structured JSON logs, run IDs, graph node events/spans, retrieval events/spans, Azure workflow LLM adapter events/spans, eval scoring events, local stdout logging, opt-in console tracing, focused observability tests, docs, and learning note exist. |
 | 16. API / CLI interface | TODO |  |  |
 | 17. Portfolio skeleton hardening | TODO |  |  |
 | 18. Final review and roadmap | TODO |  |  |
@@ -1201,15 +1201,15 @@ Add observability for:
 
 ## Checkpoint
 
-- [ ] Structured logging exists.
-- [ ] Graph run has a run ID.
-- [ ] Nodes emit useful telemetry.
-- [ ] Tool failures are observable.
-- [ ] LLM calls are traceable through adapter.
-- [ ] Graph tests prove workflow event timeline.
-- [ ] Adapter tests prove LLM call event shape.
-- [ ] A real local run can be reconstructed from structured events.
-- [ ] Learning note exists.
+- [x] Structured logging exists.
+- [x] Graph run has a run ID.
+- [x] Nodes emit useful telemetry.
+- [x] Tool failures are observable.
+- [x] LLM calls are traceable through adapter.
+- [x] Graph tests prove workflow event timeline.
+- [x] Adapter tests prove LLM call event shape.
+- [x] A real local run can be reconstructed from structured events.
+- [x] Learning note exists.
 
 ## Codex stop condition
 
@@ -1466,5 +1466,7 @@ The project fails if it becomes:
 - an overengineered distributed system,
 - a demo with no evals,
 - a system that produces confident answers from weak evidence.
+
+
 
 

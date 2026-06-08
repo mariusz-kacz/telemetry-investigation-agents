@@ -10,6 +10,8 @@ from telemetry_agents.app.azure_composition import build_azure_evaluation_compos
 from telemetry_agents.app.config import AzureEvaluationConfig
 from telemetry_agents.evaluation import EvaluationScorecard, EvalCase
 from telemetry_agents.evaluation.evaluator import run_batch_evaluation
+from telemetry_agents.shared.logging_config import configure_observability_logging
+from telemetry_agents.shared.tracing import configure_local_tracing
 
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -96,7 +98,6 @@ def load_config() -> AzureEvaluationConfig:
 
     endpoint = os.environ["AZURE_OPENAI_ENDPOINT"]
     deployment_name = os.environ["AZURE_OPENAI_HYPOTHESIS_DEPLOYMENT_NAME"]
-
     return AzureEvaluationConfig(
         endpoint=endpoint,
         deployment_name=deployment_name,
@@ -117,7 +118,11 @@ def _load_eval_cases(data_root: Path) -> list[EvalCase]:
 def main(argv: Sequence[str] | None = None) -> int:
     _parse_args(argv)
 
+    configure_observability_logging()
     config = load_config()
+
+    tracing_enabled = os.getenv("TELEMETRY_AGENTS_TRACING", "false").lower() == "true"
+    configure_local_tracing(tracing_enabled=tracing_enabled)
     cases = _load_eval_cases(config.eval_data_root)
     evaluation_composition = build_azure_evaluation_composition(config)
     scorecards = run_batch_evaluation(

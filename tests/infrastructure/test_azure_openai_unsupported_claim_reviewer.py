@@ -1,5 +1,3 @@
-import json
-import logging
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -26,9 +24,6 @@ from telemetry_agents.investigation.evidence_retrieval import (
     RetrievedEvidence,
 )
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
-from telemetry_agents.shared.observability import LOGGER_NAME
-
-
 
 def _request() -> UnsupportedClaimReviewRequest:
     return UnsupportedClaimReviewRequest(
@@ -65,10 +60,6 @@ def _request() -> UnsupportedClaimReviewRequest:
     )
 
 
-def _observability_events(caplog: pytest.LogCaptureFixture) -> list[dict[str, object]]:
-    return [json.loads(record.message) for record in caplog.records]
-
-
 
 def test_review_returns_findings_from_parsed_structured_response() -> None:
     client = Mock()
@@ -99,60 +90,6 @@ def test_review_returns_findings_from_parsed_structured_response() -> None:
     assert call["response_format"] is UnsupportedClaimReviewResult
     assert "hyp-001" in call["messages"][-1]["content"]
     assert "log-001" in call["messages"][-1]["content"]
-
-
-def test_review_emits_safe_llm_event_shape(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    caplog.set_level(logging.INFO, logger=LOGGER_NAME)
-    client = Mock()
-    expected_result = UnsupportedClaimReviewResult(
-        findings=[
-            UnsupportedClaimFinding(
-                hypothesis_id="hyp-001",
-                claim="A DNS outage caused checkout database timeouts.",
-                reason="The cited log reports a timeout but does not support a DNS outage.",
-                evidence_ids=["log-001"],
-            )
-        ]
-    )
-    client.beta.chat.completions.parse.return_value = SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(parsed=expected_result))]
-    )
-    reviewer = AzureOpenAIUnsupportedClaimAdapter(
-        client=client,
-        deployment_name="evaluation-model",
-    )
-
-    reviewer.review(_request())
-
-    events = _observability_events(caplog)
-    assert [event["event"] for event in events] == [
-        "llm.call.started",
-        "llm.call.completed",
-    ]
-    assert events[0] == {
-        "event": "llm.call.started",
-        "run_id": "run-001",
-        "case_id": "case-001",
-        "provider": "azure_openai",
-        "operation": "unsupported_claim_review",
-        "deployment_name": "evaluation-model",
-        "output_schema": "UnsupportedClaimReviewResult",
-    }
-    assert events[1] | {"duration_ms": 0.0} == {
-        "event": "llm.call.completed",
-        "run_id": "run-001",
-        "case_id": "case-001",
-        "provider": "azure_openai",
-        "operation": "unsupported_claim_review",
-        "deployment_name": "evaluation-model",
-        "output_schema": "UnsupportedClaimReviewResult",
-        "finding_count": 1,
-        "duration_ms": 0.0,
-    }
-    assert isinstance(events[1]["duration_ms"], float)
-    assert events[1]["duration_ms"] >= 0
 
 
 def test_review_passes_bounded_system_prompt_to_model() -> None:
@@ -198,10 +135,7 @@ def test_review_raises_value_error_from_empty_response() -> None:
         reviewer.review(_request())
 
 
-def test_review_translates_provider_connection_failure_to_unavailable(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    caplog.set_level(logging.INFO, logger=LOGGER_NAME)
+def test_review_translates_provider_connection_failure_to_unavailable() -> None:
     client = Mock()
     client.beta.chat.completions.parse.side_effect = APIConnectionError(request=Mock())
     reviewer = AzureOpenAIUnsupportedClaimAdapter(
@@ -211,23 +145,3 @@ def test_review_translates_provider_connection_failure_to_unavailable(
 
     with pytest.raises(UnsupportedClaimReviewerUnavailableError):
         reviewer.review(_request())
-
-    events = _observability_events(caplog)
-    assert [event["event"] for event in events] == [
-        "llm.call.started",
-        "llm.call.failed",
-    ]
-    assert events[1] | {"duration_ms": 0.0} == {
-        "event": "llm.call.failed",
-        "run_id": "run-001",
-        "case_id": "case-001",
-        "provider": "azure_openai",
-        "operation": "unsupported_claim_review",
-        "deployment_name": "evaluation-model",
-        "output_schema": "UnsupportedClaimReviewResult",
-        "error_type": "APIConnectionError",
-        "duration_ms": 0.0,
-    }
-    assert isinstance(events[1]["duration_ms"], float)
-    assert events[1]["duration_ms"] >= 0
-

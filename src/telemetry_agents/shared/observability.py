@@ -6,6 +6,7 @@ from time import perf_counter
 from typing import Any
 from uuid import uuid4
 
+from telemetry_agents.shared.tracing import get_tracer
 
 LOGGER_NAME = "telemetry_agents.observability"
 EVENT_NODE_STARTED = "graph.node.started"
@@ -70,23 +71,48 @@ class LlmCallObservation:
 
 
 @contextmanager
-def observe_llm_call(**fields: Any) -> Iterator[LlmCallObservation]:
+def observe_llm_call(
+    *,
+    provider: str,
+    operation: str,
+    deployment_name: str,
+    output_schema: str,
+    run_id: str | None = None,
+    incident_id: str | None = None,
+    case_id: str | None = None,
+) -> Iterator[LlmCallObservation]:
+    fields = {
+        "run_id": run_id,
+        "incident_id": incident_id,
+        "case_id": case_id,
+        "provider": provider,
+        "operation": operation,
+        "deployment_name": deployment_name,
+        "output_schema": output_schema,
+    }
     """Emit start/end events for one provider-backed LLM call.
 
     Callers should pass only safe metadata. Prompts, raw responses, evidence
     payloads, hypothesis statements, and critic reasons do not belong here.
     """
-    started_at = perf_counter()
-    emit_event(EVENT_LLM_CALL_STARTED, **fields)
-    observation = LlmCallObservation(started_at=started_at, fields=fields)
-    try:
-        yield observation
-    except Exception as exc:
-        if not observation._ended:
-            observation.fail(exc)
-        raise
+    fields = {key: value for key, value in fields.items() if value is not None}
 
-    if not observation._ended:
-        exc = RuntimeError("LLM call didn't complete successfully")
-        observation.fail(exc)
-        raise exc
+    tracer = get_tracer()
+    with tracer.start_as_current_span(f"llm.call.{fields['operation']}") as llm_span:
+        for key, value in fields.items():
+            llm_span.set_attribute(key, value)
+
+        started_at = perf_counter()
+        emit_event(EVENT_LLM_CALL_STARTED, **fields)
+        observation = LlmCallObservation(started_at=started_at, fields=fields)
+        try:
+            yield observation
+        except Exception as exc:
+            if not observation._ended:
+                observation.fail(exc)
+            raise
+
+        if not observation._ended:
+            exc = RuntimeError("LLM call didn't complete successfully")
+            observation.fail(exc)
+            raise exc

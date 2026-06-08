@@ -32,6 +32,7 @@ from telemetry_agents.shared.observability import (
     EVENT_TELEMETRY_SOURCE_UNAVAILABLE,
 )
 from telemetry_agents.shared.time import parse_utc_timestamp
+from telemetry_agents.shared.tracing import get_tracer
 from telemetry_agents.telemetry.readers import LocalFileTelemetryReader
 
 
@@ -373,50 +374,54 @@ def _retrieve_metric_evidence(
 
 def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEvidence]:
     """Retrieve and rank cited evidence for one incident investigation."""
-    try:
-        start_timestamp = parse_utc_timestamp(request.start_timestamp)
-        end_timestamp = parse_utc_timestamp(request.end_timestamp)
-    except ValueError as exc:
-        raise ValueError("Wrong timestamp value") from exc
+    tracer = get_tracer()
+    with tracer.start_as_current_span("evidence.retrieval") as retrieval_span:
+        retrieval_span.set_attribute("run_id", request.run_id)
+        retrieval_span.set_attribute("incident_id", request.incident_id)
+        try:
+            start_timestamp = parse_utc_timestamp(request.start_timestamp)
+            end_timestamp = parse_utc_timestamp(request.end_timestamp)
+        except ValueError as exc:
+            raise ValueError("Wrong timestamp value") from exc
 
-    reader = LocalFileTelemetryReader(Path(request.data_root))
+        reader = LocalFileTelemetryReader(Path(request.data_root))
 
-    log_evidence, trace_ids_from_query_seed_logs = _retrieve_log_evidence(
-        reader=reader,
-        start_timestamp=start_timestamp,
-        end_timestamp=end_timestamp,
-        request=request,
-    )
-    trace_span_evidence = _retrieve_trace_evidence(
-        reader=reader,
-        start_timestamp=start_timestamp,
-        end_timestamp=end_timestamp,
-        request=request,
-        trace_ids_from_query_seed_logs=trace_ids_from_query_seed_logs,
-    )
+        log_evidence, trace_ids_from_query_seed_logs = _retrieve_log_evidence(
+            reader=reader,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+            request=request,
+        )
+        trace_span_evidence = _retrieve_trace_evidence(
+            reader=reader,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+            request=request,
+            trace_ids_from_query_seed_logs=trace_ids_from_query_seed_logs,
+        )
 
-    metric_sample_evidence = _retrieve_metric_evidence(
-        reader=reader,
-        start_timestamp=start_timestamp,
-        end_timestamp=end_timestamp,
-        request=request,
-    )
+        metric_sample_evidence = _retrieve_metric_evidence(
+            reader=reader,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+            request=request,
+        )
 
-    retrieved_evidence = log_evidence + trace_span_evidence + metric_sample_evidence
+        retrieved_evidence = log_evidence + trace_span_evidence + metric_sample_evidence
 
-    _emit_evidence_retrieval_completed_event(
-        run_id=request.run_id,
-        incident_id=request.incident_id,
-        log_evidence_len=len(log_evidence),
-        metric_sample_evidence_len=len(metric_sample_evidence),
-        trace_span_evidence_len=len(trace_span_evidence),
-        retrieved_evidence=retrieved_evidence,
-    )
-    return sorted(
-        retrieved_evidence,
-        key=lambda item: item.relevance_score,
-        reverse=True,
-    )
+        _emit_evidence_retrieval_completed_event(
+            run_id=request.run_id,
+            incident_id=request.incident_id,
+            log_evidence_len=len(log_evidence),
+            metric_sample_evidence_len=len(metric_sample_evidence),
+            trace_span_evidence_len=len(trace_span_evidence),
+            retrieved_evidence=retrieved_evidence,
+        )
+        return sorted(
+            retrieved_evidence,
+            key=lambda item: item.relevance_score,
+            reverse=True,
+        )
 
 
 def _emit_evidence_retrieval_completed_event(

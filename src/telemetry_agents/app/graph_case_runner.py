@@ -21,6 +21,7 @@ from telemetry_agents.investigation.evidence_retrieval import (
 from telemetry_agents.investigation.hypothesis_critic import HypothesisCritic
 from telemetry_agents.investigation.hypothesis_generation import HypothesisGenerator
 from telemetry_agents.shared.observability import new_run_id
+from telemetry_agents.shared.tracing import get_tracer
 
 RunEvaluationCase = Callable[[EvalCase], EvaluationRunOutput]
 
@@ -62,28 +63,37 @@ def build_graph_case_runner(
             critic=critic,
             checkpointer=checkpointer,
         )
+
         incident = _load_incident(case.incident_file, data_root)
-        evidence = _load_evidence(run_id, case.case_id, incident, data_root)
-        config: RunnableConfig = {"configurable": {"thread_id": incident.incident_id}}
 
-        result = graph.invoke(
-            {
-                "normalized_incident": incident,
-                "collected_evidence": evidence,
-                "run_id": run_id,
-            },
-            config=config,
-        )
+        tracer = get_tracer()
+        with tracer.start_as_current_span("investigation.run") as run_span:
+            run_span.set_attribute("run_id", run_id)
+            run_span.set_attribute("incident_id", incident.incident_id)
 
-        if result.get("__interrupt__") is not None:
-            result = graph.invoke(Command(resume={"approved": True}), config=config)
+            evidence = _load_evidence(run_id, case.case_id, incident, data_root)
+            config: RunnableConfig = {
+                "configurable": {"thread_id": incident.incident_id}
+            }
 
-        return EvaluationRunOutput(
-            validation_result=result["validation_result"],
-            review_result=result["review_result"],
-            human_review_assessment=result["human_review_assessment"],
-            warnings=result["warnings"],
-            retrieved_evidence=evidence,
-        )
+            result = graph.invoke(
+                {
+                    "normalized_incident": incident,
+                    "collected_evidence": evidence,
+                    "run_id": run_id,
+                },
+                config=config,
+            )
+
+            if result.get("__interrupt__") is not None:
+                result = graph.invoke(Command(resume={"approved": True}), config=config)
+
+            return EvaluationRunOutput(
+                validation_result=result["validation_result"],
+                review_result=result["review_result"],
+                human_review_assessment=result["human_review_assessment"],
+                warnings=result["warnings"],
+                retrieved_evidence=evidence,
+            )
 
     return run_case

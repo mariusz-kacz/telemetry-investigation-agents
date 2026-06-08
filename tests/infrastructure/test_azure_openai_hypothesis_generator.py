@@ -29,7 +29,6 @@ from telemetry_agents.investigation.hypothesis_generation import (
 from telemetry_agents.shared.observability import LOGGER_NAME
 
 
-
 def _request() -> HypothesisGenerationRequest:
     return HypothesisGenerationRequest(
         run_id="run-001",
@@ -71,7 +70,6 @@ def _request() -> HypothesisGenerationRequest:
 
 def _observability_events(caplog: pytest.LogCaptureFixture) -> list[dict[str, object]]:
     return [json.loads(record.message) for record in caplog.records]
-
 
 
 def test_generate_returns_hypotheses_from_parsed_structured_response() -> None:
@@ -275,4 +273,3 @@ def test_generate_propagates_provider_connection_failure(
     }
     assert isinstance(events[1]["duration_ms"], float)
     assert events[1]["duration_ms"] >= 0
-
