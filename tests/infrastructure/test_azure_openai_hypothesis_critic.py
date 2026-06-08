@@ -1,3 +1,5 @@
+import json
+import logging
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -26,6 +28,8 @@ from telemetry_agents.investigation.hypothesis_critic import (
     HypothesisCritiqueRequest,
     HypothesisCriticUnavailableError,
 )
+from telemetry_agents.shared.observability import LOGGER_NAME
+
 
 
 def _retrieved_evidence() -> RetrievedEvidence:
@@ -62,6 +66,8 @@ def _request() -> HypothesisCritiqueRequest:
     evidence = _retrieved_evidence()
     validation_result = HypothesisValidationResult(validated_hypotheses=[_hypothesis()])
     return HypothesisCritiqueRequest(
+        run_id="run-001",
+        incident_id="inc-001",
         evidence=[evidence],
         validation_result=validation_result,
     )
@@ -81,6 +87,11 @@ def _critique_result() -> HypothesisCritiqueResult:
             )
         ]
     )
+
+
+def _observability_events(caplog: pytest.LogCaptureFixture) -> list[dict[str, object]]:
+    return [json.loads(record.message) for record in caplog.records]
+
 
 
 def test_critique_returns_findings_from_parsed_structured_response() -> None:
@@ -103,6 +114,51 @@ def test_critique_returns_findings_from_parsed_structured_response() -> None:
     assert call["model"] == "hypothesis-model"
     assert call["response_format"] is HypothesisCritiqueResult
     assert "log-001" in call["messages"][-1]["content"]
+
+
+def test_critique_emits_safe_llm_event_shape(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.INFO, logger=LOGGER_NAME)
+    client = Mock()
+    client.beta.chat.completions.parse.return_value = SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(parsed=_critique_result()))]
+    )
+    critic = AzureOpenAIHypothesisCritic(
+        client=client,
+        deployment_name="hypothesis-model",
+    )
+
+    critic.critique(_request())
+
+    events = _observability_events(caplog)
+    assert [event["event"] for event in events] == [
+        "llm.call.started",
+        "llm.call.completed",
+    ]
+    assert events[0] == {
+        "event": "llm.call.started",
+        "run_id": "run-001",
+        "incident_id": "inc-001",
+        "provider": "azure_openai",
+        "operation": "hypothesis_critic",
+        "deployment_name": "hypothesis-model",
+        "output_schema": "HypothesisCritiqueResult",
+    }
+    assert events[1] | {"duration_ms": 0.0} == {
+        "event": "llm.call.completed",
+        "run_id": "run-001",
+        "incident_id": "inc-001",
+        "provider": "azure_openai",
+        "operation": "hypothesis_critic",
+        "deployment_name": "hypothesis-model",
+        "output_schema": "HypothesisCritiqueResult",
+        "finding_count": 1,
+        "finding_types": ["overstated_confidence"],
+        "duration_ms": 0.0,
+    }
+    assert isinstance(events[1]["duration_ms"], float)
+    assert events[1]["duration_ms"] >= 0
 
 
 def test_critic_passes_system_prompt_to_model() -> None:
@@ -188,7 +244,10 @@ def test_critic_passes_valid_empty_structured_response() -> None:
     assert result.critique_findings == []
 
 
-def test_critic_translates_provider_connection_failure_to_unavailable() -> None:
+def test_critic_translates_provider_connection_failure_to_unavailable(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.INFO, logger=LOGGER_NAME)
     client = Mock()
     client.beta.chat.completions.parse.side_effect = APIConnectionError(request=Mock())
     critic = AzureOpenAIHypothesisCritic(
@@ -198,3 +257,23 @@ def test_critic_translates_provider_connection_failure_to_unavailable() -> None:
 
     with pytest.raises(HypothesisCriticUnavailableError):
         critic.critique(_request())
+
+    events = _observability_events(caplog)
+    assert [event["event"] for event in events] == [
+        "llm.call.started",
+        "llm.call.failed",
+    ]
+    assert events[1] | {"duration_ms": 0.0} == {
+        "event": "llm.call.failed",
+        "run_id": "run-001",
+        "incident_id": "inc-001",
+        "provider": "azure_openai",
+        "operation": "hypothesis_critic",
+        "deployment_name": "hypothesis-model",
+        "output_schema": "HypothesisCritiqueResult",
+        "error_type": "APIConnectionError",
+        "duration_ms": 0.0,
+    }
+    assert isinstance(events[1]["duration_ms"], float)
+    assert events[1]["duration_ms"] >= 0
+

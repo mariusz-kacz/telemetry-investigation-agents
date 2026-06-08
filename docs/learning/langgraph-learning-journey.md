@@ -1195,6 +1195,8 @@ Add observability for:
 - Add structured logs.
 - Capture structured observability events from a real local run.
 - Document how to reconstruct the investigation timeline from those events.
+- Add graph tests which prove workflow event timeline.
+- Add adapter tests which prove LLM call event shape.
 - Write learning note: “Agent observability is not optional.”
 
 ## Checkpoint
@@ -1204,6 +1206,8 @@ Add observability for:
 - [ ] Nodes emit useful telemetry.
 - [ ] Tool failures are observable.
 - [ ] LLM calls are traceable through adapter.
+- [ ] Graph tests prove workflow event timeline.
+- [ ] Adapter tests prove LLM call event shape.
 - [ ] A real local run can be reconstructed from structured events.
 - [ ] Learning note exists.
 
@@ -1462,4 +1466,5 @@ The project fails if it becomes:
 - an overengineered distributed system,
 - a demo with no evals,
 - a system that produces confident answers from weak evidence.
+
 

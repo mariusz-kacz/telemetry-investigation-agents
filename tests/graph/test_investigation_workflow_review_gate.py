@@ -1,6 +1,7 @@
 import json
 import logging
 
+import pytest
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
@@ -65,17 +66,19 @@ class UnavailableHypothesisCritic:
 
 
 def _incident() -> Incident:
-    return Incident(
-        incident_id="inc-001",
-        title="Checkout API latency spike",
-        service="checkout-api",
-        impact=IncidentImpact.MEDIUM,
-        reported_at="2026-05-11T10:05:00Z",
-        investigation_window={
-            "start": "2026-05-11T09:40:00Z",
-            "end": "2026-05-11T10:10:00Z",
-        },
-        retrieval={"query_terms": ["timeout"], "trace_id": "trace-001"},
+    return Incident.model_validate(
+        {
+            "incident_id": "inc-001",
+            "title": "Checkout API latency spike",
+            "service": "checkout-api",
+            "impact": IncidentImpact.MEDIUM,
+            "reported_at": "2026-05-11T10:05:00Z",
+            "investigation_window": {
+                "start": "2026-05-11T09:40:00Z",
+                "end": "2026-05-11T10:10:00Z",
+            },
+            "retrieval": {"query_terms": ["timeout"], "trace_id": "trace-001"},
+        }
     )
 
 
@@ -315,7 +318,7 @@ def test_safe_investigation_bypasses_human_review() -> None:
 
 
 def test_graph_run_emits_correlatable_node_telemetry(
-    caplog,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     caplog.set_level(logging.INFO, logger=LOGGER_NAME)
     graph = build_memory_investigation_workflow_graph([_supported_hypothesis()])
@@ -341,3 +344,89 @@ def test_graph_run_emits_correlatable_node_telemetry(
     assert completed_generation_events
     assert completed_generation_events[0]["run_id"] == result["run_id"]
     assert completed_generation_events[0]["incident_id"] == "inc-001"
+
+
+def test_graph_events_reconstruct_safe_workflow_timeline(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.INFO, logger=LOGGER_NAME)
+    graph = build_memory_investigation_workflow_graph([_supported_hypothesis()])
+    config: RunnableConfig = {"configurable": {"thread_id": "run-timeline"}}
+
+    result = graph.invoke(
+        {
+            "run_id": "run-timeline",
+            "normalized_incident": _incident(),
+            "collected_evidence": [_retrieved_evidence()],
+        },
+        config=config,
+    )
+
+    events = [json.loads(record.message) for record in caplog.records]
+    completed_nodes = [
+        event["node_name"]
+        for event in events
+        if event["event"] == "graph.node.completed"
+    ]
+
+    assert completed_nodes == [
+        "hypothesis_generation",
+        "hypothesis_validation",
+        "hypothesis_critic",
+        "hypothesis_review",
+        "human_review_assessment",
+        "human_review_not_required_marker",
+        "report_ready_marker",
+    ]
+
+    for event in events:
+        assert event["run_id"] == "run-timeline"
+        if event["event"].startswith("graph.node."):
+            assert event["incident_id"] == "inc-001"
+            assert event["node_name"]
+        if event["event"] == "graph.node.completed":
+            assert isinstance(event["duration_ms"], float)
+            assert event["duration_ms"] >= 0
+
+    critic_events = [
+        event for event in events if event["event"] == "hypothesis.critic.completed"
+    ]
+    review_events = [
+        event for event in events if event["event"] == "hypothesis.review.completed"
+    ]
+    routing_events = [
+        event for event in events if event["event"] == "human_review.routing_decided"
+    ]
+
+    assert critic_events == [
+        {
+            "event": "hypothesis.critic.completed",
+            "run_id": "run-timeline",
+            "incident_id": "inc-001",
+            "finding_count": 0,
+            "finding_types": [],
+            "affected_hypothesis_ids": [],
+            "evidence_reference_count": 0,
+        }
+    ]
+    assert review_events == [
+        {
+            "event": "hypothesis.review.completed",
+            "run_id": "run-timeline",
+            "incident_id": "inc-001",
+            "accepted_count": 1,
+            "disputed_count": 0,
+            "blocked_count": 0,
+            "critic_finding_count": 0,
+        }
+    ]
+    assert routing_events == [
+        {
+            "event": "human_review.routing_decided",
+            "run_id": "run-timeline",
+            "incident_id": "inc-001",
+            "human_review_required": False,
+            "reason": None,
+        }
+    ]
+    assert result["report_ready"] is True

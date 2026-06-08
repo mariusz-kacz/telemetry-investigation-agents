@@ -1,3 +1,5 @@
+import json
+import logging
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -24,21 +26,26 @@ from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 from telemetry_agents.investigation.hypothesis_generation import (
     HypothesisGenerationRequest,
 )
+from telemetry_agents.shared.observability import LOGGER_NAME
+
 
 
 def _request() -> HypothesisGenerationRequest:
     return HypothesisGenerationRequest(
-        incident=Incident(
-            incident_id="inc-001",
-            title="Checkout API latency spike",
-            service="checkout-api",
-            impact=IncidentImpact.MEDIUM,
-            reported_at="2026-05-11T10:05:00Z",
-            investigation_window={
-                "start": "2026-05-11T09:40:00Z",
-                "end": "2026-05-11T10:10:00Z",
-            },
-            retrieval={"query_terms": ["timeout"], "trace_id": "trace-001"},
+        run_id="run-001",
+        incident=Incident.model_validate(
+            {
+                "incident_id": "inc-001",
+                "title": "Checkout API latency spike",
+                "service": "checkout-api",
+                "impact": IncidentImpact.MEDIUM,
+                "reported_at": "2026-05-11T10:05:00Z",
+                "investigation_window": {
+                    "start": "2026-05-11T09:40:00Z",
+                    "end": "2026-05-11T10:10:00Z",
+                },
+                "retrieval": {"query_terms": ["timeout"], "trace_id": "trace-001"},
+            }
         ),
         evidence=[
             RetrievedEvidence(
@@ -60,6 +67,11 @@ def _request() -> HypothesisGenerationRequest:
             )
         ],
     )
+
+
+def _observability_events(caplog: pytest.LogCaptureFixture) -> list[dict[str, object]]:
+    return [json.loads(record.message) for record in caplog.records]
+
 
 
 def test_generate_returns_hypotheses_from_parsed_structured_response() -> None:
@@ -97,6 +109,66 @@ def test_generate_returns_hypotheses_from_parsed_structured_response() -> None:
     assert call["model"] == "hypothesis-model"
     assert call["response_format"] is InvestigationHypothesisResponse
     assert "log-001" in call["messages"][-1]["content"]
+
+
+def test_generate_emits_safe_llm_event_shape(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.INFO, logger=LOGGER_NAME)
+    client = Mock()
+    expected_hypothesis = InvestigationHypothesis(
+        hypothesis_id="hyp-001",
+        statement="Database timeouts may explain checkout latency.",
+        category=HypothesisCategory.DATABASE_FAILURE,
+        supporting_evidence_ids=["log-001"],
+        confidence=0.7,
+        uncertainty="Database metrics are not available.",
+    )
+    client.beta.chat.completions.parse.return_value = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(
+                    parsed=InvestigationHypothesisResponse(
+                        hypotheses=[expected_hypothesis]
+                    )
+                )
+            )
+        ]
+    )
+    generator = AzureOpenAIHypothesisGenerator(
+        client=client,
+        deployment_name="hypothesis-model",
+    )
+
+    generator.generate(_request())
+
+    events = _observability_events(caplog)
+    assert [event["event"] for event in events] == [
+        "llm.call.started",
+        "llm.call.completed",
+    ]
+    assert events[0] == {
+        "event": "llm.call.started",
+        "run_id": "run-001",
+        "incident_id": "inc-001",
+        "provider": "azure_openai",
+        "operation": "hypothesis_generation",
+        "deployment_name": "hypothesis-model",
+        "output_schema": "InvestigationHypothesisResponse",
+    }
+    assert events[1] | {"duration_ms": 0.0} == {
+        "event": "llm.call.completed",
+        "run_id": "run-001",
+        "incident_id": "inc-001",
+        "provider": "azure_openai",
+        "operation": "hypothesis_generation",
+        "deployment_name": "hypothesis-model",
+        "output_schema": "InvestigationHypothesisResponse",
+        "hypothesis_count": 1,
+        "duration_ms": 0.0,
+    }
+    assert isinstance(events[1]["duration_ms"], float)
+    assert events[1]["duration_ms"] >= 0
 
 
 def test_generate_passes_system_prompt_to_model() -> None:
@@ -171,7 +243,10 @@ def test_generate_raises_value_error_from_empty_response() -> None:
         generator.generate(_request())
 
 
-def test_generate_propagates_provider_connection_failure() -> None:
+def test_generate_propagates_provider_connection_failure(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.INFO, logger=LOGGER_NAME)
     client = Mock()
     client.beta.chat.completions.parse.side_effect = APIConnectionError(request=Mock())
     generator = AzureOpenAIHypothesisGenerator(
@@ -181,3 +256,23 @@ def test_generate_propagates_provider_connection_failure() -> None:
 
     with pytest.raises(APIConnectionError):
         generator.generate(_request())
+
+    events = _observability_events(caplog)
+    assert [event["event"] for event in events] == [
+        "llm.call.started",
+        "llm.call.failed",
+    ]
+    assert events[1] | {"duration_ms": 0.0} == {
+        "event": "llm.call.failed",
+        "run_id": "run-001",
+        "incident_id": "inc-001",
+        "provider": "azure_openai",
+        "operation": "hypothesis_generation",
+        "deployment_name": "hypothesis-model",
+        "output_schema": "InvestigationHypothesisResponse",
+        "error_type": "APIConnectionError",
+        "duration_ms": 0.0,
+    }
+    assert isinstance(events[1]["duration_ms"], float)
+    assert events[1]["duration_ms"] >= 0
+
