@@ -32,6 +32,7 @@ def make_hypothesis_critic_node(
             raise ValueError("validation_result is required before hypothesis critique")
 
         request = HypothesisCritiqueRequest(
+            **graph_correlation_fields(state),
             evidence=collected_evidence,
             validation_result=validation_result,
         )

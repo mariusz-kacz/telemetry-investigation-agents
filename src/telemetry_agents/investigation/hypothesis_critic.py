@@ -11,6 +11,8 @@ from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 
 
 class HypothesisCritiqueRequest(BaseModel):
+    run_id: str | None = Field(default=None, min_length=1)
+    incident_id: str | None = Field(default=None, min_length=1)
     evidence: list[RetrievedEvidence] = Field(default_factory=list)
     validation_result: HypothesisValidationResult
 

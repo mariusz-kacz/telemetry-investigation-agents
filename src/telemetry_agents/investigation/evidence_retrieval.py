@@ -29,6 +29,7 @@ from telemetry_agents.investigation.trace_matching import (
 from telemetry_agents.shared.observability import (
     emit_event,
     EVENT_EVIDENCE_RETRIEVAL_COMPLETED,
+    EVENT_TELEMETRY_SOURCE_UNAVAILABLE,
 )
 from telemetry_agents.shared.time import parse_utc_timestamp
 from telemetry_agents.telemetry.readers import LocalFileTelemetryReader
@@ -68,7 +69,17 @@ def _missing_evidence(
     source_file: Path,
     summary: str,
     selection_reason: str,
+    emit_source_unavailable: bool = False,
 ) -> list[RetrievedEvidence]:
+    if emit_source_unavailable:
+        emit_event(
+            EVENT_TELEMETRY_SOURCE_UNAVAILABLE,
+            run_id=request.run_id,
+            incident_id=request.incident_id,
+            source=source.value,
+            source_file=source_file.as_posix(),
+            reason=selection_reason,
+        )
     return [
         RetrievedEvidence(
             evidence=TelemetryEvidence(
@@ -147,6 +158,7 @@ def _retrieve_log_evidence(
                 source_file=source_file,
                 summary="Log source file is unavailable for this incident.",
                 selection_reason="Log source file was not found.",
+                emit_source_unavailable=True,
             ),
             set(),
         )
@@ -237,6 +249,7 @@ def _retrieve_trace_evidence(
             source_file=source_file,
             summary="Trace source file is unavailable for this incident.",
             selection_reason="Trace source file was not found.",
+            emit_source_unavailable=True,
         )
 
     for matching_trace_span in matching_trace_spans:
@@ -313,6 +326,7 @@ def _retrieve_metric_evidence(
             source_file=source_file,
             summary="Metric source file is unavailable for this incident.",
             selection_reason="Metric source file was not found.",
+            emit_source_unavailable=True,
         )
 
     for matching_metric_sample in matching_metric_samples:

@@ -1168,13 +1168,12 @@ Make the agentic workflow inspectable like a production system.
 
 - Structured logs.
 - Trace IDs.
-- Span boundaries.
+- Workflow timeline boundaries.
 - Node-level latency.
 - Tool latency.
 - LLM latency/cost.
 - Error telemetry.
 - Trace IDs and run IDs.
-- OpenTelemetry.
 - Debuggability of agent workflows.
 
 ## Implementation tasks
@@ -1193,9 +1192,9 @@ Add observability for:
 
 ## Learning tasks
 
-- Map graph nodes to tracing spans.
 - Add structured logs.
-- Add one OpenTelemetry exporter or local trace demonstration.
+- Capture structured observability events from a real local run.
+- Document how to reconstruct the investigation timeline from those events.
 - Write learning note: “Agent observability is not optional.”
 
 ## Checkpoint
@@ -1205,11 +1204,12 @@ Add observability for:
 - [ ] Nodes emit useful telemetry.
 - [ ] Tool failures are observable.
 - [ ] LLM calls are traceable through adapter.
+- [ ] A real local run can be reconstructed from structured events.
 - [ ] Learning note exists.
 
 ## Codex stop condition
 
-Stop after local observability demonstration.
+Stop after a local observability walkthrough from a real workflow or eval run.
 
 ---
 
@@ -1462,3 +1462,4 @@ The project fails if it becomes:
 - an overengineered distributed system,
 - a demo with no evals,
 - a system that produces confident answers from weak evidence.
+

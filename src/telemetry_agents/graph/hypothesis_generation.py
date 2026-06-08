@@ -26,6 +26,7 @@ def make_hypothesis_generation_node(
             )
 
         request = HypothesisGenerationRequest(
+            run_id=state.get("run_id"),
             incident=incident,
             evidence=evidence,
         )

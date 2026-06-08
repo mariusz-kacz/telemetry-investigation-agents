@@ -19,6 +19,8 @@ class UnsupportedClaimFinding(BaseModel):
 
 
 class UnsupportedClaimReviewRequest(BaseModel):
+    run_id: str | None = Field(default=None, min_length=1)
+    case_id: str | None = Field(default=None, min_length=1)
     evidence: list[RetrievedEvidence] = Field(default_factory=list)
     reviewed_accepted_hypotheses: list[InvestigationHypothesis] = Field(
         default_factory=list

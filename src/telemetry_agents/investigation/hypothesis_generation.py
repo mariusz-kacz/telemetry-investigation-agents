@@ -7,6 +7,7 @@ from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 
 
 class HypothesisGenerationRequest(BaseModel):
+    run_id: str | None = Field(default=None, min_length=1)
     incident: Incident
     evidence: list[RetrievedEvidence] = Field(default_factory=list)
 
