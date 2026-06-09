@@ -1,8 +1,13 @@
 from pathlib import Path
 from typing import Callable
 
+from langgraph.checkpoint.memory import InMemorySaver
+
 from telemetry_agents.app.demo_cases import load_incident_file
-from telemetry_agents.app.workflow_runner import build_workflow_runner, WorkflowRunRequest
+from telemetry_agents.app.workflow_runner import (
+    WorkflowRunRequest,
+    build_workflow_service,
+)
 
 from telemetry_agents.evaluation.models import (
     EvalCase,
@@ -21,13 +26,12 @@ def build_graph_case_runner(
     def run_case(case: EvalCase) -> EvaluationRunOutput:
         run_id = new_run_id()
         incident = load_incident_file(data_root / case.incident_file)
-
-        run = build_workflow_runner(
-            generator=generator,
-            critic=critic,
+        checkpointer = InMemorySaver()
+        service = build_workflow_service(
+            generator=generator, critic=critic, checkpointer=checkpointer
         )
 
-        result = run(
+        result = service.run(
             WorkflowRunRequest(
                 run_id=run_id,
                 case_id=case.case_id,

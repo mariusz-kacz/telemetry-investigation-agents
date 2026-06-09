@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     data_root: Path
     eval_data_root: Path
     tracing_enabled: bool = False
+    checkpoint_db_path: Path
+    run_registry_db_path: Path
 
     @field_validator("data_root", mode="after")
     @classmethod

@@ -1,8 +1,9 @@
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
 from langchain_core.runnables import RunnableConfig
-from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.types import Command
 from pydantic import BaseModel
 
@@ -42,7 +43,19 @@ class WorkflowRunResult(BaseModel):
     warnings: list[str]
 
 
+class WorkflowResumeRequest(BaseModel):
+    run_id: str
+    approved: bool
+
+
 RunWorkflow = Callable[[WorkflowRunRequest], WorkflowRunResult]
+ResumeWorkflow = Callable[[WorkflowResumeRequest], WorkflowRunResult]
+
+
+@dataclass(frozen=True)
+class WorkflowService:
+    run: RunWorkflow
+    resume: ResumeWorkflow
 
 
 def _load_evidence(
@@ -66,13 +79,13 @@ def _review_reasons(assessment: HumanReviewAssessment) -> list[str]:
     return [assessment.human_review_reason] if assessment.human_review_reason else []
 
 
-def build_workflow_runner(
+def _build_workflow_runner(
     *,
     generator: HypothesisGenerator,
     critic: HypothesisCritic,
+    checkpointer: BaseCheckpointSaver,
 ) -> RunWorkflow:
     def run(request: WorkflowRunRequest) -> WorkflowRunResult:
-        checkpointer = InMemorySaver()
         graph = build_investigation_workflow(
             generator=generator,
             critic=critic,
@@ -88,9 +101,7 @@ def build_workflow_runner(
             run_span.set_attribute("run_id", request.run_id)
             run_span.set_attribute("incident_id", request.incident.incident_id)
 
-            config: RunnableConfig = {
-                "configurable": {"thread_id": request.incident.incident_id}
-            }
+            config: RunnableConfig = {"configurable": {"thread_id": request.run_id}}
 
             result = graph.invoke(
                 {
@@ -122,3 +133,56 @@ def build_workflow_runner(
             )
 
     return run
+
+
+def _build_resume_workflow_runner(
+    *,
+    generator: HypothesisGenerator,
+    critic: HypothesisCritic,
+    checkpointer: BaseCheckpointSaver,
+) -> ResumeWorkflow:
+    def run(request: WorkflowResumeRequest) -> WorkflowRunResult:
+        graph = build_investigation_workflow(
+            generator=generator,
+            critic=critic,
+            checkpointer=checkpointer,
+        )
+
+        tracer = get_tracer()
+        with tracer.start_as_current_span("investigation.run") as run_span:
+            run_span.set_attribute("run_id", request.run_id)
+
+            config: RunnableConfig = {"configurable": {"thread_id": request.run_id}}
+
+            result = graph.invoke(
+                Command(resume={"approved": request.approved}), config=config
+            )
+
+            return WorkflowRunResult(
+                run_id=request.run_id,
+                incident=result["normalized_incident"],
+                retrieved_evidence=result["collected_evidence"],
+                validation_result=result["validation_result"],
+                review_result=result["review_result"],
+                human_review_assessment=result["human_review_assessment"],
+                review_reasons=_review_reasons(result["human_review_assessment"]),
+                warnings=result["warnings"],
+            )
+
+    return run
+
+
+def build_workflow_service(
+    *,
+    generator: HypothesisGenerator,
+    critic: HypothesisCritic,
+    checkpointer: BaseCheckpointSaver,
+) -> WorkflowService:
+    return WorkflowService(
+        run=_build_workflow_runner(
+            generator=generator, critic=critic, checkpointer=checkpointer
+        ),
+        resume=_build_resume_workflow_runner(
+            generator=generator, critic=critic, checkpointer=checkpointer
+        ),
+    )

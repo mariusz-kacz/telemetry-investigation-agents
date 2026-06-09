@@ -8,7 +8,7 @@ from telemetry_agents.domain import Incident
 def get_demo_cases(
     settings: Settings,
 ) -> list[str]:
-    if settings.eval_data_root:
+    if settings.data_root:
         cases_dir = settings.data_root / "cases"
         case_names: list[str] = []
         for eval_case_file in cases_dir.glob("*.json"):

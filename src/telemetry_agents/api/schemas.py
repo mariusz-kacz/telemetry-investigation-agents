@@ -19,3 +19,7 @@ class InvestigationResponse(BaseModel):
     hypotheses: list[HypothesisResponse]
     human_review_required: bool
     review_reasons: list[str]
+
+
+class HumanReviewRequest(BaseModel):
+    approved: bool

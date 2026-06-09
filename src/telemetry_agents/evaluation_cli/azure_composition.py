@@ -1,7 +1,5 @@
 from dataclasses import dataclass
 
-from fastapi import Depends
-
 from telemetry_agents.app.config import get_settings, Settings
 from telemetry_agents.evaluation import GuardedUnsupportedClaimReviewer
 from telemetry_agents.evaluation_cli.graph_case_runner import (
@@ -30,7 +28,7 @@ class AzureComposition:
 
 
 def build_azure_evaluation_composition(
-    settings: Settings = Depends(get_settings),
+    settings: Settings,
 ) -> AzureComposition:
     openai_client = create_azure_openai_client(
         endpoint=settings.azure_openai_endpoint,

@@ -16,29 +16,68 @@ def initialize_run_registry(db_path: Path) -> None:
     with sqlite3.connect(db_path) as conn:
         conn.execute("""CREATE TABLE IF NOT EXISTS investigation_runs(
                 run_id TEXT PRIMARY KEY,
-                incident_id TEXT NOT NULL
+                incident_id TEXT NOT NULL,
+                status TEXT NOT NULL
             )
         """)
 
 
 def create_investigation_run(
-    db_path: Path,
-    *,
-    run_id: str,
-    incident_id: str,
+    db_path: Path, *, run_id: str, incident_id: str, status: str = "STARTED"
 ) -> InvestigationRunRecord:
     """Insert one investigation run into SQLite and return the stored record."""
     with sqlite3.connect(db_path) as conn:
         conn.execute(
             """
-            INSERT INTO investigation_runs (run_id, incident_id)
-            VALUES (?, ?)
+            INSERT INTO investigation_runs (run_id, incident_id, status)
+            VALUES (?, ?, ?)
             """,
-            (run_id, incident_id),
+            (run_id, incident_id, status),
         )
 
         conn.commit()
 
+        return InvestigationRunRecord(
+            run_id=run_id,
+            incident_id=incident_id,
+        )
+
+
+def update_investigation_run(
+    db_path: Path, *, run_id: str, incident_id: str, status: str
+) -> InvestigationRunRecord:
+    """Insert one investigation run into SQLite and return the stored record."""
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            """
+            UPDATE investigation_runs SET status = ?
+            where run_id = ? and incident_id = ?
+            """,
+            (status, run_id, incident_id),
+        )
+
+        conn.commit()
+
+        return InvestigationRunRecord(
+            run_id=run_id,
+            incident_id=incident_id,
+        )
+
+
+def get_resumable_investigation_run(
+    db_path: Path, *, run_id: str
+) -> InvestigationRunRecord | None:
+    """Read one investigation run from SQLite by run id."""
+    with sqlite3.connect(db_path) as conn:
+        row = conn.execute(
+            "SELECT run_id, incident_id FROM investigation_runs WHERE run_id = ? and status = AWAITING_REVIEW",
+            (run_id,),
+        ).fetchone()
+
+        if row is None:
+            return None
+
+        run_id, incident_id = row
         return InvestigationRunRecord(
             run_id=run_id,
             incident_id=incident_id,
