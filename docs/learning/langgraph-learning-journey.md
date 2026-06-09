@@ -175,7 +175,7 @@ Before any phase is marked DONE:
 | 13. Azure OpenAI integration and graph smoke | DONE | 2026-05-28 | Azure OpenAI generator and critic adapters use Microsoft Entra ID, structured outputs, mocked adapter tests, adapter-level live smoke tests, and one graph-level live smoke run through generation, validation, critique, human review, and approval resume. |
 | 14. Evaluation framework | DONE | 2026-06-06 | Golden cases load from JSON and run through `uv run telemetry-evals`; deterministic and semantic scorecard dimensions, accepted-reviewed-hypothesis scoring, readable reporting, severity retrieval coverage, prompt guardrails, and ADR exist. |
 | 15. Observability and tracing | DONE | 2026-06-08 | Structured JSON logs, run IDs, graph node events/spans, retrieval events/spans, Azure workflow LLM adapter events/spans, eval scoring events, local stdout logging, opt-in console tracing, focused observability tests, docs, and learning note exist. |
-| 16. API / CLI interface | TODO |  |  |
+| 16. API / CLI interface | DONE | 2026-06-09 | FastAPI app factory, demo-case listing, start/read/review investigation endpoints, thin route delegation, UI-oriented response fields, TestClient coverage, and README API examples exist. |
 | 17. Portfolio skeleton hardening | TODO |  |  |
 | 18. Final review and roadmap | TODO |  |  |
 
@@ -1320,15 +1320,15 @@ hardening/demo improvements, not the first learning target.
 
 ## Checkpoint
 
-- [ ] FastAPI app factory exists.
-- [ ] Demo cases can be listed through `GET /demo-cases`.
-- [ ] Investigation can be launched externally with a `demo_case_id`.
-- [ ] Investigation status/report can be retrieved by `run_id`.
-- [ ] Resume/review path exists if HITL is implemented.
-- [ ] API response is UI-oriented and does not expose raw LangGraph state.
-- [ ] API route handlers do not contain business logic or graph wiring.
-- [ ] FastAPI tests cover route contracts and application-service delegation.
-- [ ] README has usage instructions.
+- [x] FastAPI app factory exists.
+- [x] Demo cases can be listed through `GET /demo-cases`.
+- [x] Investigation can be launched externally with a `demo_case_id`.
+- [x] Investigation status/report can be retrieved by `run_id`.
+- [x] Resume/review path exists if HITL is implemented.
+- [x] API response is UI-oriented and does not expose raw LangGraph state.
+- [x] API route handlers do not contain business logic or graph wiring.
+- [x] FastAPI tests cover route contracts and application-service delegation.
+- [x] README has usage instructions.
 
 ## Codex stop condition
 
