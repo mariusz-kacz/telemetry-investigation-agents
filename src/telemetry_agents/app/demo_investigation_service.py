@@ -10,6 +10,7 @@ from telemetry_agents.app.workflow_runner import (
     WorkflowRunRequest,
     ResumeWorkflow,
     WorkflowResumeRequest,
+    ReadWorkflowState,
 )
 from telemetry_agents.domain import ReviewedHypothesis
 from telemetry_agents.infrastructure.run_registry import (
@@ -17,6 +18,7 @@ from telemetry_agents.infrastructure.run_registry import (
     update_investigation_run,
     get_resumable_investigation_run,
     InvestigationRunStatus,
+    get_investigation_run,
 )
 from telemetry_agents.shared.observability import new_run_id
 
@@ -28,9 +30,12 @@ class RunNotFound(Exception):
 class DemoInvestigationResult(BaseModel):
     run_id: str
     incident_id: str
+    status: InvestigationRunStatus
     hypotheses: list[ReviewedHypothesis]
     human_review_required: bool
     review_reasons: list[str]
+    warnings: list[str]
+    report_ready: bool
 
 
 RunDemoInvestigation = Callable[[str], DemoInvestigationResult]
@@ -40,6 +45,7 @@ RunDemoInvestigation = Callable[[str], DemoInvestigationResult]
 class DemoInvestigationService:
     run_workflow: RunWorkflow
     resume_workflow: ResumeWorkflow
+    read_workflow_state: ReadWorkflowState
     demo_data_root: Path
     run_registry_db_path: Path
 
@@ -79,9 +85,12 @@ class DemoInvestigationService:
         return DemoInvestigationResult(
             run_id=run_id,
             incident_id=result.incident.incident_id,
+            status=status,
             hypotheses=result.review_result.reviewed_hypotheses,
             human_review_required=result.human_review_assessment.human_review_required,
             review_reasons=result.review_reasons,
+            warnings=result.warnings,
+            report_ready=result.report_ready,
         )
 
     def review(self, run_id: str, approved: bool) -> DemoInvestigationResult:
@@ -112,21 +121,44 @@ class DemoInvestigationService:
         return DemoInvestigationResult(
             run_id=run_id,
             incident_id=result.incident.incident_id,
+            status=status,
             hypotheses=result.review_result.reviewed_hypotheses,
             human_review_required=result.human_review_assessment.human_review_required,
             review_reasons=result.review_reasons,
+            warnings=result.warnings,
+            report_ready=result.report_ready,
+        )
+
+    def read(self, run_id: str) -> DemoInvestigationResult:
+        record = get_investigation_run(self.run_registry_db_path, run_id=run_id)
+        if record is None:
+            raise RunNotFound(f"Run {run_id} not found")
+
+        result = self.read_workflow_state(record.run_id)
+
+        return DemoInvestigationResult(
+            run_id=record.run_id,
+            incident_id=result.incident.incident_id,
+            status=record.status,
+            hypotheses=result.review_result.reviewed_hypotheses,
+            human_review_required=result.human_review_assessment.human_review_required,
+            review_reasons=result.review_reasons,
+            warnings=result.warnings,
+            report_ready=result.report_ready,
         )
 
 
 def build_demo_investigation_service(
     run_workflow: RunWorkflow,
     resume_workflow: ResumeWorkflow,
+    read_workflow_state: ReadWorkflowState,
     demo_data_root: Path,
     run_registry_db_path: Path,
 ) -> DemoInvestigationService:
     return DemoInvestigationService(
         run_workflow=run_workflow,
         resume_workflow=resume_workflow,
+        read_workflow_state=read_workflow_state,
         demo_data_root=demo_data_root,
         run_registry_db_path=run_registry_db_path,
     )

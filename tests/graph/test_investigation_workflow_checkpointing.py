@@ -1,5 +1,11 @@
 from pathlib import Path
 
+import pytest
+
+from telemetry_agents.app.workflow_runner import (
+    WorkflowStateUnavailable,
+    build_workflow_service,
+)
 from telemetry_agents.domain import IncidentImpact, InvestigationHypothesis
 from telemetry_agents.domain.models import (
     EvidenceSource,
@@ -13,7 +19,8 @@ from telemetry_agents.infrastructure.run_registry import (
     InvestigationRunRecord,
     create_investigation_run,
     get_investigation_run,
-    initialize_run_registry, InvestigationRunStatus,
+    initialize_run_registry,
+    InvestigationRunStatus,
 )
 from telemetry_agents.investigation.evidence_retrieval import (
     CitationMetadata,
@@ -177,3 +184,21 @@ def test_checkpointed_state_can_be_read_by_new_graph_instance(tmp_path: Path) ->
     )
 
     assert state.values["validation_result"] is not None
+
+
+def test_workflow_restore_raises_clear_error_for_missing_checkpoint_state(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "checkpoints.sqlite"
+    checkpointer = create_sqlite_checkpointer(db_path)
+    workflow = build_workflow_service(
+        generator=FakeHypothesisGenerator([]),
+        critic=FakeHypothesisCritic(HypothesisCritiqueResult()),
+        checkpointer=checkpointer,
+    )
+
+    with pytest.raises(
+        WorkflowStateUnavailable,
+        match="Workflow state for run missing-run is unavailable or incomplete.",
+    ):
+        workflow.read_state("missing-run")

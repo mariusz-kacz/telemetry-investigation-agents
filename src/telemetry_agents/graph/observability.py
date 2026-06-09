@@ -1,10 +1,14 @@
 from collections.abc import Callable
 from time import perf_counter
 
+from langgraph.errors import GraphInterrupt
+from opentelemetry.trace import Status, StatusCode
+
 from telemetry_agents.graph.investigation_state import InvestigationGraphState
 from telemetry_agents.shared.observability import (
     EVENT_NODE_COMPLETED,
     EVENT_NODE_FAILED,
+    EVENT_NODE_INTERRUPTED,
     EVENT_NODE_STARTED,
     emit_event,
     new_run_id,
@@ -24,7 +28,9 @@ def observe_graph_node(
         incident_id = incident.incident_id if incident is not None else None
 
         tracer = get_tracer()
-        with tracer.start_as_current_span(f"graph.node.{node_name}") as node_span:
+        with tracer.start_as_current_span(
+            f"graph.node.{node_name}", set_status_on_exception=False
+        ) as node_span:
             node_span.set_attribute("node_name", node_name)
             node_span.set_attribute("run_id", run_id)
             if incident_id is not None:
@@ -40,7 +46,19 @@ def observe_graph_node(
             started_at = perf_counter()
             try:
                 result = action(state)
+            except GraphInterrupt:
+                node_span.set_attribute("graph.interrupted", True)
+                emit_event(
+                    EVENT_NODE_INTERRUPTED,
+                    run_id=run_id,
+                    incident_id=incident_id,
+                    node_name=node_name,
+                    duration_ms=round((perf_counter() - started_at) * 1000, 3),
+                )
+                raise
             except Exception as exc:
+                node_span.record_exception(exc)
+                node_span.set_status(Status(StatusCode.ERROR))
                 emit_event(
                     EVENT_NODE_FAILED,
                     run_id=run_id,

@@ -12,6 +12,7 @@ from telemetry_agents.app.demo_investigation_service import (
     RunNotFound,
     DemoInvestigationResult,
 )
+from telemetry_agents.app.workflow_runner import WorkflowStateUnavailable
 
 router = APIRouter(prefix="/investigations", tags=["investigations"])
 
@@ -20,6 +21,7 @@ def to_investigation_response(result: DemoInvestigationResult) -> InvestigationR
     return InvestigationResponse(
         run_id=result.run_id,
         incident_id=result.incident_id,
+        status=result.status.value.lower(),
         hypotheses=[
             HypothesisResponse(
                 id=reviewed.hypothesis.hypothesis_id,
@@ -32,6 +34,8 @@ def to_investigation_response(result: DemoInvestigationResult) -> InvestigationR
         ],
         human_review_required=result.human_review_required,
         review_reasons=list(result.review_reasons),
+        warnings=list(result.warnings),
+        report_ready=result.report_ready,
     )
 
 
@@ -56,6 +60,33 @@ def start_investigation(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+
+    return to_investigation_response(result=result)
+
+
+@router.get(
+    "/{run_id}",
+    response_model=InvestigationResponse,
+    status_code=status.HTTP_200_OK,
+)
+def get_investigation(
+    run_id: str,
+    investigation_service: DemoInvestigationService = Depends(
+        get_demo_investigation_service
+    ),
+) -> InvestigationResponse:
+    try:
+        result = investigation_service.read(run_id=run_id)
+    except WorkflowStateUnavailable as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+    except RunNotFound as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
         ) from exc
 
@@ -87,6 +118,9 @@ def review_investigation(
             detail=str(exc),
         ) from exc
     except RunNotFound as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
 
     return to_investigation_response(result=result)

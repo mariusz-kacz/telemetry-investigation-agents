@@ -55,9 +55,7 @@ def create_investigation_run(
         conn.commit()
 
         return InvestigationRunRecord(
-            run_id=run_id,
-            incident_id=incident_id,
-            status=status
+            run_id=run_id, incident_id=incident_id, status=status
         )
 
 
@@ -85,9 +83,7 @@ def update_investigation_run(
         conn.commit()
 
         return InvestigationRunRecord(
-            run_id=run_id,
-            incident_id=incident_id,
-            status=status
+            run_id=run_id, incident_id=incident_id, status=status
         )
 
 
@@ -108,7 +104,7 @@ def get_resumable_investigation_run(
         return InvestigationRunRecord(
             run_id=run_id,
             incident_id=incident_id,
-            status=InvestigationRunStatus(status)
+            status=InvestigationRunStatus(status),
         )
 
 
@@ -131,5 +127,5 @@ def get_investigation_run(
         return InvestigationRunRecord(
             run_id=run_id,
             incident_id=incident_id,
-            status=InvestigationRunStatus(status)
+            status=InvestigationRunStatus(status),
         )

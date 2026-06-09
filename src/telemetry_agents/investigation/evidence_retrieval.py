@@ -408,6 +408,27 @@ def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEviden
         )
 
         retrieved_evidence = log_evidence + trace_span_evidence + metric_sample_evidence
+        strong_count = sum(
+            item.strength == EvidenceStrength.STRONG for item in retrieved_evidence
+        )
+        medium_count = sum(
+            item.strength == EvidenceStrength.MEDIUM for item in retrieved_evidence
+        )
+        weak_count = sum(
+            item.strength == EvidenceStrength.WEAK for item in retrieved_evidence
+        )
+        missing_count = sum(
+            item.strength == EvidenceStrength.MISSING for item in retrieved_evidence
+        )
+        retrieval_span.set_attribute("evidence.log_count", len(log_evidence))
+        retrieval_span.set_attribute("evidence.trace_count", len(trace_span_evidence))
+        retrieval_span.set_attribute(
+            "evidence.metric_count", len(metric_sample_evidence)
+        )
+        retrieval_span.set_attribute("evidence.strong_count", strong_count)
+        retrieval_span.set_attribute("evidence.medium_count", medium_count)
+        retrieval_span.set_attribute("evidence.weak_count", weak_count)
+        retrieval_span.set_attribute("evidence.missing_count", missing_count)
 
         _emit_evidence_retrieval_completed_event(
             run_id=request.run_id,
@@ -415,7 +436,10 @@ def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEviden
             log_evidence_len=len(log_evidence),
             metric_sample_evidence_len=len(metric_sample_evidence),
             trace_span_evidence_len=len(trace_span_evidence),
-            retrieved_evidence=retrieved_evidence,
+            strong_count=strong_count,
+            medium_count=medium_count,
+            weak_count=weak_count,
+            missing_count=missing_count,
         )
         return sorted(
             retrieved_evidence,
@@ -430,7 +454,10 @@ def _emit_evidence_retrieval_completed_event(
     log_evidence_len: int,
     metric_sample_evidence_len: int,
     trace_span_evidence_len: int,
-    retrieved_evidence: list[RetrievedEvidence],
+    strong_count: int,
+    medium_count: int,
+    weak_count: int,
+    missing_count: int,
 ) -> None:
     emit_event(
         EVENT_EVIDENCE_RETRIEVAL_COMPLETED,
@@ -439,14 +466,8 @@ def _emit_evidence_retrieval_completed_event(
         log_count=log_evidence_len,
         trace_count=trace_span_evidence_len,
         metric_count=metric_sample_evidence_len,
-        strong_count=sum(
-            e.strength == EvidenceStrength.STRONG for e in retrieved_evidence
-        ),
-        medium_count=sum(
-            e.strength == EvidenceStrength.MEDIUM for e in retrieved_evidence
-        ),
-        weak_count=sum(e.strength == EvidenceStrength.WEAK for e in retrieved_evidence),
-        missing_count=sum(
-            e.strength == EvidenceStrength.MISSING for e in retrieved_evidence
-        ),
+        strong_count=strong_count,
+        medium_count=medium_count,
+        weak_count=weak_count,
+        missing_count=missing_count,
     )

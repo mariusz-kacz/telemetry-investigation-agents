@@ -11,6 +11,7 @@ from telemetry_agents.shared.tracing import get_tracer
 LOGGER_NAME = "telemetry_agents.observability"
 EVENT_NODE_STARTED = "graph.node.started"
 EVENT_NODE_COMPLETED = "graph.node.completed"
+EVENT_NODE_INTERRUPTED = "graph.node.interrupted"
 EVENT_NODE_FAILED = "graph.node.failed"
 EVENT_LLM_CALL_STARTED = "llm.call.started"
 EVENT_LLM_CALL_COMPLETED = "llm.call.completed"

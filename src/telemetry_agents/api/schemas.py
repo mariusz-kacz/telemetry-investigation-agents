@@ -16,9 +16,12 @@ class HypothesisResponse(BaseModel):
 class InvestigationResponse(BaseModel):
     run_id: str
     incident_id: str
+    status: str
     hypotheses: list[HypothesisResponse]
     human_review_required: bool
     review_reasons: list[str]
+    warnings: list[str]
+    report_ready: bool
 
 
 class HumanReviewRequest(BaseModel):

@@ -45,6 +45,7 @@ def build_azure_demo_investigation_service(
     return build_demo_investigation_service(
         run_workflow=workflow.run,
         resume_workflow=workflow.resume,
+        read_workflow_state=workflow.read_state,
         demo_data_root=settings.data_root,
         run_registry_db_path=settings.run_registry_db_path,
     )
