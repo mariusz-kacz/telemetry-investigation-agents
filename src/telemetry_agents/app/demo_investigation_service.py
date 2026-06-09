@@ -16,6 +16,7 @@ from telemetry_agents.infrastructure.run_registry import (
     create_investigation_run,
     update_investigation_run,
     get_resumable_investigation_run,
+    InvestigationRunStatus,
 )
 from telemetry_agents.shared.observability import new_run_id
 
@@ -50,7 +51,7 @@ class DemoInvestigationService:
             db_path=self.run_registry_db_path,
             run_id=run_id,
             incident_id=incident.incident_id,
-            status="PENDING",
+            status=InvestigationRunStatus.PENDING,
         )
 
         result = self.run_workflow(
@@ -64,9 +65,9 @@ class DemoInvestigationService:
         )
 
         status = (
-            "AWAITING_REVIEW"
+            InvestigationRunStatus.AWAITING_REVIEW
             if result.human_review_assessment.human_review_required
-            else "COMPLETED"
+            else InvestigationRunStatus.COMPLETED
         )
         update_investigation_run(
             db_path=self.run_registry_db_path,
@@ -96,7 +97,11 @@ class DemoInvestigationService:
                 approved=approved,
             )
         )
-        status = "COMPLETED" if approved else "REJECTED"
+        status = (
+            InvestigationRunStatus.COMPLETED
+            if approved
+            else InvestigationRunStatus.REJECTED
+        )
         update_investigation_run(
             db_path=self.run_registry_db_path,
             run_id=run_id,

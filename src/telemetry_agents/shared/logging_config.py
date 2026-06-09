@@ -13,11 +13,15 @@ def configure_observability_logging() -> None:
 
     logger = logging.getLogger(LOGGER_NAME)
     logger.setLevel(logging.INFO)
-    logger.propagate = False
 
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter("%(message)s"))
-    handler.setLevel(logging.INFO)
-    logger.addHandler(handler)
+    if not any(
+        getattr(handler, "_telemetry_agents_handler", False)
+        for handler in logger.handlers
+    ):
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        handler.setLevel(logging.INFO)
+        handler._telemetry_agents_handler = True
+        logger.addHandler(handler)
 
     _CONFIGURED = True

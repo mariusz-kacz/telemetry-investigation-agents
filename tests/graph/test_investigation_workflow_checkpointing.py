@@ -13,7 +13,7 @@ from telemetry_agents.infrastructure.run_registry import (
     InvestigationRunRecord,
     create_investigation_run,
     get_investigation_run,
-    initialize_run_registry,
+    initialize_run_registry, InvestigationRunStatus,
 )
 from telemetry_agents.investigation.evidence_retrieval import (
     CitationMetadata,
@@ -136,6 +136,7 @@ def test_registered_run_id_is_used_as_checkpoint_thread_id(tmp_path: Path) -> No
     assert stored == InvestigationRunRecord(
         run_id="run-001",
         incident_id="incident-checkout-timeout",
+        status=InvestigationRunStatus.PENDING,
     )
 
     state = graph.get_state(
