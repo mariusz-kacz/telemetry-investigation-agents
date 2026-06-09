@@ -1,0 +1,124 @@
+from pathlib import Path
+from typing import Callable
+
+from langchain_core.runnables import RunnableConfig
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.types import Command
+from pydantic import BaseModel
+
+from telemetry_agents.domain import (
+    Incident,
+    HypothesisValidationResult,
+    HypothesisReviewResult,
+    HumanReviewAssessment,
+)
+from telemetry_agents.graph.investigation_workflow import build_investigation_workflow
+from telemetry_agents.investigation.evidence_retrieval import (
+    RetrievedEvidence,
+    retrieve_evidence,
+    EvidenceRetrievalRequest,
+)
+from telemetry_agents.investigation.hypothesis_critic import HypothesisCritic
+from telemetry_agents.investigation.hypothesis_generation import HypothesisGenerator
+from telemetry_agents.shared.tracing import get_tracer
+
+
+class WorkflowRunRequest(BaseModel):
+    run_id: str
+    case_id: str
+    incident: Incident
+    data_root: Path
+    auto_approve_human_review: bool = False
+
+
+class WorkflowRunResult(BaseModel):
+    run_id: str
+    incident: Incident
+    retrieved_evidence: list[RetrievedEvidence]
+    validation_result: HypothesisValidationResult
+    review_result: HypothesisReviewResult
+    human_review_assessment: HumanReviewAssessment
+    review_reasons: list[str]
+    warnings: list[str]
+
+
+RunWorkflow = Callable[[WorkflowRunRequest], WorkflowRunResult]
+
+
+def _load_evidence(
+    run_id: str, incident: Incident, data_root: Path
+) -> list[RetrievedEvidence]:
+    return retrieve_evidence(
+        request=EvidenceRetrievalRequest(
+            run_id=run_id,
+            trace_id=incident.retrieval.trace_id,
+            incident_id=incident.incident_id,
+            service=incident.service,
+            data_root=str(data_root),
+            start_timestamp=incident.investigation_window.start.isoformat(),
+            end_timestamp=incident.investigation_window.end.isoformat(),
+            query_terms=incident.retrieval.query_terms,
+        )
+    )
+
+
+def _review_reasons(assessment: HumanReviewAssessment) -> list[str]:
+    return [assessment.human_review_reason] if assessment.human_review_reason else []
+
+
+def build_workflow_runner(
+    *,
+    generator: HypothesisGenerator,
+    critic: HypothesisCritic,
+) -> RunWorkflow:
+    def run(request: WorkflowRunRequest) -> WorkflowRunResult:
+        checkpointer = InMemorySaver()
+        graph = build_investigation_workflow(
+            generator=generator,
+            critic=critic,
+            checkpointer=checkpointer,
+        )
+        evidence = _load_evidence(
+            run_id=request.run_id,
+            incident=request.incident,
+            data_root=request.data_root,
+        )
+        tracer = get_tracer()
+        with tracer.start_as_current_span("investigation.run") as run_span:
+            run_span.set_attribute("run_id", request.run_id)
+            run_span.set_attribute("incident_id", request.incident.incident_id)
+
+            config: RunnableConfig = {
+                "configurable": {"thread_id": request.incident.incident_id}
+            }
+
+            result = graph.invoke(
+                {
+                    "normalized_incident": request.incident,
+                    "collected_evidence": evidence,
+                    "run_id": request.run_id,
+                },
+                config=config,
+            )
+            interrupted = result.get("__interrupt__") is not None
+
+            if interrupted and request.auto_approve_human_review:
+                result = graph.invoke(Command(resume={"approved": True}), config=config)
+            elif interrupted:
+                snapshot = graph.get_state(config)
+                result = snapshot.values
+
+            evidence = result["collected_evidence"]
+
+            return WorkflowRunResult(
+                run_id=request.run_id,
+                incident=request.incident,
+                retrieved_evidence=evidence,
+                validation_result=result["validation_result"],
+                review_result=result["review_result"],
+                human_review_assessment=result["human_review_assessment"],
+                review_reasons=_review_reasons(result["human_review_assessment"]),
+                warnings=result["warnings"],
+            )
+
+    return run

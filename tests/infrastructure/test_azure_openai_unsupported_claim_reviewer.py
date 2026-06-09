@@ -25,6 +25,7 @@ from telemetry_agents.investigation.evidence_retrieval import (
 )
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 
+
 def _request() -> UnsupportedClaimReviewRequest:
     return UnsupportedClaimReviewRequest(
         run_id="run-001",
@@ -58,7 +59,6 @@ def _request() -> UnsupportedClaimReviewRequest:
             )
         ],
     )
-
 
 
 def test_review_returns_findings_from_parsed_structured_response() -> None:

@@ -1,6 +1,6 @@
 import pytest
 
-from telemetry_agents.cli import run_evals
+from telemetry_agents.evaluation_cli import run_evals
 from telemetry_agents.domain import EvidenceSource
 from telemetry_agents.evaluation import (
     CitationCorrectnessScore,
@@ -17,9 +17,9 @@ def test_help_exits_without_loading_config(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     def fail_if_called() -> None:
-        pytest.fail("load_config should not be called for --help")
+        pytest.fail("get_settings should not be called for --help")
 
-    monkeypatch.setattr(run_evals, "load_config", fail_if_called)
+    monkeypatch.setattr(run_evals, "get_settings", fail_if_called)
 
     with pytest.raises(SystemExit) as exc_info:
         run_evals.main(["--help"])

@@ -1,10 +1,14 @@
 from dataclasses import dataclass
-from telemetry_agents.app.config import AzureEvaluationConfig
+
+from fastapi import Depends
+
+from telemetry_agents.app.config import get_settings, Settings
 from telemetry_agents.evaluation import GuardedUnsupportedClaimReviewer
-from telemetry_agents.app.graph_case_runner import (
+from telemetry_agents.evaluation_cli.graph_case_runner import (
     RunEvaluationCase,
     build_graph_case_runner,
 )
+
 from telemetry_agents.infrastructure.azure_openai_client import (
     create_azure_openai_client,
 )
@@ -26,24 +30,24 @@ class AzureComposition:
 
 
 def build_azure_evaluation_composition(
-    config: AzureEvaluationConfig,
+    settings: Settings = Depends(get_settings),
 ) -> AzureComposition:
     openai_client = create_azure_openai_client(
-        endpoint=config.endpoint,
+        endpoint=settings.azure_openai_endpoint,
     )
     generator = AzureOpenAIHypothesisGenerator(
         client=openai_client,
-        deployment_name=config.deployment_name,
+        deployment_name=settings.azure_openai_hypothesis_deployment_name,
     )
 
     critic = AzureOpenAIHypothesisCritic(
         client=openai_client,
-        deployment_name=config.deployment_name,
+        deployment_name=settings.azure_openai_hypothesis_deployment_name,
     )
 
     adapter = AzureOpenAIUnsupportedClaimAdapter(
         client=openai_client,
-        deployment_name=config.deployment_name,
+        deployment_name=settings.azure_openai_evaluation_deployment_name,
     )
 
     reviewer = GuardedUnsupportedClaimReviewer(
@@ -53,7 +57,7 @@ def build_azure_evaluation_composition(
     run_case = build_graph_case_runner(
         generator=generator,
         critic=critic,
-        data_root=config.eval_data_root,
+        data_root=settings.eval_data_root,
     )
 
     return AzureComposition(run_case=run_case, reviewer=reviewer)

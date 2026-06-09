@@ -1,7 +1,4 @@
-import os
-
-from dotenv import load_dotenv
-
+from telemetry_agents.app.config import get_settings
 from telemetry_agents.domain import (
     EvidenceSource,
     HypothesisCritiqueResult,
@@ -25,16 +22,14 @@ from telemetry_agents.investigation.hypothesis_critic import HypothesisCritiqueR
 
 
 def test_live_azure_critic_returns_evidence_bounded_findings() -> None:
-    load_dotenv()
+    settings = get_settings()
 
-    endpoint = os.environ["AZURE_OPENAI_ENDPOINT"]
-    deployment_name = os.environ["AZURE_OPENAI_HYPOTHESIS_DEPLOYMENT_NAME"]
-
-    client = create_azure_openai_client(endpoint=endpoint)
+    client = create_azure_openai_client(endpoint=settings.azure_openai_endpoint)
     critic = AzureOpenAIHypothesisCritic(
         client=client,
-        deployment_name=deployment_name,
+        deployment_name=settings.azure_openai_hypothesis_deployment_name,
     )
+
     evidence = _retrieved_evidence()
     validation_result = HypothesisValidationResult(
         validated_hypotheses=[

@@ -2,6 +2,7 @@ import os
 
 from dotenv import load_dotenv
 
+from telemetry_agents.app.config import get_settings
 from telemetry_agents.domain import (
     EvidenceSource,
     HypothesisCategory,
@@ -27,17 +28,14 @@ from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 
 
 def test_live_azure_reviewer_returns_evidence_bounded_findings() -> None:
-    load_dotenv()
-
-    endpoint = os.environ["AZURE_OPENAI_ENDPOINT"]
-    deployment_name = os.environ["AZURE_OPENAI_EVALUATION_DEPLOYMENT_NAME"]
+    settings = get_settings()
 
     client = create_azure_openai_client(
-        endpoint=endpoint,
+        endpoint=settings.azure_openai_endpoint,
     )
     adapter = AzureOpenAIUnsupportedClaimAdapter(
         client=client,
-        deployment_name=deployment_name,
+        deployment_name=settings.azure_openai_evaluation_deployment_name,
     )
 
     reviewer = GuardedUnsupportedClaimReviewer(

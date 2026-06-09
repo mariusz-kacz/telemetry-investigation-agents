@@ -1217,61 +1217,123 @@ Stop after a local observability walkthrough from a real workflow or eval run.
 
 ---
 
-# Phase 16 â€” API / CLI interface
+# Phase 16 — FastAPI demo interface
 
 ## Goal
 
-Expose the workflow in a clean way without polluting core design.
+Expose the workflow through a clean FastAPI boundary that can support a basic
+portfolio demo UI.
+
+The immediate product goal is not a general-purpose production ingestion API.
+The goal is a focused demo experience where a user can select one predefined
+synthetic investigation case, run the workflow, and inspect a simple execution
+report with hypotheses, confidence, evidence citations, warnings, and
+human-review status.
 
 ## Concepts
 
 - FastAPI boundary.
-- CLI runner.
 - Request/response schemas.
-- Async execution.
+- Demo-case catalog.
+- UI-oriented response models.
+- Thin route handlers.
+- Application service boundary.
+- Sync execution first, async/background execution later.
 - Run ID.
-- Resume endpoint.
+- Investigation status endpoint.
 - Human review endpoint.
 - Separation between API and graph.
+- Avoiding raw LangGraph state exposure.
 
 ## Implementation tasks
 
-Create either CLI first or FastAPI first:
-
-CLI commands:
+Create a FastAPI-first external interface for demo investigations:
 
 ```text
-investigate --incident sample_data/incidents/db-timeout.json
-resume --run-id <id> --decision approve
-eval run
-```
-
-Optional FastAPI endpoints:
-
-```text
+GET  /demo-cases
 POST /investigations
-GET /investigations/{run_id}
+GET  /investigations/{run_id}
 POST /investigations/{run_id}/review
-POST /evals/run
 ```
+
+Initial request model:
+
+```json
+{
+  "demo_case_id": "checkout-database-timeout"
+}
+```
+
+Initial response shape should be UI-friendly rather than a raw graph state dump:
+
+```json
+{
+  "run_id": "run_...",
+  "case_id": "checkout-database-timeout",
+  "status": "requires_human_review",
+  "incident": {
+    "title": "Checkout API latency and database timeout errors",
+    "service": "checkout-api",
+    "impact": "high"
+  },
+  "top_hypothesis": {
+    "statement": "...",
+    "category": "database_failure",
+    "confidence": 0.84,
+    "review_status": "accepted"
+  },
+  "evidence": [
+    {
+      "evidence_id": "log-1",
+      "source": "log",
+      "summary": "...",
+      "citation": "logs/checkout-api.log:12"
+    }
+  ],
+  "warnings": [],
+  "human_review_required": true,
+  "report_ready": false
+}
+```
+
+Keep route handlers thin:
+
+- validate HTTP request DTOs,
+- delegate to an application-level demo investigation service,
+- map application results to API response DTOs,
+- do not build LangGraph workflows directly inside route handlers,
+- do not expose internal graph state as the public API contract.
+
+Use synchronous execution for the first version. Background jobs, polling
+workers, WebSockets, auth, and arbitrary incident ingestion are later
+hardening/demo improvements, not the first learning target.
 
 ## Learning tasks
 
-- Explain why API should not know graph internals.
-- Add one integration test.
-- Add README usage examples.
+- Explain why the API should not know graph internals.
+- Explain why demo-case IDs are safer for the UI than exposing local file paths.
+- Design API DTOs separately from domain models and graph state.
+- Add focused FastAPI route/delegation tests.
+- Add one integration-style test using `TestClient`.
+- Add README usage examples for starting a demo investigation and submitting a
+  human review decision.
 
 ## Checkpoint
 
-- [ ] CLI or API exists.
-- [ ] Investigation can be launched externally.
+- [ ] FastAPI app factory exists.
+- [ ] Demo cases can be listed through `GET /demo-cases`.
+- [ ] Investigation can be launched externally with a `demo_case_id`.
+- [ ] Investigation status/report can be retrieved by `run_id`.
 - [ ] Resume/review path exists if HITL is implemented.
-- [ ] API/CLI does not contain business logic.
+- [ ] API response is UI-oriented and does not expose raw LangGraph state.
+- [ ] API route handlers do not contain business logic or graph wiring.
+- [ ] FastAPI tests cover route contracts and application-service delegation.
 - [ ] README has usage instructions.
 
 ## Codex stop condition
 
-Stop after external interface is usable.
+Stop after the FastAPI demo interface is usable for one predefined demo case.
+Do not build the frontend in this checkpoint unless explicitly requested.
 
 ---
 

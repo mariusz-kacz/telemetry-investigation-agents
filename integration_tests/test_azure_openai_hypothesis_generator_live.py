@@ -2,6 +2,7 @@ import os
 
 from dotenv import load_dotenv
 
+from telemetry_agents.app.config import get_settings
 from telemetry_agents.domain import (
     EvidenceSource,
     Incident,
@@ -26,17 +27,14 @@ from telemetry_agents.investigation.hypothesis_generation import (
 
 
 def test_azure_generator_returns_typed_candidate_hypotheses() -> None:
-    load_dotenv()
-
-    endpoint = os.environ["AZURE_OPENAI_ENDPOINT"]
-    deployment_name = os.environ["AZURE_OPENAI_HYPOTHESIS_DEPLOYMENT_NAME"]
+    settings = get_settings()
 
     client = create_azure_openai_client(
-        endpoint=endpoint,
+        endpoint=settings.azure_openai_endpoint,
     )
     generator = AzureOpenAIHypothesisGenerator(
         client=client,
-        deployment_name=deployment_name,
+        deployment_name=settings.azure_openai_hypothesis_deployment_name,
     )
     request = HypothesisGenerationRequest(
         incident=Incident(

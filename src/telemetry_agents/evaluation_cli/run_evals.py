@@ -1,15 +1,14 @@
 import argparse
 from collections.abc import Sequence
 import json
-import os
 from pathlib import Path
 
-from dotenv import load_dotenv
-
-from telemetry_agents.app.azure_composition import build_azure_evaluation_composition
-from telemetry_agents.app.config import AzureEvaluationConfig
+from telemetry_agents.app.config import get_settings
 from telemetry_agents.evaluation import EvaluationScorecard, EvalCase
 from telemetry_agents.evaluation.evaluator import run_batch_evaluation
+from telemetry_agents.evaluation_cli.azure_composition import (
+    build_azure_evaluation_composition,
+)
 from telemetry_agents.shared.logging_config import configure_observability_logging
 from telemetry_agents.shared.tracing import configure_local_tracing
 
@@ -93,18 +92,6 @@ def _print_failure_details(scorecard: EvaluationScorecard) -> None:
         print(f"  unsupported claim in {finding.hypothesis_id}: {finding.reason}")
 
 
-def load_config() -> AzureEvaluationConfig:
-    load_dotenv()
-
-    endpoint = os.environ["AZURE_OPENAI_ENDPOINT"]
-    deployment_name = os.environ["AZURE_OPENAI_HYPOTHESIS_DEPLOYMENT_NAME"]
-    return AzureEvaluationConfig(
-        endpoint=endpoint,
-        deployment_name=deployment_name,
-        eval_data_root=Path(__file__).resolve().parents[3] / "eval_data",
-    )
-
-
 def _load_eval_cases(data_root: Path) -> list[EvalCase]:
     eval_cases_dir = data_root / "cases"
     eval_cases: list[EvalCase] = []
@@ -119,12 +106,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     _parse_args(argv)
 
     configure_observability_logging()
-    config = load_config()
+    settings = get_settings()
 
-    tracing_enabled = os.getenv("TELEMETRY_AGENTS_TRACING", "false").lower() == "true"
-    configure_local_tracing(tracing_enabled=tracing_enabled)
-    cases = _load_eval_cases(config.eval_data_root)
-    evaluation_composition = build_azure_evaluation_composition(config)
+    configure_local_tracing(tracing_enabled=settings.tracing_enabled)
+    cases = _load_eval_cases(settings.eval_data_root)
+    evaluation_composition = build_azure_evaluation_composition(settings)
     scorecards = run_batch_evaluation(
         cases=cases,
         run_case=evaluation_composition.run_case,
