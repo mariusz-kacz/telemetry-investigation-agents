@@ -53,3 +53,14 @@ class InvestigationResponse(BaseModel):
     review_reasons: list[str]
     warnings: list[str]
     report_ready: bool
+
+
+class InvestigationRunResponse(BaseModel):
+    run_id: str
+    case_id: str
+    incident_id: str
+    status: str
+
+
+class InvestigationRunSummaryResponse(BaseModel):
+    runs: list[InvestigationRunResponse]

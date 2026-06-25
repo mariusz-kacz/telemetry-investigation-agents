@@ -162,3 +162,24 @@ def get_investigation_run(
             incident_id=incident_id,
             status=InvestigationRunStatus(status),
         )
+
+
+def list_investigation_runs(db_path: Path) -> list[InvestigationRunRecord]:
+    """Read investigation runs from SQLite."""
+    with sqlite3.connect(db_path) as conn:
+        rows = conn.execute(
+            """
+            SELECT run_id, case_id, incident_id, status
+            FROM investigation_runs
+            """,
+        ).fetchall()
+
+    return [
+        InvestigationRunRecord(
+            run_id=run_id,
+            case_id=case_id,
+            incident_id=incident_id,
+            status=InvestigationRunStatus(status),
+        )
+        for run_id, case_id, incident_id, status in rows
+    ]

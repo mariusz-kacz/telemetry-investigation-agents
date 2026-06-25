@@ -176,6 +176,7 @@ Before any phase is marked DONE:
 | 14. Evaluation framework | DONE | 2026-06-06 | Golden cases load from JSON and run through `uv run telemetry-evals`; deterministic and semantic scorecard dimensions, accepted-reviewed-hypothesis scoring, readable reporting, severity retrieval coverage, prompt guardrails, and ADR exist. |
 | 15. Observability and tracing | DONE | 2026-06-08 | Structured JSON logs, run IDs, graph node events/spans, retrieval events/spans, Azure workflow LLM adapter events/spans, eval scoring events, local stdout logging, opt-in console tracing, focused observability tests, docs, and learning note exist. |
 | 16. API / CLI interface | DONE | 2026-06-09 | FastAPI app factory, demo-case listing, start/read/review investigation endpoints, thin route delegation, UI-oriented response fields, TestClient coverage, and README API examples exist. |
+| 16.5 React/Vite portfolio demo UI | DONE | 2026-06-25 | React/Vite dashboard consumes API DTOs only, launches demo investigations, shows hypotheses/evidence/review state, supports human-review decisions, and reloads past run outcomes through a run-history endpoint. |
 | 17. Portfolio skeleton hardening | TODO |  |  |
 | 18. Final review and roadmap | TODO |  |  |
 
@@ -1337,6 +1338,73 @@ Do not build the frontend in this checkpoint unless explicitly requested.
 
 ---
 
+# Phase 16.5 - React/Vite portfolio demo UI
+
+## Goal
+
+Build a polished portfolio-facing UI that presents the existing investigation
+workflow without coupling the frontend to LangGraph internals.
+
+This phase is a deliberate detour between the API checkpoint and portfolio
+hardening. It exists because the project needs a visual demo surface before the
+final documentation pass.
+
+## Concepts
+
+- React/Vite development workflow.
+- API DTOs as the frontend contract.
+- UI as a presentation adapter.
+- Run history as a lightweight registry read model.
+- Avoiding graph-state leakage into the browser.
+- Human-review actions as resumable workflow operations.
+
+## Implementation tasks
+
+Add a React/Vite dashboard that:
+
+- lists demo cases;
+- starts a demo investigation through the FastAPI API;
+- displays incident status, top hypothesis, confidence, evidence citations,
+  hypothesis review status, warnings, and human-review state;
+- enables approve/reject only while a run is `awaiting_review`;
+- lists past runs through a registry-backed API endpoint;
+- loads completed or rejected investigation outcomes without rerunning the
+  workflow.
+
+Keep the UI thin:
+
+- React depends on API DTOs only;
+- React does not import Python domain, graph, or checkpoint concepts;
+- the dashboard list reads run summaries, not checkpoint payloads;
+- full investigation details are loaded only when a user selects a run.
+
+## Learning tasks
+
+- Explain why the UI should depend on API DTOs rather than graph state.
+- Explain why the past-runs dashboard should call the API rather than read
+  checkpoints.
+- Explain when human-review buttons should be actionable.
+- Define one example of UI scope creep that belongs outside this checkpoint.
+
+## Checkpoint
+
+- [x] React/Vite frontend exists.
+- [x] UI consumes FastAPI DTOs only.
+- [x] Demo investigations can be launched from the UI.
+- [x] Top hypothesis, evidence, confidence, and review state are visible.
+- [x] Human-review approve/reject actions work only for `awaiting_review` runs.
+- [x] Past runs can be listed and selected without rerunning the workflow.
+- [x] Frontend build succeeds.
+- [x] Backend route tests cover the run-history API contract.
+- [x] Learning note exists.
+
+## Codex stop condition
+
+Stop after the UI is complete enough to support portfolio presentation. Do not
+add arbitrary incident upload, background execution, WebSockets, auth, or a
+general investigation builder in this checkpoint.
+
+---
 # Phase 17 — Portfolio skeleton hardening
 
 ## Goal

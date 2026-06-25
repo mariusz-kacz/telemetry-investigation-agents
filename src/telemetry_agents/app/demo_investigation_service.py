@@ -19,6 +19,7 @@ from telemetry_agents.infrastructure.run_registry import (
     get_resumable_investigation_run,
     InvestigationRunStatus,
     get_investigation_run,
+    list_investigation_runs,
 )
 from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 from telemetry_agents.shared.observability import new_run_id
@@ -42,6 +43,13 @@ class DemoInvestigationResult(BaseModel):
 
 
 RunDemoInvestigation = Callable[[str], DemoInvestigationResult]
+
+
+class InvestigationRunResult(BaseModel):
+    run_id: str
+    case_id: str
+    incident_id: str
+    status: InvestigationRunStatus
 
 
 @dataclass(frozen=True)
@@ -154,6 +162,19 @@ class DemoInvestigationService:
             warnings=result.warnings,
             report_ready=result.report_ready,
         )
+
+    def list_runs(self):
+        records = list_investigation_runs(self.run_registry_db_path)
+
+        return [
+            InvestigationRunResult(
+                run_id=record.run_id,
+                case_id=record.case_id,
+                incident_id=record.incident_id,
+                status=record.status,
+            )
+            for record in records
+        ]
 
 
 def build_demo_investigation_service(

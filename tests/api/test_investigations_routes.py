@@ -4,7 +4,10 @@ from starlette.testclient import TestClient
 
 from telemetry_agents.api.app import create_app
 from telemetry_agents.api.dependencies import get_demo_investigation_service
-from telemetry_agents.app.demo_investigation_service import DemoInvestigationResult
+from telemetry_agents.app.demo_investigation_service import (
+    DemoInvestigationResult,
+    InvestigationRunResult,
+)
 from telemetry_agents.domain import (
     EvidenceSource,
     HypothesisCategory,
@@ -27,6 +30,7 @@ class FakeDemoInvestigationService:
     start_result: DemoInvestigationResult
     review_result: DemoInvestigationResult | None = None
     read_result: DemoInvestigationResult | None = None
+    runs_result: list[InvestigationRunResult] | None = None
     read_run_id: str | None = None
     reviewed_run_id: str | None = None
     reviewed_approved: bool | None = None
@@ -46,6 +50,11 @@ class FakeDemoInvestigationService:
         if self.read_result is None:
             raise AssertionError("read_result was not configured")
         return self.read_result
+
+    def list_runs(self) -> list[InvestigationRunResult]:
+        if self.runs_result is None:
+            raise AssertionError("runs_result was not configured")
+        return self.runs_result
 
 
 def test_start_investigation_returns_no_human_review_response() -> None:
@@ -170,6 +179,49 @@ def test_get_investigation_delegates_to_read_model() -> None:
     assert body["status"] == "awaiting_review"
     assert body["warnings"] == ["critic unavailable"]
     assert body["report_ready"] is False
+
+
+def test_list_investigations_returns_run_summaries() -> None:
+    service = FakeDemoInvestigationService(
+        start_result=_result(human_review_required=False),
+        runs_result=[
+            InvestigationRunResult(
+                run_id="run-history-001",
+                case_id="conflicting-evidence",
+                incident_id="inc-conflicting-evidence-001",
+                status=InvestigationRunStatus.AWAITING_REVIEW,
+            ),
+            InvestigationRunResult(
+                run_id="run-history-002",
+                case_id="checkout-database-timeout",
+                incident_id="inc-checkout-001",
+                status=InvestigationRunStatus.COMPLETED,
+            ),
+        ],
+    )
+    app = create_app()
+    app.dependency_overrides[get_demo_investigation_service] = lambda: service
+
+    with TestClient(app) as client:
+        response = client.get("/api/v1/investigations")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "runs": [
+            {
+                "run_id": "run-history-001",
+                "case_id": "conflicting-evidence",
+                "incident_id": "inc-conflicting-evidence-001",
+                "status": "awaiting_review",
+            },
+            {
+                "run_id": "run-history-002",
+                "case_id": "checkout-database-timeout",
+                "incident_id": "inc-checkout-001",
+                "status": "completed",
+            },
+        ]
+    }
 
 
 def test_start_investigation_returns_null_top_hypothesis_without_hypotheses() -> None:

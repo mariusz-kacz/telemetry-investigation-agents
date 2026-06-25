@@ -205,6 +205,17 @@ tempCodeRunnerFile.py
 # Ruff stuff:
 .ruff_cache/
 
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/*.log
+
+# Local dev server logs
+api.out.log
+api.err.log
+checkpoints.sqlite*
+runs.sqlite
+
 # PyPI configuration file
 .pypirc
 

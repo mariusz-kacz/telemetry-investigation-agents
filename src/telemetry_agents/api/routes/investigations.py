@@ -9,6 +9,8 @@ from telemetry_agents.api.schemas import (
     IncidentResponse,
     EvidenceResponse,
     TopHypothesisResponse,
+    InvestigationRunSummaryResponse,
+    InvestigationRunResponse,
 )
 from telemetry_agents.app.demo_investigation_service import (
     DemoInvestigationService,
@@ -170,3 +172,28 @@ def review_investigation(
         ) from exc
 
     return to_investigation_response(result=result)
+
+
+@router.get(
+    "",
+    response_model=InvestigationRunSummaryResponse,
+    status_code=status.HTTP_200_OK,
+)
+def get_investigations(
+    investigation_service: DemoInvestigationService = Depends(
+        get_demo_investigation_service
+    ),
+) -> InvestigationRunSummaryResponse:
+    runs = investigation_service.list_runs()
+
+    return InvestigationRunSummaryResponse(
+        runs=[
+            InvestigationRunResponse(
+                run_id=run.run_id,
+                case_id=run.case_id,
+                incident_id=run.incident_id,
+                status=run.status.value.lower(),
+            )
+            for run in runs
+        ]
+    )

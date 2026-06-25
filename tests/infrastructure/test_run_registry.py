@@ -8,6 +8,7 @@ from telemetry_agents.infrastructure.run_registry import (
     get_investigation_run,
     get_resumable_investigation_run,
     initialize_run_registry,
+    list_investigation_runs,
 )
 
 
@@ -111,3 +112,27 @@ def test_get_investigation_run_returns_none_for_unknown_run(
     initialize_run_registry(db_path)
 
     assert get_investigation_run(db_path, run_id="missing-run") is None
+
+
+def test_list_investigation_runs_returns_typed_records(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "checkpoints.sqlite"
+
+    initialize_run_registry(db_path)
+    first_run = create_investigation_run(
+        db_path,
+        run_id="run-001",
+        case_id="case-001",
+        incident_id="incident-checkout-timeout",
+        status=InvestigationRunStatus.COMPLETED,
+    )
+    second_run = create_investigation_run(
+        db_path,
+        run_id="run-002",
+        case_id="case-002",
+        incident_id="incident-conflicting-evidence",
+        status=InvestigationRunStatus.AWAITING_REVIEW,
+    )
+
+    assert list_investigation_runs(db_path) == [first_run, second_run]
