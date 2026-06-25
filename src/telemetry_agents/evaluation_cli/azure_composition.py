@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from telemetry_agents.app.config import get_settings, Settings
+from telemetry_agents.app.config import Settings
 from telemetry_agents.evaluation import GuardedUnsupportedClaimReviewer
 from telemetry_agents.evaluation_cli.graph_case_runner import (
     RunEvaluationCase,

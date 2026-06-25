@@ -82,7 +82,7 @@ def observe_llm_call(
     incident_id: str | None = None,
     case_id: str | None = None,
 ) -> Iterator[LlmCallObservation]:
-    fields = {
+    optional_fields: dict[str, str | None] = {
         "run_id": run_id,
         "incident_id": incident_id,
         "case_id": case_id,
@@ -96,7 +96,9 @@ def observe_llm_call(
     Callers should pass only safe metadata. Prompts, raw responses, evidence
     payloads, hypothesis statements, and critic reasons do not belong here.
     """
-    fields = {key: value for key, value in fields.items() if value is not None}
+    fields = {
+        key: value for key, value in optional_fields.items() if value is not None
+    }
 
     tracer = get_tracer()
     with tracer.start_as_current_span(f"llm.call.{fields['operation']}") as llm_span:
@@ -114,6 +116,6 @@ def observe_llm_call(
             raise
 
         if not observation._ended:
-            exc = RuntimeError("LLM call didn't complete successfully")
-            observation.fail(exc)
-            raise exc
+            failure = RuntimeError("LLM call didn't complete successfully")
+            observation.fail(failure)
+            raise failure

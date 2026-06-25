@@ -1,5 +1,4 @@
 import pytest
-from pathlib import Path
 from pydantic import ValidationError
 
 from telemetry_agents.domain import (

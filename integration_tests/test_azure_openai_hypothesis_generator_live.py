@@ -1,7 +1,3 @@
-import os
-
-from dotenv import load_dotenv
-
 from telemetry_agents.app.config import get_settings
 from telemetry_agents.domain import (
     EvidenceSource,
@@ -37,11 +33,19 @@ def test_azure_generator_returns_typed_candidate_hypotheses() -> None:
         deployment_name=settings.azure_openai_hypothesis_deployment_name,
     )
     request = HypothesisGenerationRequest(
-        incident=Incident(
-            incident_id="inc-001",
-            title="Checkout API latency spike",
-            service="checkout-api",
-            impact=IncidentImpact.MEDIUM,
+        incident=Incident.model_validate(
+            {
+                "incident_id": "inc-001",
+                "title": "Checkout API latency spike",
+                "service": "checkout-api",
+                "impact": IncidentImpact.MEDIUM,
+                "reported_at": "2026-05-11T10:05:00Z",
+                "investigation_window": {
+                    "start": "2026-05-11T09:40:00Z",
+                    "end": "2026-05-11T10:10:00Z",
+                },
+                "retrieval": {"query_terms": ["timeout"], "trace_id": "trace-001"},
+            }
         ),
         evidence=[
             RetrievedEvidence(

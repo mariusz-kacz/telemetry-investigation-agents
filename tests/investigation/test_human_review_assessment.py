@@ -91,25 +91,32 @@ def _reviewed_hypothesis(
 
 
 def _incident(impact: IncidentImpact = IncidentImpact.MEDIUM) -> Incident:
-    return Incident(
-        incident_id="inc-001",
-        title="Checkout API latency spike",
-        service="checkout-api",
-        impact=impact,
-        reported_at="2026-05-11T10:05:00Z",
-        investigation_window={
-            "start": "2026-05-11T09:40:00Z",
-            "end": "2026-05-11T10:10:00Z",
-        },
-        retrieval={"query_terms": ["timeout"], "trace_id": "trace-001"},
+    return Incident.model_validate(
+        {
+            "incident_id": "inc-001",
+            "title": "Checkout API latency spike",
+            "service": "checkout-api",
+            "impact": impact,
+            "reported_at": "2026-05-11T10:05:00Z",
+            "investigation_window": {
+                "start": "2026-05-11T09:40:00Z",
+                "end": "2026-05-11T10:10:00Z",
+            },
+            "retrieval": {"query_terms": ["timeout"], "trace_id": "trace-001"},
+        }
     )
 
 
 def test_raw_critic_findings_do_not_directly_trigger_human_review() -> None:
     request = HumanReviewAssessmentRequest(
         validation_result=_validation_result(),
-        critique_findings=[_critique_finding()],
-        reviewed_hypotheses=[_reviewed_hypothesis()],
+        reviewed_hypotheses=[
+            ReviewedHypothesis(
+                hypothesis=_hypothesis(),
+                status=HypothesisReviewStatus.ACCEPTED,
+                critique_findings=[_critique_finding()],
+            )
+        ],
         evidence=[_retrieved_evidence()],
         incident=_incident(),
     )

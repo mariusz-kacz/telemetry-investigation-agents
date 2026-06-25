@@ -1,7 +1,3 @@
-import os
-
-from dotenv import load_dotenv
-
 from telemetry_agents.app.config import get_settings
 from telemetry_agents.domain import (
     EvidenceSource,
@@ -71,7 +67,7 @@ def _request() -> UnsupportedClaimReviewRequest:
                 relevance_score=1.0,
             )
         ],
-        validated_hypotheses=[
+        reviewed_accepted_hypotheses=[
             InvestigationHypothesis(
                 hypothesis_id="hyp-001",
                 statement="A DNS outage caused checkout database timeouts.",

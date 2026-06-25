@@ -41,7 +41,7 @@ reportUnknownArgumentType = "none"
 reportMissingTypeStubs = "none"
 
 [project.scripts]
-telemetry-evals = "telemetry_agents.cli.run_evals:main"
+telemetry-evals = "telemetry_agents.evaluation_cli.run_evals:main"
 
 [build-system]
 requires = ["hatchling"]

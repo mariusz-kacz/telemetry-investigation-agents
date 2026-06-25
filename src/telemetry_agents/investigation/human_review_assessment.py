@@ -4,7 +4,6 @@ from telemetry_agents.domain import (
     HypothesisValidationResult,
     Incident,
     HumanReviewAssessment,
-    LOW_CONFIDENCE_THRESHOLD,
     IncidentImpact,
     ReviewedHypothesis,
     HypothesisReviewStatus,
