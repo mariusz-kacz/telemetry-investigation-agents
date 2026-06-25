@@ -6,6 +6,7 @@ from telemetry_agents.domain import (
     CritiqueFindingType,
     EvidenceSource,
     HumanReviewAssessment,
+    HumanReviewStatus,
     HypothesisCritiqueFinding,
     HypothesisValidationResult,
     Incident,
@@ -223,6 +224,9 @@ def test_report_contains_summary_confidence_and_uncertainty() -> None:
         summary="Checkout API latency increased during payment flow.",
         confidence=0.7,
         uncertainty="Trace data has not been reviewed yet.",
+        selected_hypothesis_id=None,
+        category=None,
+        human_review_status=HumanReviewStatus.NOT_REQUIRED,
     )
 
     assert report.incident_id == "inc-001"
@@ -281,6 +285,9 @@ def test_low_confidence_report_requires_meaningful_uncertainty(
             summary="Checkout latency is elevated.",
             confidence=0.7,
             uncertainty=uncertainty,
+            selected_hypothesis_id=None,
+            category=None,
+            human_review_status=HumanReviewStatus.NOT_REQUIRED,
         )
 
 

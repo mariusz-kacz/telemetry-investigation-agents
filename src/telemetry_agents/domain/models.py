@@ -238,6 +238,10 @@ class InvestigationReport(BaseModel):
     summary: NonEmptyStr
     confidence: float = Field(ge=0.0, le=1.0)
     uncertainty: NonEmptyStr | None = None
+    evidence_citations: list[TelemetryEvidence] = Field(default_factory=list)
+    selected_hypothesis_id: str | None
+    category: HypothesisCategory | None
+    human_review_status: HumanReviewStatus
 
     @model_validator(mode="after")
     def must_have_uncertainty_if_not_confident(self) -> "InvestigationReport":

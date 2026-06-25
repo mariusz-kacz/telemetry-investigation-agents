@@ -5,6 +5,7 @@ from langgraph.constants import START, END
 from langgraph.graph.state import CompiledStateGraph, StateGraph
 
 from telemetry_agents.domain.models import HumanReviewStatus
+from telemetry_agents.graph.final_report_builder import make_final_report_builder_node
 from telemetry_agents.graph.human_review_assessment import (
     make_human_review_assessment_node,
 )
@@ -76,6 +77,10 @@ def build_investigation_workflow(
         _node("report_review_gate", make_report_review_gate_node()),
     )
     builder.add_node(
+        "final_report_builder",
+        _node("final_report_builder", make_final_report_builder_node()),
+    )
+    builder.add_node(
         "report_ready_marker",
         _node("report_ready_marker", make_report_ready_marker_node()),
     )
@@ -94,7 +99,9 @@ def build_investigation_workflow(
         _requires_human_review_route,
         {True: "report_review_gate", False: "human_review_not_required_marker"},
     )
-    builder.add_edge("human_review_not_required_marker", "report_ready_marker")
+    builder.add_edge("human_review_not_required_marker", "final_report_builder")
+    builder.add_edge("final_report_builder", "report_ready_marker")
+
     builder.add_conditional_edges(
         "report_review_gate",
         _route_on_review_status,
@@ -123,6 +130,6 @@ def _route_on_review_status(state: InvestigationGraphState) -> str:
         raise ValueError("human_review_status with status NOT_REQUIRED is not expected")
 
     if human_review_status == HumanReviewStatus.APPROVED:
-        return "report_ready_marker"
+        return "final_report_builder"
     else:
         return "report_rejected_marker"

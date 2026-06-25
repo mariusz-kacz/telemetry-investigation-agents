@@ -188,6 +188,8 @@ def test_report_review_gate_handled() -> None:
 
     assert result["human_review_status"] is HumanReviewStatus.APPROVED
     assert result["report_ready"] is True
+    assert result["final_report"].human_review_status is HumanReviewStatus.APPROVED
+    assert result["final_report"].selected_hypothesis_id is None
 
 
 def test_report_review_interrupt_exposes_decision_material() -> None:
@@ -298,6 +300,7 @@ def test_rejected_human_review_does_not_mark_report_ready() -> None:
 
     assert result["human_review_status"] is HumanReviewStatus.REJECTED
     assert result["report_ready"] is False
+    assert "final_report" not in result
 
 
 def test_safe_investigation_bypasses_human_review() -> None:
@@ -315,6 +318,11 @@ def test_safe_investigation_bypasses_human_review() -> None:
     assert not result.get("__interrupt__")
     assert result["human_review_status"] is HumanReviewStatus.NOT_REQUIRED
     assert result["report_ready"] is True
+    assert result["final_report"].selected_hypothesis_id == "hyp-001"
+    assert result["final_report"].summary == (
+        "Checkout latency is caused by database timeout errors."
+    )
+    assert result["final_report"].evidence_citations == [_retrieved_evidence().evidence]
 
 
 def test_graph_run_emits_correlatable_node_telemetry(
@@ -376,6 +384,7 @@ def test_graph_events_reconstruct_safe_workflow_timeline(
         "hypothesis_review",
         "human_review_assessment",
         "human_review_not_required_marker",
+        "final_report_builder",
         "report_ready_marker",
     ]
 
