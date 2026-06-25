@@ -6,12 +6,20 @@ from telemetry_agents.api.app import create_app
 from telemetry_agents.api.dependencies import get_demo_investigation_service
 from telemetry_agents.app.demo_investigation_service import DemoInvestigationResult
 from telemetry_agents.domain import (
+    EvidenceSource,
     HypothesisCategory,
     HypothesisReviewStatus,
+    Incident,
     InvestigationHypothesis,
     ReviewedHypothesis,
+    TelemetryEvidence,
 )
 from telemetry_agents.infrastructure.run_registry import InvestigationRunStatus
+from telemetry_agents.investigation.evidence_retrieval import (
+    CitationMetadata,
+    RetrievedEvidence,
+)
+from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 
 
 @dataclass
@@ -61,6 +69,49 @@ def test_start_investigation_returns_no_human_review_response() -> None:
     assert body["warnings"] == []
     assert body["report_ready"] is True
     assert body["hypotheses"][0]["status"] == "accepted"
+
+
+def test_start_investigation_returns_ui_oriented_incident_hypothesis_and_evidence() -> (
+    None
+):
+    service = FakeDemoInvestigationService(
+        start_result=_result(human_review_required=False, review_reasons=[])
+    )
+    app = create_app()
+    app.dependency_overrides[get_demo_investigation_service] = lambda: service
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/v1/investigations",
+            json={"case_id": "checkout-database-timeout"},
+        )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["case_id"] == "checkout-database-timeout"
+    assert body["incident"] == {
+        "id": "inc-checkout-001",
+        "title": "Checkout API latency spike",
+        "service": "checkout-api",
+        "impact": "medium",
+    }
+    assert body["top_hypothesis"] == {
+        "id": "hyp-001",
+        "statement": "Database timeouts are causing checkout latency.",
+        "category": "database_failure",
+        "confidence": 0.9,
+        "review_status": "accepted",
+        "evidence_ids": ["log-001"],
+    }
+    assert body["evidence"] == [
+        {
+            "evidence_id": "log-001",
+            "source": "log",
+            "summary": "Checkout API reports database timeout errors.",
+            "citation": "sample_data/logs/checkout-api.log:1",
+            "strength": "strong",
+        }
+    ]
 
 
 def test_review_investigation_delegates_human_approval_decision() -> None:
@@ -121,10 +172,31 @@ def test_get_investigation_delegates_to_read_model() -> None:
     assert body["report_ready"] is False
 
 
+def test_start_investigation_returns_null_top_hypothesis_without_hypotheses() -> None:
+    service = FakeDemoInvestigationService(
+        start_result=_result(human_review_required=True, hypotheses=[])
+    )
+    app = create_app()
+    app.dependency_overrides[get_demo_investigation_service] = lambda: service
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/v1/investigations",
+            json={"case_id": "checkout-database-timeout"},
+        )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["hypotheses"] == []
+    assert body["top_hypothesis"] is None
+
+
 def _result(
     *,
     run_id: str = "run-001",
     human_review_required: bool,
+    hypotheses: list[ReviewedHypothesis] | None = None,
+    evidence: list[RetrievedEvidence] | None = None,
     review_reasons: list[str] | None = None,
     status: InvestigationRunStatus = InvestigationRunStatus.COMPLETED,
     warnings: list[str] | None = None,
@@ -132,9 +204,25 @@ def _result(
 ) -> DemoInvestigationResult:
     return DemoInvestigationResult(
         run_id=run_id,
-        incident_id="inc-checkout-001",
+        case_id="checkout-database-timeout",
+        incident=Incident.model_validate(
+            {
+                "incident_id": "inc-checkout-001",
+                "title": "Checkout API latency spike",
+                "service": "checkout-api",
+                "impact": "medium",
+                "reported_at": "2026-05-11T10:05:00Z",
+                "investigation_window": {
+                    "start": "2026-05-11T09:40:00Z",
+                    "end": "2026-05-11T10:10:00Z",
+                },
+                "retrieval": {"query_terms": ["timeout"], "trace_id": "trace-001"},
+            }
+        ),
         status=status,
-        hypotheses=[
+        hypotheses=hypotheses
+        if hypotheses is not None
+        else [
             ReviewedHypothesis(
                 hypothesis=InvestigationHypothesis(
                     hypothesis_id="hyp-001",
@@ -146,8 +234,29 @@ def _result(
                 status=HypothesisReviewStatus.ACCEPTED,
             )
         ],
+        evidence=evidence if evidence is not None else [_retrieved_evidence()],
         human_review_required=human_review_required,
         review_reasons=review_reasons or [],
         warnings=warnings or [],
         report_ready=report_ready,
+    )
+
+
+def _retrieved_evidence() -> RetrievedEvidence:
+    return RetrievedEvidence(
+        evidence=TelemetryEvidence(
+            evidence_id="log-001",
+            source=EvidenceSource.LOG,
+            summary="Checkout API reports database timeout errors.",
+            citation="sample_data/logs/checkout-api.log:1",
+            service="checkout-api",
+        ),
+        citation=CitationMetadata(
+            source_file="sample_data/logs/checkout-api.log",
+            line_number=1,
+            service="checkout-api",
+            selection_reason="Matched incident query terms.",
+        ),
+        strength=EvidenceStrength.STRONG,
+        relevance_score=1.0,
     )

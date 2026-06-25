@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
@@ -99,7 +99,7 @@ def _build_workflow_runner(
     *,
     generator: HypothesisGenerator,
     critic: HypothesisCritic,
-    checkpointer: BaseCheckpointSaver,
+    checkpointer: BaseCheckpointSaver[Any],
 ) -> RunWorkflow:
     def run(request: WorkflowRunRequest) -> WorkflowRunResult:
         graph = build_investigation_workflow(
@@ -160,7 +160,7 @@ def _build_resume_workflow_runner(
     *,
     generator: HypothesisGenerator,
     critic: HypothesisCritic,
-    checkpointer: BaseCheckpointSaver,
+    checkpointer: BaseCheckpointSaver[Any],
 ) -> ResumeWorkflow:
     def run(request: WorkflowResumeRequest) -> WorkflowRunResult:
         graph = build_investigation_workflow(
@@ -203,7 +203,7 @@ def _build_workflow_state_reader(
     *,
     generator: HypothesisGenerator,
     critic: HypothesisCritic,
-    checkpointer: BaseCheckpointSaver,
+    checkpointer: BaseCheckpointSaver[Any],
 ) -> ReadWorkflowState:
     def read_state(run_id: str) -> WorkflowRunResult:
         graph = build_investigation_workflow(
@@ -241,7 +241,7 @@ def build_workflow_service(
     *,
     generator: HypothesisGenerator,
     critic: HypothesisCritic,
-    checkpointer: BaseCheckpointSaver,
+    checkpointer: BaseCheckpointSaver[Any],
 ) -> WorkflowService:
     return WorkflowService(
         run=_build_workflow_runner(

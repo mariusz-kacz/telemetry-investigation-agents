@@ -20,6 +20,7 @@ class InvestigationRunRecord:
     """Small SQL row model for workflow execution metadata."""
 
     run_id: str
+    case_id: str
     incident_id: str
     status: InvestigationRunStatus
 
@@ -29,16 +30,29 @@ def initialize_run_registry(db_path: Path) -> None:
     with sqlite3.connect(db_path) as conn:
         conn.execute("""CREATE TABLE IF NOT EXISTS investigation_runs(
                 run_id TEXT PRIMARY KEY,
+                case_id TEXT NOT NULL,
                 incident_id TEXT NOT NULL,
                 status TEXT NOT NULL
             )
         """)
+        columns = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(investigation_runs)").fetchall()
+        }
+        if "case_id" not in columns:
+            conn.execute(
+                """
+                ALTER TABLE investigation_runs
+                ADD COLUMN case_id TEXT NOT NULL DEFAULT 'unknown'
+                """
+            )
 
 
 def create_investigation_run(
     db_path: Path,
     *,
     run_id: str,
+    case_id: str,
     incident_id: str,
     status: InvestigationRunStatus = InvestigationRunStatus.PENDING,
 ) -> InvestigationRunRecord:
@@ -46,16 +60,16 @@ def create_investigation_run(
     with sqlite3.connect(db_path) as conn:
         conn.execute(
             """
-            INSERT INTO investigation_runs (run_id, incident_id, status)
-            VALUES (?, ?, ?)
+            INSERT INTO investigation_runs (run_id, case_id, incident_id, status)
+            VALUES (?, ?, ?, ?)
             """,
-            (run_id, incident_id, status.value),
+            (run_id, case_id, incident_id, status.value),
         )
 
         conn.commit()
 
         return InvestigationRunRecord(
-            run_id=run_id, incident_id=incident_id, status=status
+            run_id=run_id, case_id=case_id, incident_id=incident_id, status=status
         )
 
 
@@ -63,7 +77,6 @@ def update_investigation_run(
     db_path: Path,
     *,
     run_id: str,
-    incident_id: str,
     status: InvestigationRunStatus,
 ) -> InvestigationRunRecord:
     """Update one investigation run status and return the stored record."""
@@ -71,20 +84,38 @@ def update_investigation_run(
         cursor = conn.execute(
             """
             UPDATE investigation_runs SET status = ?
-            where run_id = ? and incident_id = ?
+            where run_id = ?
             """,
-            (status.value, run_id, incident_id),
+            (status.value, run_id),
         )
         if cursor.rowcount == 0:
             raise InvestigationRunUpdateFailed(
-                f"Investigation run {run_id} for incident {incident_id} was not found"
+                f"Investigation run {run_id} was not found"
             )
+
+        row = conn.execute(
+            """
+            SELECT run_id, case_id, incident_id, status
+            FROM investigation_runs
+            WHERE run_id = ?
+            """,
+            (run_id,),
+        ).fetchone()
 
         conn.commit()
 
-        return InvestigationRunRecord(
-            run_id=run_id, incident_id=incident_id, status=status
+    if row is None:
+        raise InvestigationRunUpdateFailed(
+            f"Investigation run {run_id} was not found after update"
         )
+
+    stored_run_id, case_id, incident_id, stored_status = row
+    return InvestigationRunRecord(
+        run_id=stored_run_id,
+        case_id=case_id,
+        incident_id=incident_id,
+        status=InvestigationRunStatus(stored_status),
+    )
 
 
 def get_resumable_investigation_run(
@@ -93,16 +124,17 @@ def get_resumable_investigation_run(
     """Read one investigation run from SQLite by run id."""
     with sqlite3.connect(db_path) as conn:
         row = conn.execute(
-            "SELECT run_id, incident_id, status FROM investigation_runs WHERE run_id = ? and status = ?",
+            "SELECT run_id, case_id, incident_id, status FROM investigation_runs WHERE run_id = ? and status = ?",
             (run_id, InvestigationRunStatus.AWAITING_REVIEW.value),
         ).fetchone()
 
         if row is None:
             return None
 
-        run_id, incident_id, status = row
+        run_id, case_id, incident_id, status = row
         return InvestigationRunRecord(
             run_id=run_id,
+            case_id=case_id,
             incident_id=incident_id,
             status=InvestigationRunStatus(status),
         )
@@ -116,16 +148,17 @@ def get_investigation_run(
     """Read one investigation run from SQLite by run id."""
     with sqlite3.connect(db_path) as conn:
         row = conn.execute(
-            "SELECT run_id, incident_id, status FROM investigation_runs WHERE run_id = ?",
+            "SELECT run_id, case_id, incident_id, status FROM investigation_runs WHERE run_id = ?",
             (run_id,),
         ).fetchone()
 
         if row is None:
             return None
 
-        run_id, incident_id, status = row
+        run_id, case_id, incident_id, status = row
         return InvestigationRunRecord(
             run_id=run_id,
+            case_id=case_id,
             incident_id=incident_id,
             status=InvestigationRunStatus(status),
         )

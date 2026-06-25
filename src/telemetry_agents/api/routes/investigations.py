@@ -6,6 +6,9 @@ from telemetry_agents.api.schemas import (
     InvestigationResponse,
     HypothesisResponse,
     HumanReviewRequest,
+    IncidentResponse,
+    EvidenceResponse,
+    TopHypothesisResponse,
 )
 from telemetry_agents.app.demo_investigation_service import (
     DemoInvestigationService,
@@ -13,14 +16,45 @@ from telemetry_agents.app.demo_investigation_service import (
     DemoInvestigationResult,
 )
 from telemetry_agents.app.workflow_runner import WorkflowStateUnavailable
+from telemetry_agents.domain import HypothesisReviewStatus
 
 router = APIRouter(prefix="/investigations", tags=["investigations"])
 
 
 def to_investigation_response(result: DemoInvestigationResult) -> InvestigationResponse:
+    accepted_hypotheses = [
+        item
+        for item in result.hypotheses
+        if item.status is HypothesisReviewStatus.ACCEPTED
+    ]
+    top_hypothesis = (
+        max(
+            accepted_hypotheses,
+            key=lambda item: item.hypothesis.confidence,
+        )
+        if accepted_hypotheses
+        else None
+    )
+
     return InvestigationResponse(
         run_id=result.run_id,
-        incident_id=result.incident_id,
+        case_id=result.case_id,
+        incident=IncidentResponse(
+            id=result.incident.incident_id,
+            service=result.incident.service,
+            impact=result.incident.impact,
+            title=result.incident.title,
+        ),
+        evidence=[
+            EvidenceResponse(
+                evidence_id=retrieved_evidence.evidence.evidence_id,
+                summary=retrieved_evidence.evidence.summary,
+                citation=retrieved_evidence.evidence.citation,
+                strength=retrieved_evidence.strength,
+                source=retrieved_evidence.evidence.source,
+            )
+            for retrieved_evidence in result.evidence
+        ],
         status=result.status.value.lower(),
         hypotheses=[
             HypothesisResponse(
@@ -32,6 +66,18 @@ def to_investigation_response(result: DemoInvestigationResult) -> InvestigationR
             )
             for reviewed in result.hypotheses
         ],
+        top_hypothesis=(
+            TopHypothesisResponse(
+                id=top_hypothesis.hypothesis.hypothesis_id,
+                statement=top_hypothesis.hypothesis.statement,
+                category=top_hypothesis.hypothesis.category,
+                confidence=top_hypothesis.hypothesis.confidence,
+                review_status=top_hypothesis.status,
+                evidence_ids=list(top_hypothesis.hypothesis.supporting_evidence_ids),
+            )
+            if top_hypothesis
+            else None
+        ),
         human_review_required=result.human_review_required,
         review_reasons=list(result.review_reasons),
         warnings=list(result.warnings),

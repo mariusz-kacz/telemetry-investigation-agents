@@ -96,9 +96,7 @@ def observe_llm_call(
     Callers should pass only safe metadata. Prompts, raw responses, evidence
     payloads, hypothesis statements, and critic reasons do not belong here.
     """
-    fields = {
-        key: value for key, value in optional_fields.items() if value is not None
-    }
+    fields = {key: value for key, value in optional_fields.items() if value is not None}
 
     tracer = get_tracer()
     with tracer.start_as_current_span(f"llm.call.{fields['operation']}") as llm_span:

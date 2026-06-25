@@ -1,8 +1,10 @@
+from pathlib import Path
+
 from telemetry_agents.telemetry.readers import LocalFileTelemetryReader
 from telemetry_agents.shared.paths import SAMPLE_DATA_DIR
 
 
-def test_local_file_reader_reads_utf8_bom_trace_file(tmp_path) -> None:
+def test_local_file_reader_reads_utf8_bom_trace_file(tmp_path: Path) -> None:
     traces_dir = tmp_path / "traces"
     traces_dir.mkdir()
     (traces_dir / "checkout-api.jsonl").write_text(

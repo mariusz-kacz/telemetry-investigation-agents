@@ -12,7 +12,7 @@ from telemetry_agents.app.workflow_runner import (
     WorkflowResumeRequest,
     ReadWorkflowState,
 )
-from telemetry_agents.domain import ReviewedHypothesis
+from telemetry_agents.domain import ReviewedHypothesis, Incident
 from telemetry_agents.infrastructure.run_registry import (
     create_investigation_run,
     update_investigation_run,
@@ -20,6 +20,7 @@ from telemetry_agents.infrastructure.run_registry import (
     InvestigationRunStatus,
     get_investigation_run,
 )
+from telemetry_agents.investigation.evidence_retrieval import RetrievedEvidence
 from telemetry_agents.shared.observability import new_run_id
 
 
@@ -29,9 +30,11 @@ class RunNotFound(Exception):
 
 class DemoInvestigationResult(BaseModel):
     run_id: str
-    incident_id: str
+    case_id: str
+    incident: Incident
     status: InvestigationRunStatus
     hypotheses: list[ReviewedHypothesis]
+    evidence: list[RetrievedEvidence]
     human_review_required: bool
     review_reasons: list[str]
     warnings: list[str]
@@ -56,6 +59,7 @@ class DemoInvestigationService:
         create_investigation_run(
             db_path=self.run_registry_db_path,
             run_id=run_id,
+            case_id=case_id,
             incident_id=incident.incident_id,
             status=InvestigationRunStatus.PENDING,
         )
@@ -78,13 +82,14 @@ class DemoInvestigationService:
         update_investigation_run(
             db_path=self.run_registry_db_path,
             run_id=run_id,
-            incident_id=incident.incident_id,
             status=status,
         )
 
         return DemoInvestigationResult(
             run_id=run_id,
-            incident_id=result.incident.incident_id,
+            case_id=case_id,
+            evidence=result.retrieved_evidence,
+            incident=result.incident,
             status=status,
             hypotheses=result.review_result.reviewed_hypotheses,
             human_review_required=result.human_review_assessment.human_review_required,
@@ -114,13 +119,14 @@ class DemoInvestigationService:
         update_investigation_run(
             db_path=self.run_registry_db_path,
             run_id=run_id,
-            incident_id=result.incident.incident_id,
             status=status,
         )
 
         return DemoInvestigationResult(
             run_id=run_id,
-            incident_id=result.incident.incident_id,
+            case_id=record.case_id,
+            incident=result.incident,
+            evidence=result.retrieved_evidence,
             status=status,
             hypotheses=result.review_result.reviewed_hypotheses,
             human_review_required=result.human_review_assessment.human_review_required,
@@ -138,7 +144,9 @@ class DemoInvestigationService:
 
         return DemoInvestigationResult(
             run_id=record.run_id,
-            incident_id=result.incident.incident_id,
+            case_id=record.case_id,
+            incident=result.incident,
+            evidence=result.retrieved_evidence,
             status=record.status,
             hypotheses=result.review_result.reviewed_hypotheses,
             human_review_required=result.human_review_assessment.human_review_required,
