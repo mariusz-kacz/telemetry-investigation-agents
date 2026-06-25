@@ -78,6 +78,8 @@ def test_print_report_outputs_failure_details(
         expected_category_score=ExpectedHypothesisCategoryScore(
             passed=False,
             expected_category="database_failure",
+            actual_category="downstream_dependency_failure",
+            selected_hypothesis_id="hyp-2",
         ),
         expected_human_review_score=ExpectedHumanReviewScore(
             passed=False,
@@ -99,6 +101,8 @@ def test_print_report_outputs_failure_details(
         "missing evidence sources: log:eval_data/case/logs/checkout-api.log" in output
     )
     assert "expected category: database_failure" in output
+    assert "actual selected category: downstream_dependency_failure" in output
+    assert "selected hypothesis: hyp-2" in output
     assert "expected human review: True, actual: False" in output
     assert "hypotheses without citations: hyp-1" in output
 

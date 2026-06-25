@@ -12,8 +12,10 @@ from telemetry_agents.domain import (
     EvidenceSource,
     HypothesisCategory,
     HypothesisReviewStatus,
+    HumanReviewStatus,
     Incident,
     InvestigationHypothesis,
+    InvestigationReport,
     ReviewedHypothesis,
     TelemetryEvidence,
 )
@@ -77,6 +79,22 @@ def test_start_investigation_returns_no_human_review_response() -> None:
     assert body["status"] == "completed"
     assert body["warnings"] == []
     assert body["report_ready"] is True
+    assert body["final_report"] == {
+        "incident_id": "inc-checkout-001",
+        "summary": "Database timeouts are causing checkout latency.",
+        "confidence": 0.9,
+        "uncertainty": None,
+        "selected_hypothesis_id": "hyp-001",
+        "category": "database_failure",
+        "human_review_status": "not_required",
+        "evidence_citations": [
+            {
+                "evidence_id": "log-001",
+                "source": "log",
+                "citation": "sample_data/logs/checkout-api.log:1",
+            }
+        ],
+    }
     assert body["hypotheses"][0]["status"] == "accepted"
 
 
@@ -179,6 +197,7 @@ def test_get_investigation_delegates_to_read_model() -> None:
     assert body["status"] == "awaiting_review"
     assert body["warnings"] == ["critic unavailable"]
     assert body["report_ready"] is False
+    assert body["final_report"] is None
 
 
 def test_list_investigations_returns_run_summaries() -> None:
@@ -258,6 +277,8 @@ def _result(
     warnings: list[str] | None = None,
     report_ready: bool = True,
 ) -> DemoInvestigationResult:
+    default_final_report = _report() if report_ready else None
+
     return DemoInvestigationResult(
         run_id=run_id,
         case_id="checkout-database-timeout",
@@ -296,6 +317,7 @@ def _result(
         review_reasons=review_reasons or [],
         warnings=warnings or [],
         report_ready=report_ready,
+        final_report=default_final_report,
     )
 
 
@@ -316,4 +338,16 @@ def _retrieved_evidence() -> RetrievedEvidence:
         ),
         strength=EvidenceStrength.STRONG,
         relevance_score=1.0,
+    )
+
+
+def _report() -> InvestigationReport:
+    return InvestigationReport(
+        incident_id="inc-checkout-001",
+        summary="Database timeouts are causing checkout latency.",
+        confidence=0.9,
+        selected_hypothesis_id="hyp-001",
+        category=HypothesisCategory.DATABASE_FAILURE,
+        human_review_status=HumanReviewStatus.NOT_REQUIRED,
+        evidence_citations=[_retrieved_evidence().evidence],
     )

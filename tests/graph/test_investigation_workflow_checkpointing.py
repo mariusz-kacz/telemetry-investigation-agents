@@ -3,10 +3,15 @@ from pathlib import Path
 import pytest
 
 from telemetry_agents.app.workflow_runner import (
+    WorkflowRunRequest,
     WorkflowStateUnavailable,
     build_workflow_service,
 )
-from telemetry_agents.domain import IncidentImpact, InvestigationHypothesis
+from telemetry_agents.domain import (
+    HypothesisCategory,
+    IncidentImpact,
+    InvestigationHypothesis,
+)
 from telemetry_agents.domain.models import (
     EvidenceSource,
     HypothesisCritiqueResult,
@@ -31,6 +36,7 @@ from telemetry_agents.investigation.hypothesis_critic import HypothesisCritiqueR
 from telemetry_agents.investigation.hypothesis_generation import (
     HypothesisGenerationRequest,
 )
+from telemetry_agents.shared.paths import SAMPLE_DATA_DIR
 
 
 class FakeHypothesisGenerator:
@@ -208,3 +214,44 @@ def test_workflow_restore_raises_clear_error_for_missing_checkpoint_state(
         match="Workflow state for run missing-run is unavailable or incomplete.",
     ):
         workflow.read_state("missing-run")
+
+
+def test_workflow_run_result_includes_final_report_for_completed_run(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "checkpoints.sqlite"
+    checkpointer = create_sqlite_checkpointer(db_path)
+    workflow = build_workflow_service(
+        generator=FakeHypothesisGenerator(
+            [
+                InvestigationHypothesis(
+                    hypothesis_id="hyp-001",
+                    statement="Database timeouts are causing checkout latency.",
+                    category=HypothesisCategory.DATABASE_FAILURE,
+                    supporting_evidence_ids=["log-checkout-api-1"],
+                    confidence=0.9,
+                )
+            ]
+        ),
+        critic=FakeHypothesisCritic(HypothesisCritiqueResult()),
+        checkpointer=checkpointer,
+    )
+
+    result = workflow.run(
+        WorkflowRunRequest(
+            run_id="run-final-report-001",
+            case_id="checkout-database-timeout",
+            incident=_incident(),
+            data_root=SAMPLE_DATA_DIR,
+        )
+    )
+
+    assert result.report_ready is True
+    assert result.final_report is not None
+    assert (
+        result.final_report.summary == "Database timeouts are causing checkout latency."
+    )
+    assert result.final_report.selected_hypothesis_id == "hyp-001"
+    assert [
+        citation.evidence_id for citation in result.final_report.evidence_citations
+    ] == ["log-checkout-api-1"]

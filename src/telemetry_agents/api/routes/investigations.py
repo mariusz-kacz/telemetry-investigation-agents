@@ -8,6 +8,8 @@ from telemetry_agents.api.schemas import (
     HumanReviewRequest,
     IncidentResponse,
     EvidenceResponse,
+    FinalReportResponse,
+    ReportCitationResponse,
     TopHypothesisResponse,
     InvestigationRunSummaryResponse,
     InvestigationRunResponse,
@@ -85,6 +87,27 @@ def to_investigation_response(result: DemoInvestigationResult) -> InvestigationR
         review_reasons=list(result.review_reasons),
         warnings=list(result.warnings),
         report_ready=result.report_ready,
+        final_report=(
+            FinalReportResponse(
+                incident_id=result.final_report.incident_id,
+                summary=result.final_report.summary,
+                confidence=result.final_report.confidence,
+                uncertainty=result.final_report.uncertainty,
+                selected_hypothesis_id=result.final_report.selected_hypothesis_id,
+                category=result.final_report.category,
+                human_review_status=result.final_report.human_review_status,
+                evidence_citations=[
+                    ReportCitationResponse(
+                        evidence_id=evidence.evidence_id,
+                        source=evidence.source,
+                        citation=evidence.citation,
+                    )
+                    for evidence in result.final_report.evidence_citations
+                ],
+            )
+            if result.final_report
+            else None
+        ),
     )
 
 

@@ -12,6 +12,7 @@ from telemetry_agents.domain import (
     HypothesisValidationResult,
     HypothesisReviewResult,
     HumanReviewAssessment,
+    InvestigationReport,
 )
 from telemetry_agents.graph.investigation_workflow import build_investigation_workflow
 from telemetry_agents.investigation.evidence_retrieval import (
@@ -42,6 +43,7 @@ class WorkflowRunResult(BaseModel):
     review_reasons: list[str]
     warnings: list[str]
     report_ready: bool
+    final_report: InvestigationReport | None = None
 
 
 class WorkflowResumeRequest(BaseModel):
@@ -151,6 +153,7 @@ def _build_workflow_runner(
                 review_reasons=_review_reasons(result["human_review_assessment"]),
                 warnings=result["warnings"],
                 report_ready=result.get("report_ready", False),
+                final_report=result.get("final_report"),
             )
 
     return run
@@ -194,6 +197,7 @@ def _build_resume_workflow_runner(
                 review_reasons=_review_reasons(result["human_review_assessment"]),
                 warnings=result["warnings"],
                 report_ready=result["report_ready"],
+                final_report=result.get("final_report"),
             )
 
     return run
@@ -232,6 +236,7 @@ def _build_workflow_state_reader(
             review_reasons=_review_reasons(result.values["human_review_assessment"]),
             warnings=result.values["warnings"],
             report_ready=result.values.get("report_ready", False),
+            final_report=result.values.get("final_report"),
         )
 
     return read_state

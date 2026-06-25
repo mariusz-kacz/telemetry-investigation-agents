@@ -198,10 +198,10 @@ def test_critic_passes_system_prompt_to_model() -> None:
     assert "UNSUPPORTED_CAUSAL_LEAP" in system_message
     assert "correlation, not causation" in system_message
     assert "direct causal path" in system_message
-    assert (
-        "UNCERTAIN_ROOT_CAUSE hypothesis lists possible root causes" in system_message
-    )
-    assert "speculative possibilities" in system_message
+    assert "For UNCERTAIN_ROOT_CAUSE hypotheses" in system_message
+    assert "possible rather than definitive" in system_message
+    assert "do not emit UNSUPPORTED_CAUSAL_LEAP merely because" in system_message
+    assert "supported by correlation or symptoms" in system_message
 
 
 def test_critic_raises_value_error_from_empty_response() -> None:

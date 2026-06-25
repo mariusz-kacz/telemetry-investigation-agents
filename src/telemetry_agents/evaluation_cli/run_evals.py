@@ -69,6 +69,8 @@ def _print_failure_details(scorecard: EvaluationScorecard) -> None:
     category_score = scorecard.expected_category_score
     if not category_score.passed:
         print(f"  expected category: {category_score.expected_category}")
+        print(f"  actual selected category: {category_score.actual_category}")
+        print(f"  selected hypothesis: {category_score.selected_hypothesis_id}")
 
     human_review_score = scorecard.expected_human_review_score
     if not human_review_score.passed:

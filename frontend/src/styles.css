@@ -485,6 +485,44 @@ button:disabled {
   line-height: 1.24;
 }
 
+.report-summary {
+  margin: 0 0 16px;
+  color: var(--ink);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.report-facts {
+  display: grid;
+}
+
+.report-uncertainty {
+  margin: 14px 0 0;
+  padding: 12px;
+  color: #78510f;
+  border: 1px solid #efcd83;
+  border-radius: 8px;
+  background: #fff5d9;
+  line-height: 1.4;
+}
+
+.report-citations {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.report-citations code {
+  width: fit-content;
+  max-width: 100%;
+  padding: 5px 7px;
+  overflow-wrap: anywhere;
+  border-radius: 6px;
+  color: #61400a;
+  background: #fff2d2;
+}
+
 .detail-row {
   display: flex;
   justify-content: space-between;

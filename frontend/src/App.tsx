@@ -301,6 +301,7 @@ function App() {
 
         <section className="content-grid">
           <TopHypothesisPanel investigation={investigation} />
+          <FinalReportPanel investigation={investigation} />
           <EvidencePanel evidence={investigation?.evidence ?? []} />
           <HypothesisPanel hypotheses={investigation?.hypotheses ?? []} />
           <ReviewPanel
@@ -420,6 +421,59 @@ function RunHistoryPanel({
         </div>
       )}
     </section>
+  );
+}
+
+function FinalReportPanel({
+  investigation
+}: {
+  investigation: Investigation | null;
+}) {
+  const report = investigation?.final_report;
+
+  return (
+    <article className="panel report-panel">
+      <div className="panel-heading">
+        <h3>Final Report</h3>
+        {report ? (
+          <StatusBadge
+            label={report.human_review_status}
+            tone={statusTone(report.human_review_status)}
+          />
+        ) : null}
+      </div>
+      {report ? (
+        <>
+          <p className="report-summary">{report.summary}</p>
+          <div className="report-facts">
+            <div className="detail-row">
+              <span>Confidence</span>
+              <strong>{confidencePercent(report.confidence)}%</strong>
+            </div>
+            <div className="detail-row">
+              <span>Category</span>
+              <strong>{report.category ? formatLabel(report.category) : "None"}</strong>
+            </div>
+            <div className="detail-row">
+              <span>Selected hypothesis</span>
+              <strong>{report.selected_hypothesis_id ?? "None"}</strong>
+            </div>
+          </div>
+          {report.uncertainty ? (
+            <p className="report-uncertainty">{report.uncertainty}</p>
+          ) : null}
+          <div className="report-citations" aria-label="Report citations">
+            {report.evidence_citations.map((citation) => (
+              <code key={citation.evidence_id}>
+                {citation.evidence_id} - {citation.citation}
+              </code>
+            ))}
+          </div>
+        </>
+      ) : (
+        <EmptyState text="The final report appears after the workflow is approved or safely bypasses human review." />
+      )}
+    </article>
   );
 }
 

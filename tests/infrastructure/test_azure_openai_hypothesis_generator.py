@@ -216,6 +216,7 @@ def test_generate_passes_system_prompt_to_model() -> None:
     assert "UNCERTAIN_ROOT_CAUSE" in system_message
     assert "multiple materially different root-cause directions" in system_message
     assert "Do not force a single concrete category" in system_message
+    assert "exactly one UNCERTAIN_ROOT_CAUSE hypothesis" in system_message
     assert "INSUFFICIENT_EVIDENCE" in system_message
     assert "symptoms, correlation, or elevated metrics" in system_message
     assert "does not directly support a root-cause mechanism" in system_message

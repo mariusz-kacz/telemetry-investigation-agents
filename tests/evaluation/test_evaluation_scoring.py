@@ -360,7 +360,9 @@ def test_expected_evidence_sources_fails_when_wrong_telemetry_source() -> None:
     ]
 
 
-def test_categorization_passes_when_all_hypotheses_match_category() -> None:
+def test_categorization_passes_when_selected_accepted_hypothesis_matches_category() -> (
+    None
+):
     case = _eval_case(
         expected_evidence_sources=[
             EvalExpectedEvidenceSource(
@@ -385,10 +387,14 @@ def test_categorization_passes_when_all_hypotheses_match_category() -> None:
     score = score_expected_category(case=case, output=output)
 
     assert score.passed is True
-    assert score.matched_hypothesis_ids == ["hyp-001", "hyp-002"]
+    assert score.actual_category == HypothesisCategory.DATABASE_FAILURE
+    assert score.selected_hypothesis_id == "hyp-001"
+    assert score.matched_hypothesis_ids == ["hyp-001"]
 
 
-def test_categorization_passes_when_any_hypotheses_match_category() -> None:
+def test_categorization_fails_when_only_lower_confidence_accepted_hypothesis_matches_category() -> (
+    None
+):
     case = _eval_case(
         expected_evidence_sources=[
             EvalExpectedEvidenceSource(
@@ -401,11 +407,14 @@ def test_categorization_passes_when_any_hypotheses_match_category() -> None:
     database_hypothesis = _hypothesis(
         "hyp-001",
         statement="Checkout latency is caused by database timeout errors.",
+        confidence=0.6,
+        uncertainty="Database timeout evidence is weaker than the downstream evidence.",
     )
     downstream_hypothesis = _hypothesis(
         "hyp-002",
         statement="Downstream system unresponsive.",
         category=HypothesisCategory.DOWNSTREAM_DEPENDENCY_FAILURE,
+        confidence=0.9,
     )
     output = _output(
         validated_hypotheses=[database_hypothesis, downstream_hypothesis],
@@ -413,8 +422,10 @@ def test_categorization_passes_when_any_hypotheses_match_category() -> None:
 
     score = score_expected_category(case=case, output=output)
 
-    assert score.passed is True
-    assert score.matched_hypothesis_ids == ["hyp-001"]
+    assert score.passed is False
+    assert score.actual_category == HypothesisCategory.DOWNSTREAM_DEPENDENCY_FAILURE
+    assert score.selected_hypothesis_id == "hyp-002"
+    assert score.matched_hypothesis_ids == []
 
 
 def test_categorization_fails_when_none_hypotheses_match_category() -> None:
@@ -433,6 +444,8 @@ def test_categorization_fails_when_none_hypotheses_match_category() -> None:
     score = score_expected_category(case=case, output=output)
 
     assert score.passed is False
+    assert score.actual_category == HypothesisCategory.DATABASE_FAILURE
+    assert score.selected_hypothesis_id == "hyp-001"
     assert score.matched_hypothesis_ids == []
 
 

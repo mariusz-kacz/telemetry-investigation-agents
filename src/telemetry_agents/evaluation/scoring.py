@@ -149,19 +149,38 @@ def score_expected_category(
     output: EvaluationRunOutput,
 ) -> ExpectedHypothesisCategoryScore:
     expected_category = case.expected_category
-    matched_hypothesis_ids = []
-    accepted_reviewed_hypothesis = [
+    accepted_reviewed_hypotheses = [
         h
         for h in output.review_result.reviewed_hypotheses
         if h.status == HypothesisReviewStatus.ACCEPTED
     ]
-    for accepted_hypothesis in accepted_reviewed_hypothesis:
-        if expected_category == accepted_hypothesis.hypothesis.category:
-            matched_hypothesis_ids.append(accepted_hypothesis.hypothesis.hypothesis_id)
+    selected_hypothesis = (
+        max(
+            accepted_reviewed_hypotheses,
+            key=lambda item: item.hypothesis.confidence,
+        )
+        if accepted_reviewed_hypotheses
+        else None
+    )
+
+    matched_hypothesis_ids = (
+        [selected_hypothesis.hypothesis.hypothesis_id]
+        if selected_hypothesis
+        and expected_category == selected_hypothesis.hypothesis.category
+        else []
+    )
 
     return ExpectedHypothesisCategoryScore(
         passed=bool(matched_hypothesis_ids),
         expected_category=expected_category,
+        actual_category=(
+            selected_hypothesis.hypothesis.category if selected_hypothesis else None
+        ),
+        selected_hypothesis_id=(
+            selected_hypothesis.hypothesis.hypothesis_id
+            if selected_hypothesis
+            else None
+        ),
         matched_hypothesis_ids=matched_hypothesis_ids,
     )
 

@@ -51,6 +51,8 @@ class ExpectedEvidenceSourcesScore(BaseModel):
 class ExpectedHypothesisCategoryScore(BaseModel):
     passed: bool
     expected_category: str
+    actual_category: str | None = None
+    selected_hypothesis_id: str | None = None
     matched_hypothesis_ids: list[str] = Field(default_factory=list)
 
 

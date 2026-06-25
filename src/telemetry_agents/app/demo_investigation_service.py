@@ -12,7 +12,7 @@ from telemetry_agents.app.workflow_runner import (
     WorkflowResumeRequest,
     ReadWorkflowState,
 )
-from telemetry_agents.domain import ReviewedHypothesis, Incident
+from telemetry_agents.domain import InvestigationReport, ReviewedHypothesis, Incident
 from telemetry_agents.infrastructure.run_registry import (
     create_investigation_run,
     update_investigation_run,
@@ -41,6 +41,7 @@ class DemoInvestigationResult(BaseModel):
     review_reasons: list[str]
     warnings: list[str]
     report_ready: bool
+    final_report: InvestigationReport | None = None
 
 
 RunDemoInvestigation = Callable[[str], DemoInvestigationResult]
@@ -109,6 +110,7 @@ class DemoInvestigationService:
             review_reasons=result.review_reasons,
             warnings=result.warnings,
             report_ready=result.report_ready,
+            final_report=result.final_report,
         )
 
     def review(self, run_id: str, approved: bool) -> DemoInvestigationResult:
@@ -147,6 +149,7 @@ class DemoInvestigationService:
             review_reasons=result.review_reasons,
             warnings=result.warnings,
             report_ready=result.report_ready,
+            final_report=result.final_report,
         )
 
     def read(self, run_id: str) -> DemoInvestigationResult:
@@ -168,6 +171,7 @@ class DemoInvestigationService:
             review_reasons=result.review_reasons,
             warnings=result.warnings,
             report_ready=result.report_ready,
+            final_report=result.final_report,
         )
 
     def list_runs(self):

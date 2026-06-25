@@ -41,6 +41,23 @@ class EvidenceResponse(BaseModel):
     strength: str
 
 
+class ReportCitationResponse(BaseModel):
+    evidence_id: str
+    source: str
+    citation: str
+
+
+class FinalReportResponse(BaseModel):
+    incident_id: str
+    summary: str
+    confidence: float
+    uncertainty: str | None
+    selected_hypothesis_id: str | None
+    category: str | None
+    human_review_status: str
+    evidence_citations: list[ReportCitationResponse]
+
+
 class InvestigationResponse(BaseModel):
     run_id: str
     case_id: str
@@ -54,6 +71,7 @@ class InvestigationResponse(BaseModel):
     review_reasons: list[str]
     warnings: list[str]
     report_ready: bool
+    final_report: FinalReportResponse | None
 
 
 class InvestigationRunResponse(BaseModel):

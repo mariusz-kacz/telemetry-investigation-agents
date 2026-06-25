@@ -32,6 +32,23 @@ export type Evidence = {
   strength: string;
 };
 
+export type ReportCitation = {
+  evidence_id: string;
+  source: string;
+  citation: string;
+};
+
+export type FinalReport = {
+  incident_id: string;
+  summary: string;
+  confidence: number;
+  uncertainty: string | null;
+  selected_hypothesis_id: string | null;
+  category: string | null;
+  human_review_status: string;
+  evidence_citations: ReportCitation[];
+};
+
 export type InvestigationRunSummary = {
   run_id: string;
   case_id: string;
@@ -57,4 +74,5 @@ export type Investigation = {
   review_reasons: string[];
   warnings: string[];
   report_ready: boolean;
+  final_report: FinalReport | null;
 };
