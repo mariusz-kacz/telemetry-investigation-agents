@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 from pathlib import Path
 
 from pydantic import field_validator
@@ -8,9 +9,10 @@ from telemetry_agents.shared.paths import PROJECT_ROOT
 
 
 class Settings(BaseSettings):
-    azure_openai_endpoint: str
-    azure_openai_hypothesis_deployment_name: str
-    azure_openai_evaluation_deployment_name: str
+    demo_provider: Literal["fake", "azure"] = "fake"
+    azure_openai_endpoint: str | None = None
+    azure_openai_hypothesis_deployment_name: str | None = None
+    azure_openai_evaluation_deployment_name: str | None = None
     data_root: Path
     eval_data_root: Path
     tracing_enabled: bool = False
@@ -59,3 +61,9 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()  # type: ignore[call-arg]  # pyright: ignore[reportCallIssue]
+
+
+def require_azure_setting(value: str | None, setting_name: str) -> str:
+    if value is None or not value.strip():
+        raise ValueError(f"{setting_name} is required when Azure OpenAI is enabled")
+    return value

@@ -35,6 +35,7 @@ export type Evidence = {
 export type InvestigationRunSummary = {
   run_id: string;
   case_id: string;
+  demo_provider: string;
   incident_id: string;
   status: string;
 };
@@ -46,6 +47,7 @@ export type InvestigationRunSummaryResponse = {
 export type Investigation = {
   run_id: string;
   case_id: string;
+  demo_provider: string;
   status: string;
   incident: Incident;
   top_hypothesis: TopHypothesis | null;

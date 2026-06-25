@@ -24,7 +24,7 @@ Local OpenTelemetry console tracing is opt-in:
 
 ```powershell
 $env:TELEMETRY_AGENTS_TRACING="true"
-uv run telemetry-evals
+uv run telemetry-evals --provider azure
 ```
 
 When tracing is not enabled, the workflow still emits structured JSON logs.

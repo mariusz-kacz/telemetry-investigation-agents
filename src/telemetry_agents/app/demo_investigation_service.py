@@ -32,6 +32,7 @@ class RunNotFound(Exception):
 class DemoInvestigationResult(BaseModel):
     run_id: str
     case_id: str
+    demo_provider: str
     incident: Incident
     status: InvestigationRunStatus
     hypotheses: list[ReviewedHypothesis]
@@ -48,6 +49,7 @@ RunDemoInvestigation = Callable[[str], DemoInvestigationResult]
 class InvestigationRunResult(BaseModel):
     run_id: str
     case_id: str
+    demo_provider: str
     incident_id: str
     status: InvestigationRunStatus
 
@@ -59,6 +61,7 @@ class DemoInvestigationService:
     read_workflow_state: ReadWorkflowState
     demo_data_root: Path
     run_registry_db_path: Path
+    demo_provider: str
 
     def start(self, case_id: str) -> DemoInvestigationResult:
         run_id = new_run_id()
@@ -69,6 +72,7 @@ class DemoInvestigationService:
             run_id=run_id,
             case_id=case_id,
             incident_id=incident.incident_id,
+            demo_provider=self.demo_provider,
             status=InvestigationRunStatus.PENDING,
         )
 
@@ -96,6 +100,7 @@ class DemoInvestigationService:
         return DemoInvestigationResult(
             run_id=run_id,
             case_id=case_id,
+            demo_provider=self.demo_provider,
             evidence=result.retrieved_evidence,
             incident=result.incident,
             status=status,
@@ -133,6 +138,7 @@ class DemoInvestigationService:
         return DemoInvestigationResult(
             run_id=run_id,
             case_id=record.case_id,
+            demo_provider=record.demo_provider,
             incident=result.incident,
             evidence=result.retrieved_evidence,
             status=status,
@@ -153,6 +159,7 @@ class DemoInvestigationService:
         return DemoInvestigationResult(
             run_id=record.run_id,
             case_id=record.case_id,
+            demo_provider=record.demo_provider,
             incident=result.incident,
             evidence=result.retrieved_evidence,
             status=record.status,
@@ -170,6 +177,7 @@ class DemoInvestigationService:
             InvestigationRunResult(
                 run_id=record.run_id,
                 case_id=record.case_id,
+                demo_provider=record.demo_provider,
                 incident_id=record.incident_id,
                 status=record.status,
             )
@@ -183,6 +191,7 @@ def build_demo_investigation_service(
     read_workflow_state: ReadWorkflowState,
     demo_data_root: Path,
     run_registry_db_path: Path,
+    demo_provider: str,
 ) -> DemoInvestigationService:
     return DemoInvestigationService(
         run_workflow=run_workflow,
@@ -190,4 +199,5 @@ def build_demo_investigation_service(
         read_workflow_state=read_workflow_state,
         demo_data_root=demo_data_root,
         run_registry_db_path=run_registry_db_path,
+        demo_provider=demo_provider,
     )

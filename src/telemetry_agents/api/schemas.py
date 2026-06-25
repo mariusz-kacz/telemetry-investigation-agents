@@ -44,6 +44,7 @@ class EvidenceResponse(BaseModel):
 class InvestigationResponse(BaseModel):
     run_id: str
     case_id: str
+    demo_provider: str
     status: str
     incident: IncidentResponse
     top_hypothesis: TopHypothesisResponse | None
@@ -58,6 +59,7 @@ class InvestigationResponse(BaseModel):
 class InvestigationRunResponse(BaseModel):
     run_id: str
     case_id: str
+    demo_provider: str
     incident_id: str
     status: str
 

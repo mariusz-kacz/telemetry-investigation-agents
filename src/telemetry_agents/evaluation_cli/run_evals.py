@@ -17,6 +17,12 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run telemetry investigation evaluation cases."
     )
+    parser.add_argument(
+        "--provider",
+        choices=["azure"],
+        required=True,
+        help="Evaluation provider to use. Azure runs require configured Azure OpenAI access.",
+    )
     return parser.parse_args(argv)
 
 

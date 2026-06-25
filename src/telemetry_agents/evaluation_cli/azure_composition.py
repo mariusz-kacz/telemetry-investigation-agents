@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from telemetry_agents.app.config import Settings
+from telemetry_agents.app.config import Settings, require_azure_setting
 from telemetry_agents.evaluation import GuardedUnsupportedClaimReviewer
 from telemetry_agents.evaluation_cli.graph_case_runner import (
     RunEvaluationCase,
@@ -31,21 +31,33 @@ def build_azure_evaluation_composition(
     settings: Settings,
 ) -> AzureComposition:
     openai_client = create_azure_openai_client(
-        endpoint=settings.azure_openai_endpoint,
+        endpoint=require_azure_setting(
+            settings.azure_openai_endpoint,
+            "TELEMETRY_AGENTS_AZURE_OPENAI_ENDPOINT",
+        ),
     )
     generator = AzureOpenAIHypothesisGenerator(
         client=openai_client,
-        deployment_name=settings.azure_openai_hypothesis_deployment_name,
+        deployment_name=require_azure_setting(
+            settings.azure_openai_hypothesis_deployment_name,
+            "TELEMETRY_AGENTS_AZURE_OPENAI_HYPOTHESIS_DEPLOYMENT_NAME",
+        ),
     )
 
     critic = AzureOpenAIHypothesisCritic(
         client=openai_client,
-        deployment_name=settings.azure_openai_hypothesis_deployment_name,
+        deployment_name=require_azure_setting(
+            settings.azure_openai_hypothesis_deployment_name,
+            "TELEMETRY_AGENTS_AZURE_OPENAI_HYPOTHESIS_DEPLOYMENT_NAME",
+        ),
     )
 
     adapter = AzureOpenAIUnsupportedClaimAdapter(
         client=openai_client,
-        deployment_name=settings.azure_openai_evaluation_deployment_name,
+        deployment_name=require_azure_setting(
+            settings.azure_openai_evaluation_deployment_name,
+            "TELEMETRY_AGENTS_AZURE_OPENAI_EVALUATION_DEPLOYMENT_NAME",
+        ),
     )
 
     reviewer = GuardedUnsupportedClaimReviewer(

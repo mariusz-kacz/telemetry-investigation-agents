@@ -60,6 +60,16 @@ function statusTone(status: string): string {
   return "neutral";
 }
 
+function providerLabel(provider: string): string {
+  if (provider === "fake") {
+    return "Local Deterministic";
+  }
+  if (provider === "azure") {
+    return "Azure OpenAI";
+  }
+  return formatLabel(provider);
+}
+
 function App() {
   const [cases, setCases] = useState<DemoCaseId[]>(fallbackCases);
   const [selectedCase, setSelectedCase] = useState<DemoCaseId>(fallbackCases[0]);
@@ -131,7 +141,6 @@ function App() {
     try {
       const result = await getInvestigation(runId);
       setInvestigation(result);
-      setSelectedCase(result.case_id);
     } catch (exc) {
       setError(exc instanceof Error ? exc.message : "Investigation failed to load.");
     } finally {
@@ -244,10 +253,18 @@ function App() {
                 : "Run the workflow to inspect hypotheses, citations, and review gates."}
             </p>
           </div>
-          <StatusBadge
-            label={investigation?.status ?? "ready"}
-            tone={statusTone(investigation?.status ?? "ready")}
-          />
+          <div className="header-badges">
+            <StatusBadge
+              label={investigation?.status ?? "ready"}
+              tone={statusTone(investigation?.status ?? "ready")}
+            />
+            {investigation ? (
+              <StatusBadge
+                label={providerLabel(investigation.demo_provider)}
+                tone="neutral"
+              />
+            ) : null}
+          </div>
         </header>
 
         {error ? (
@@ -392,7 +409,9 @@ function RunHistoryPanel({
                 </span>
                 <span className="run-main">
                   <strong>{formatLabel(run.case_id)}</strong>
-                  <small>{run.incident_id}</small>
+                  <small>
+                    {providerLabel(run.demo_provider)} - {run.incident_id}
+                  </small>
                 </span>
                 <StatusBadge label={run.status} tone={statusTone(run.status)} />
               </button>

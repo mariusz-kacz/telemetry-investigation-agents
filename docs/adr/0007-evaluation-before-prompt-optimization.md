@@ -24,8 +24,12 @@ place.
 Prompt changes should be judged against the batch evaluation command:
 
 ```powershell
-uv run telemetry-evals
+uv run telemetry-evals --provider azure
 ```
+
+The provider flag is required because current batch evaluations use live Azure
+OpenAI model calls. They are prompt/model regression checks, not the default
+offline repository verification path.
 
 Evaluation scoring should inspect accepted reviewed hypotheses for category and
 unsupported-claim checks. Blocked or disputed hypotheses are not auto-usable

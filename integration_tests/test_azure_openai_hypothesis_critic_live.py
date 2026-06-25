@@ -1,4 +1,4 @@
-from telemetry_agents.app.config import get_settings
+from telemetry_agents.app.config import get_settings, require_azure_setting
 from telemetry_agents.domain import (
     EvidenceSource,
     HypothesisCritiqueResult,
@@ -24,10 +24,18 @@ from telemetry_agents.investigation.hypothesis_critic import HypothesisCritiqueR
 def test_live_azure_critic_returns_evidence_bounded_findings() -> None:
     settings = get_settings()
 
-    client = create_azure_openai_client(endpoint=settings.azure_openai_endpoint)
+    client = create_azure_openai_client(
+        endpoint=require_azure_setting(
+            settings.azure_openai_endpoint,
+            "TELEMETRY_AGENTS_AZURE_OPENAI_ENDPOINT",
+        )
+    )
     critic = AzureOpenAIHypothesisCritic(
         client=client,
-        deployment_name=settings.azure_openai_hypothesis_deployment_name,
+        deployment_name=require_azure_setting(
+            settings.azure_openai_hypothesis_deployment_name,
+            "TELEMETRY_AGENTS_AZURE_OPENAI_HYPOTHESIS_DEPLOYMENT_NAME",
+        ),
     )
 
     evidence = _retrieved_evidence()

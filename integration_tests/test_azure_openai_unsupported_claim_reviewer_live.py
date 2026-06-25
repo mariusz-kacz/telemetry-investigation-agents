@@ -1,4 +1,4 @@
-from telemetry_agents.app.config import get_settings
+from telemetry_agents.app.config import get_settings, require_azure_setting
 from telemetry_agents.domain import (
     EvidenceSource,
     HypothesisCategory,
@@ -27,11 +27,17 @@ def test_live_azure_reviewer_returns_evidence_bounded_findings() -> None:
     settings = get_settings()
 
     client = create_azure_openai_client(
-        endpoint=settings.azure_openai_endpoint,
+        endpoint=require_azure_setting(
+            settings.azure_openai_endpoint,
+            "TELEMETRY_AGENTS_AZURE_OPENAI_ENDPOINT",
+        ),
     )
     adapter = AzureOpenAIUnsupportedClaimAdapter(
         client=client,
-        deployment_name=settings.azure_openai_evaluation_deployment_name,
+        deployment_name=require_azure_setting(
+            settings.azure_openai_evaluation_deployment_name,
+            "TELEMETRY_AGENTS_AZURE_OPENAI_EVALUATION_DEPLOYMENT_NAME",
+        ),
     )
 
     reviewer = GuardedUnsupportedClaimReviewer(

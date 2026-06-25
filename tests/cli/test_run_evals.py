@@ -27,6 +27,23 @@ def test_help_exits_without_loading_config(
     assert exc_info.value.code == 0
     output = capsys.readouterr().out
     assert "Run telemetry investigation evaluation cases." in output
+    assert "--provider" in output
+
+
+def test_provider_is_required_before_loading_config(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def fail_if_called() -> None:
+        pytest.fail("get_settings should not be called when --provider is missing")
+
+    monkeypatch.setattr(run_evals, "get_settings", fail_if_called)
+
+    with pytest.raises(SystemExit) as exc_info:
+        run_evals.main([])
+
+    assert exc_info.value.code == 2
+    error_output = capsys.readouterr().err
+    assert "--provider" in error_output
 
 
 def test_print_report_outputs_readable_summary(

@@ -188,12 +188,14 @@ def test_list_investigations_returns_run_summaries() -> None:
             InvestigationRunResult(
                 run_id="run-history-001",
                 case_id="conflicting-evidence",
+                demo_provider="fake",
                 incident_id="inc-conflicting-evidence-001",
                 status=InvestigationRunStatus.AWAITING_REVIEW,
             ),
             InvestigationRunResult(
                 run_id="run-history-002",
                 case_id="checkout-database-timeout",
+                demo_provider="azure",
                 incident_id="inc-checkout-001",
                 status=InvestigationRunStatus.COMPLETED,
             ),
@@ -211,12 +213,14 @@ def test_list_investigations_returns_run_summaries() -> None:
             {
                 "run_id": "run-history-001",
                 "case_id": "conflicting-evidence",
+                "demo_provider": "fake",
                 "incident_id": "inc-conflicting-evidence-001",
                 "status": "awaiting_review",
             },
             {
                 "run_id": "run-history-002",
                 "case_id": "checkout-database-timeout",
+                "demo_provider": "azure",
                 "incident_id": "inc-checkout-001",
                 "status": "completed",
             },
@@ -257,6 +261,7 @@ def _result(
     return DemoInvestigationResult(
         run_id=run_id,
         case_id="checkout-database-timeout",
+        demo_provider="fake",
         incident=Incident.model_validate(
             {
                 "incident_id": "inc-checkout-001",

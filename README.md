@@ -14,9 +14,20 @@ This mirrors the useful part of enterprise layering without copying its ceremony
 
 ## FastAPI Demo API
 
-Start the local API:
+Start the local API in the default deterministic demo mode:
 
 ```powershell
+uv run uvicorn telemetry_agents.api.app:app --reload
+```
+
+The default `TELEMETRY_AGENTS_DEMO_PROVIDER=fake` mode runs the real retrieval,
+validation, graph, checkpointing, API, and UI path without making Azure OpenAI
+calls.
+
+To run the same demo with live Azure OpenAI calls, set:
+
+```powershell
+$env:TELEMETRY_AGENTS_DEMO_PROVIDER="azure"
 uv run uvicorn telemetry_agents.api.app:app --reload
 ```
 
@@ -51,3 +62,14 @@ curl -X POST http://127.0.0.1:8000/api/v1/investigations/<run_id>/review `
 The API is intentionally synchronous for this checkpoint. Background execution,
 polling workers, WebSockets, auth, and arbitrary incident ingestion are later
 hardening concerns.
+
+## Live Evaluation
+
+The batch evaluation command uses live Azure OpenAI model calls and requires
+Azure configuration from `.env`:
+
+```powershell
+uv run telemetry-evals --provider azure
+```
+
+Run `uv run pytest` for the default offline verification path.

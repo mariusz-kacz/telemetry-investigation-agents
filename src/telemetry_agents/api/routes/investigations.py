@@ -41,6 +41,7 @@ def to_investigation_response(result: DemoInvestigationResult) -> InvestigationR
     return InvestigationResponse(
         run_id=result.run_id,
         case_id=result.case_id,
+        demo_provider=result.demo_provider,
         incident=IncidentResponse(
             id=result.incident.incident_id,
             service=result.incident.service,
@@ -191,6 +192,7 @@ def get_investigations(
             InvestigationRunResponse(
                 run_id=run.run_id,
                 case_id=run.case_id,
+                demo_provider=run.demo_provider,
                 incident_id=run.incident_id,
                 status=run.status.value.lower(),
             )

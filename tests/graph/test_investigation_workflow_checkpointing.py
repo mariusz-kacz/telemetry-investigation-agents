@@ -148,6 +148,7 @@ def test_registered_run_id_is_used_as_checkpoint_thread_id(tmp_path: Path) -> No
         case_id="case-001",
         incident_id="incident-checkout-timeout",
         status=InvestigationRunStatus.PENDING,
+        demo_provider="unknown",
     )
 
     state = graph.get_state(

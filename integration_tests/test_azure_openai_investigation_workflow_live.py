@@ -2,7 +2,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 
-from telemetry_agents.app.config import get_settings
+from telemetry_agents.app.config import get_settings, require_azure_setting
 from telemetry_agents.domain import (
     EvidenceSource,
     Incident,
@@ -67,16 +67,25 @@ def build_memory_investigation_workflow_graph():
     settings = get_settings()
 
     client = create_azure_openai_client(
-        endpoint=settings.azure_openai_endpoint,
+        endpoint=require_azure_setting(
+            settings.azure_openai_endpoint,
+            "TELEMETRY_AGENTS_AZURE_OPENAI_ENDPOINT",
+        ),
     )
     generator = AzureOpenAIHypothesisGenerator(
         client=client,
-        deployment_name=settings.azure_openai_hypothesis_deployment_name,
+        deployment_name=require_azure_setting(
+            settings.azure_openai_hypothesis_deployment_name,
+            "TELEMETRY_AGENTS_AZURE_OPENAI_HYPOTHESIS_DEPLOYMENT_NAME",
+        ),
     )
 
     critic = AzureOpenAIHypothesisCritic(
         client=client,
-        deployment_name=settings.azure_openai_hypothesis_deployment_name,
+        deployment_name=require_azure_setting(
+            settings.azure_openai_hypothesis_deployment_name,
+            "TELEMETRY_AGENTS_AZURE_OPENAI_HYPOTHESIS_DEPLOYMENT_NAME",
+        ),
     )
 
     checkpointer = InMemorySaver()

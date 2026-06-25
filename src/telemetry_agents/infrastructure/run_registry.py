@@ -23,6 +23,7 @@ class InvestigationRunRecord:
     case_id: str
     incident_id: str
     status: InvestigationRunStatus
+    demo_provider: str
 
 
 def initialize_run_registry(db_path: Path) -> None:
@@ -32,7 +33,8 @@ def initialize_run_registry(db_path: Path) -> None:
                 run_id TEXT PRIMARY KEY,
                 case_id TEXT NOT NULL,
                 incident_id TEXT NOT NULL,
-                status TEXT NOT NULL
+                status TEXT NOT NULL,
+                demo_provider TEXT NOT NULL DEFAULT 'unknown'
             )
         """)
         columns = {
@@ -46,6 +48,13 @@ def initialize_run_registry(db_path: Path) -> None:
                 ADD COLUMN case_id TEXT NOT NULL DEFAULT 'unknown'
                 """
             )
+        if "demo_provider" not in columns:
+            conn.execute(
+                """
+                ALTER TABLE investigation_runs
+                ADD COLUMN demo_provider TEXT NOT NULL DEFAULT 'unknown'
+                """
+            )
 
 
 def create_investigation_run(
@@ -54,22 +63,27 @@ def create_investigation_run(
     run_id: str,
     case_id: str,
     incident_id: str,
+    demo_provider: str = "unknown",
     status: InvestigationRunStatus = InvestigationRunStatus.PENDING,
 ) -> InvestigationRunRecord:
     """Insert one investigation run into SQLite and return the stored record."""
     with sqlite3.connect(db_path) as conn:
         conn.execute(
             """
-            INSERT INTO investigation_runs (run_id, case_id, incident_id, status)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO investigation_runs (run_id, case_id, incident_id, status, demo_provider)
+            VALUES (?, ?, ?, ?, ?)
             """,
-            (run_id, case_id, incident_id, status.value),
+            (run_id, case_id, incident_id, status.value, demo_provider),
         )
 
         conn.commit()
 
         return InvestigationRunRecord(
-            run_id=run_id, case_id=case_id, incident_id=incident_id, status=status
+            run_id=run_id,
+            case_id=case_id,
+            incident_id=incident_id,
+            status=status,
+            demo_provider=demo_provider,
         )
 
 
@@ -95,7 +109,7 @@ def update_investigation_run(
 
         row = conn.execute(
             """
-            SELECT run_id, case_id, incident_id, status
+            SELECT run_id, case_id, incident_id, status, demo_provider
             FROM investigation_runs
             WHERE run_id = ?
             """,
@@ -109,12 +123,13 @@ def update_investigation_run(
             f"Investigation run {run_id} was not found after update"
         )
 
-    stored_run_id, case_id, incident_id, stored_status = row
+    stored_run_id, case_id, incident_id, stored_status, demo_provider = row
     return InvestigationRunRecord(
         run_id=stored_run_id,
         case_id=case_id,
         incident_id=incident_id,
         status=InvestigationRunStatus(stored_status),
+        demo_provider=demo_provider,
     )
 
 
@@ -124,19 +139,20 @@ def get_resumable_investigation_run(
     """Read one investigation run from SQLite by run id."""
     with sqlite3.connect(db_path) as conn:
         row = conn.execute(
-            "SELECT run_id, case_id, incident_id, status FROM investigation_runs WHERE run_id = ? and status = ?",
+            "SELECT run_id, case_id, incident_id, status, demo_provider FROM investigation_runs WHERE run_id = ? and status = ?",
             (run_id, InvestigationRunStatus.AWAITING_REVIEW.value),
         ).fetchone()
 
         if row is None:
             return None
 
-        run_id, case_id, incident_id, status = row
+        run_id, case_id, incident_id, status, demo_provider = row
         return InvestigationRunRecord(
             run_id=run_id,
             case_id=case_id,
             incident_id=incident_id,
             status=InvestigationRunStatus(status),
+            demo_provider=demo_provider,
         )
 
 
@@ -148,19 +164,20 @@ def get_investigation_run(
     """Read one investigation run from SQLite by run id."""
     with sqlite3.connect(db_path) as conn:
         row = conn.execute(
-            "SELECT run_id, case_id, incident_id, status FROM investigation_runs WHERE run_id = ?",
+            "SELECT run_id, case_id, incident_id, status, demo_provider FROM investigation_runs WHERE run_id = ?",
             (run_id,),
         ).fetchone()
 
         if row is None:
             return None
 
-        run_id, case_id, incident_id, status = row
+        run_id, case_id, incident_id, status, demo_provider = row
         return InvestigationRunRecord(
             run_id=run_id,
             case_id=case_id,
             incident_id=incident_id,
             status=InvestigationRunStatus(status),
+            demo_provider=demo_provider,
         )
 
 
@@ -169,7 +186,7 @@ def list_investigation_runs(db_path: Path) -> list[InvestigationRunRecord]:
     with sqlite3.connect(db_path) as conn:
         rows = conn.execute(
             """
-            SELECT run_id, case_id, incident_id, status
+            SELECT run_id, case_id, incident_id, status, demo_provider
             FROM investigation_runs
             """,
         ).fetchall()
@@ -180,6 +197,7 @@ def list_investigation_runs(db_path: Path) -> list[InvestigationRunRecord]:
             case_id=case_id,
             incident_id=incident_id,
             status=InvestigationRunStatus(status),
+            demo_provider=demo_provider,
         )
-        for run_id, case_id, incident_id, status in rows
+        for run_id, case_id, incident_id, status, demo_provider in rows
     ]

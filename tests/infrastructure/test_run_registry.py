@@ -29,6 +29,7 @@ def test_initialize_run_registry_creates_run_registry(
         run_id="run-001",
         case_id="case-001",
         incident_id="incident-checkout-timeout",
+        demo_provider="unknown",
         status=InvestigationRunStatus.PENDING,
     )
     assert get_investigation_run(db_path, run_id="run-001") == stored
@@ -66,6 +67,7 @@ def test_initialize_run_registry_adds_case_id_to_existing_registry(
         run_id="run-001",
         case_id="unknown",
         incident_id="incident-checkout-timeout",
+        demo_provider="unknown",
         status=InvestigationRunStatus.PENDING,
     )
 
@@ -81,6 +83,7 @@ def test_get_resumable_investigation_run_returns_awaiting_review_run(
         run_id="run-001",
         case_id="case-001",
         incident_id="incident-checkout-timeout",
+        demo_provider="fake",
         status=InvestigationRunStatus.AWAITING_REVIEW,
     )
 
@@ -98,6 +101,7 @@ def test_get_resumable_investigation_run_ignores_completed_run(
         run_id="run-001",
         case_id="case-001",
         incident_id="incident-checkout-timeout",
+        demo_provider="fake",
         status=InvestigationRunStatus.COMPLETED,
     )
 
@@ -125,6 +129,7 @@ def test_list_investigation_runs_returns_typed_records(
         run_id="run-001",
         case_id="case-001",
         incident_id="incident-checkout-timeout",
+        demo_provider="fake",
         status=InvestigationRunStatus.COMPLETED,
     )
     second_run = create_investigation_run(
@@ -132,6 +137,7 @@ def test_list_investigation_runs_returns_typed_records(
         run_id="run-002",
         case_id="case-002",
         incident_id="incident-conflicting-evidence",
+        demo_provider="azure",
         status=InvestigationRunStatus.AWAITING_REVIEW,
     )
 

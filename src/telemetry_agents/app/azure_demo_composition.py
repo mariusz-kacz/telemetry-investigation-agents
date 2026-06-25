@@ -1,4 +1,4 @@
-from telemetry_agents.app.config import Settings
+from telemetry_agents.app.config import Settings, require_azure_setting
 from telemetry_agents.app.demo_investigation_service import (
     build_demo_investigation_service,
     DemoInvestigationService,
@@ -21,17 +21,26 @@ def build_azure_demo_investigation_service(
     settings: Settings,
 ) -> DemoInvestigationService:
     openai_client = create_azure_openai_client(
-        endpoint=settings.azure_openai_endpoint,
+        endpoint=require_azure_setting(
+            settings.azure_openai_endpoint,
+            "TELEMETRY_AGENTS_AZURE_OPENAI_ENDPOINT",
+        ),
     )
 
     generator = AzureOpenAIHypothesisGenerator(
         client=openai_client,
-        deployment_name=settings.azure_openai_hypothesis_deployment_name,
+        deployment_name=require_azure_setting(
+            settings.azure_openai_hypothesis_deployment_name,
+            "TELEMETRY_AGENTS_AZURE_OPENAI_HYPOTHESIS_DEPLOYMENT_NAME",
+        ),
     )
 
     critic = AzureOpenAIHypothesisCritic(
         client=openai_client,
-        deployment_name=settings.azure_openai_hypothesis_deployment_name,
+        deployment_name=require_azure_setting(
+            settings.azure_openai_hypothesis_deployment_name,
+            "TELEMETRY_AGENTS_AZURE_OPENAI_HYPOTHESIS_DEPLOYMENT_NAME",
+        ),
     )
 
     checkpointer = create_sqlite_checkpointer(settings.checkpoint_db_path)
@@ -48,4 +57,5 @@ def build_azure_demo_investigation_service(
         read_workflow_state=workflow.read_state,
         demo_data_root=settings.data_root,
         run_registry_db_path=settings.run_registry_db_path,
+        demo_provider="azure",
     )
