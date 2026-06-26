@@ -19,6 +19,7 @@ from telemetry_agents.domain import (
 from telemetry_agents.infrastructure.azure_openai_hypothesis_critic import (
     AzureOpenAIHypothesisCritic,
 )
+from telemetry_agents.infrastructure.prompt_loader import load_prompt
 from telemetry_agents.investigation.evidence_retrieval import (
     CitationMetadata,
     RetrievedEvidence,
@@ -179,7 +180,7 @@ def test_critic_passes_system_prompt_to_model() -> None:
     system_message = next(
         (item["content"] for item in call["messages"] if item["role"] == "system"), None
     )
-    assert system_message is not None
+    assert system_message == load_prompt("hypothesis_critic.md")
     assert "category" in system_message
     assert "statement" in system_message
     assert "Causal mechanism" in system_message

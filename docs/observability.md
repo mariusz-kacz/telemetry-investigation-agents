@@ -13,8 +13,8 @@ operation.
 
 ## Runtime Configuration
 
-Structured observability logging is configured by the eval CLI and writes JSON
-events to stdout through the dedicated logger:
+Structured observability logging is configured by the FastAPI app lifecycle and
+the eval CLI. It writes JSON events to stdout through the dedicated logger:
 
 ```text
 telemetry_agents.observability
@@ -27,7 +27,8 @@ $env:TELEMETRY_AGENTS_TRACING_ENABLED="true"
 uv run telemetry-evals --provider azure
 ```
 
-When tracing is not enabled, the workflow still emits structured JSON logs.
+The same setting is read when running the FastAPI backend. When tracing is not
+enabled, the workflow still emits structured JSON logs.
 
 ## Structured Event Logging
 

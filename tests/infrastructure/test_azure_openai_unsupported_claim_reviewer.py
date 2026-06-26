@@ -19,6 +19,7 @@ from telemetry_agents.evaluation.unsupported_claim_review import (
 from telemetry_agents.infrastructure.azure_openai_unsupported_claim_adapter import (
     AzureOpenAIUnsupportedClaimAdapter,
 )
+from telemetry_agents.infrastructure.prompt_loader import load_prompt
 from telemetry_agents.investigation.evidence_retrieval import (
     CitationMetadata,
     RetrievedEvidence,
@@ -112,6 +113,7 @@ def test_review_passes_bounded_system_prompt_to_model() -> None:
     system_message = next(
         item["content"] for item in call["messages"] if item["role"] == "system"
     )
+    assert system_message == load_prompt("unsupported_claim_reviewer.md")
     assert "unsupported causal claims" in system_message
     assert "only hypothesis IDs" in system_message
     assert "only evidence IDs" in system_message
