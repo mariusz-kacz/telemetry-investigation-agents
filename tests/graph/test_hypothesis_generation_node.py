@@ -1,3 +1,6 @@
+import json
+import logging
+
 import pytest
 
 from telemetry_agents.domain import (
@@ -16,7 +19,9 @@ from telemetry_agents.investigation.evidence_retrieval import (
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 from telemetry_agents.investigation.hypothesis_generation import (
     HypothesisGenerationRequest,
+    HypothesisGeneratorUnavailableError,
 )
+from telemetry_agents.shared.observability import LOGGER_NAME
 
 
 class FakeHypothesisGenerator:
@@ -29,6 +34,13 @@ class FakeHypothesisGenerator:
     ) -> list[InvestigationHypothesis]:
         self.request = request
         return self.hypotheses
+
+
+class UnavailableHypothesisGenerator:
+    def generate(
+        self, request: HypothesisGenerationRequest
+    ) -> list[InvestigationHypothesis]:
+        raise HypothesisGeneratorUnavailableError("generator unavailable")
 
 
 def _incident() -> Incident:
@@ -107,3 +119,36 @@ def test_hypothesis_generation_node_requires_collected_evidence() -> None:
 
     with pytest.raises(ValueError, match="collected_evidence"):
         node({"normalized_incident": _incident()})
+
+
+def test_hypothesis_generation_node_adds_warning_when_generator_unavailable(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.INFO, logger=LOGGER_NAME)
+    node = make_hypothesis_generation_node(UnavailableHypothesisGenerator())
+
+    result = node(
+        {
+            "run_id": "run-001",
+            "normalized_incident": _incident(),
+            "collected_evidence": [_retrieved_evidence()],
+        }
+    )
+
+    assert result == {
+        "hypotheses": [],
+        "warnings": [
+            "Hypothesis generator was unavailable; no candidate hypotheses were generated."
+        ],
+    }
+    events = [json.loads(record.message) for record in caplog.records]
+    assert events == [
+        {
+            "event": "hypothesis.generation.fallback",
+            "run_id": "run-001",
+            "incident_id": "inc-001",
+            "reason": "generator_unavailable",
+            "fallback": "no_hypotheses_generated",
+            "warning_added": True,
+        }
+    ]

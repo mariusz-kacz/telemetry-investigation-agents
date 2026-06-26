@@ -70,6 +70,13 @@ def test_initialize_run_registry_adds_case_id_to_existing_registry(
         demo_provider="unknown",
         status=InvestigationRunStatus.PENDING,
     )
+    with sqlite3.connect(db_path) as conn:
+        created_at = conn.execute(
+            "SELECT created_at FROM investigation_runs WHERE run_id = ?",
+            ("run-001",),
+        ).fetchone()[0]
+
+    assert created_at
 
 
 def test_get_resumable_investigation_run_returns_awaiting_review_run(
@@ -118,7 +125,7 @@ def test_get_investigation_run_returns_none_for_unknown_run(
     assert get_investigation_run(db_path, run_id="missing-run") is None
 
 
-def test_list_investigation_runs_returns_typed_records(
+def test_list_investigation_runs_returns_newest_typed_records_first(
     tmp_path: Path,
 ) -> None:
     db_path = tmp_path / "checkpoints.sqlite"
@@ -141,4 +148,14 @@ def test_list_investigation_runs_returns_typed_records(
         status=InvestigationRunStatus.AWAITING_REVIEW,
     )
 
-    assert list_investigation_runs(db_path) == [first_run, second_run]
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            "UPDATE investigation_runs SET created_at = ? WHERE run_id = ?",
+            ("2026-06-25T10:00:00+00:00", first_run.run_id),
+        )
+        conn.execute(
+            "UPDATE investigation_runs SET created_at = ? WHERE run_id = ?",
+            ("2026-06-26T10:00:00+00:00", second_run.run_id),
+        )
+
+    assert list_investigation_runs(db_path) == [second_run, first_run]

@@ -1,10 +1,16 @@
 from collections.abc import Callable
 
 from telemetry_agents.graph.investigation_state import InvestigationGraphState
+from telemetry_agents.graph.observability import graph_correlation_fields
 from telemetry_agents.investigation.hypothesis_generation import (
     HypothesisGenerator,
     HypothesisGenerationRequest,
+    HypothesisGeneratorUnavailableError,
     generate_hypotheses,
+)
+from telemetry_agents.shared.observability import (
+    EVENT_HYPOTHESIS_GENERATION_FALLBACK,
+    emit_event,
 )
 
 
@@ -30,7 +36,22 @@ def make_hypothesis_generation_node(
             incident=incident,
             evidence=evidence,
         )
-        hypotheses = generate_hypotheses(request, generator)
+        try:
+            hypotheses = generate_hypotheses(request, generator)
+        except HypothesisGeneratorUnavailableError:
+            emit_event(
+                EVENT_HYPOTHESIS_GENERATION_FALLBACK,
+                **graph_correlation_fields(state),
+                reason="generator_unavailable",
+                fallback="no_hypotheses_generated",
+                warning_added=True,
+            )
+            return {
+                "hypotheses": [],
+                "warnings": [
+                    "Hypothesis generator was unavailable; no candidate hypotheses were generated."
+                ],
+            }
 
         return {"hypotheses": hypotheses}
 

@@ -23,6 +23,10 @@ class HypothesisGenerator(Protocol):
         ...
 
 
+class HypothesisGeneratorUnavailableError(Exception):
+    pass
+
+
 def generate_hypotheses(
     request: HypothesisGenerationRequest,
     generator: HypothesisGenerator,

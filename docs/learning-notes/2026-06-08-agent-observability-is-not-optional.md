@@ -60,7 +60,7 @@ Structured logs and spans are complementary:
 
 The project keeps both because neither replaces the other.
 
-Tracing is opt-in through `TELEMETRY_AGENTS_TRACING=true` because console span
+Tracing is opt-in through `TELEMETRY_AGENTS_TRACING_ENABLED=true` because console span
 output is intentionally verbose.
 
 ## Production concerns

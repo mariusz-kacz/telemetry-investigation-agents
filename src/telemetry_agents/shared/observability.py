@@ -22,6 +22,7 @@ EVENT_HYPOTHESIS_VALIDATION_CONFIDENCE_ADJUSTED = (
     "hypothesis.validation.confidence_adjusted"
 )
 EVENT_HYPOTHESIS_VALIDATION_REJECTED = "hypothesis.validation.rejected"
+EVENT_HYPOTHESIS_GENERATION_FALLBACK = "hypothesis.generation.fallback"
 EVENT_HYPOTHESIS_CRITIC_FALLBACK = "hypothesis.critic.fallback"
 EVENT_HYPOTHESIS_CRITIC_COMPLETED = "hypothesis.critic.completed"
 EVENT_HYPOTHESIS_REVIEW_COMPLETED = "hypothesis.review.completed"

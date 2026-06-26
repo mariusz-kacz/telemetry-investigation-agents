@@ -23,7 +23,7 @@ telemetry_agents.observability
 Local OpenTelemetry console tracing is opt-in:
 
 ```powershell
-$env:TELEMETRY_AGENTS_TRACING="true"
+$env:TELEMETRY_AGENTS_TRACING_ENABLED="true"
 uv run telemetry-evals --provider azure
 ```
 
@@ -83,7 +83,7 @@ investigation workflow steps.
 
 ## Span Model
 
-With `TELEMETRY_AGENTS_TRACING=true`, a local eval case maps to one logical
+With `TELEMETRY_AGENTS_TRACING_ENABLED=true`, a local eval case maps to one logical
 trace:
 
 ```text

@@ -1,5 +1,6 @@
 import sqlite3
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 
@@ -26,6 +27,10 @@ class InvestigationRunRecord:
     demo_provider: str
 
 
+def _utc_now_iso() -> str:
+    return datetime.now(UTC).isoformat()
+
+
 def initialize_run_registry(db_path: Path) -> None:
     """Create the minimal SQLite schema needed for Phase 11."""
     with sqlite3.connect(db_path) as conn:
@@ -34,7 +39,8 @@ def initialize_run_registry(db_path: Path) -> None:
                 case_id TEXT NOT NULL,
                 incident_id TEXT NOT NULL,
                 status TEXT NOT NULL,
-                demo_provider TEXT NOT NULL DEFAULT 'unknown'
+                demo_provider TEXT NOT NULL DEFAULT 'unknown',
+                created_at TEXT NOT NULL
             )
         """)
         columns = {
@@ -55,6 +61,21 @@ def initialize_run_registry(db_path: Path) -> None:
                 ADD COLUMN demo_provider TEXT NOT NULL DEFAULT 'unknown'
                 """
             )
+        if "created_at" not in columns:
+            conn.execute(
+                """
+                ALTER TABLE investigation_runs
+                ADD COLUMN created_at TEXT
+                """
+            )
+        conn.execute(
+            """
+            UPDATE investigation_runs
+            SET created_at = ?
+            WHERE created_at IS NULL
+            """,
+            (_utc_now_iso(),),
+        )
 
 
 def create_investigation_run(
@@ -70,10 +91,10 @@ def create_investigation_run(
     with sqlite3.connect(db_path) as conn:
         conn.execute(
             """
-            INSERT INTO investigation_runs (run_id, case_id, incident_id, status, demo_provider)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO investigation_runs (run_id, case_id, incident_id, status, demo_provider, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (run_id, case_id, incident_id, status.value, demo_provider),
+            (run_id, case_id, incident_id, status.value, demo_provider, _utc_now_iso()),
         )
 
         conn.commit()
@@ -188,6 +209,7 @@ def list_investigation_runs(db_path: Path) -> list[InvestigationRunRecord]:
             """
             SELECT run_id, case_id, incident_id, status, demo_provider
             FROM investigation_runs
+            ORDER BY created_at DESC, run_id DESC
             """,
         ).fetchall()
 

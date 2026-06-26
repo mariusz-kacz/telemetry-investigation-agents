@@ -25,6 +25,7 @@ from telemetry_agents.investigation.evidence_retrieval import (
 from telemetry_agents.investigation.evidence_scoring import EvidenceStrength
 from telemetry_agents.investigation.hypothesis_generation import (
     HypothesisGenerationRequest,
+    HypothesisGeneratorUnavailableError,
 )
 from telemetry_agents.shared.observability import LOGGER_NAME
 
@@ -242,7 +243,7 @@ def test_generate_raises_value_error_from_empty_response() -> None:
         generator.generate(_request())
 
 
-def test_generate_propagates_provider_connection_failure(
+def test_generate_maps_provider_connection_failure_to_unavailable_error(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     caplog.set_level(logging.INFO, logger=LOGGER_NAME)
@@ -253,7 +254,7 @@ def test_generate_propagates_provider_connection_failure(
         deployment_name="hypothesis-model",
     )
 
-    with pytest.raises(APIConnectionError):
+    with pytest.raises(HypothesisGeneratorUnavailableError):
         generator.generate(_request())
 
     events = _observability_events(caplog)
