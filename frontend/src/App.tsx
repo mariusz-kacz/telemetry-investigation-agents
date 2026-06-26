@@ -105,6 +105,7 @@ function App() {
   async function runInvestigation() {
     setLoading(true);
     setError(null);
+    setInvestigation(null);
     try {
       const result = await startInvestigation(selectedCase);
       setInvestigation(result);
@@ -178,7 +179,7 @@ function App() {
             <GitBranch size={22} aria-hidden="true" />
           </span>
           <div>
-            <p className="eyebrow">LangGraph portfolio demo</p>
+            <p className="eyebrow">Investigation workbench</p>
             <h1>Telemetry Investigation Agents</h1>
           </div>
         </div>
@@ -250,7 +251,7 @@ function App() {
                 ? `${investigation.incident.service} - ${formatLabel(
                     investigation.incident.impact
                   )} impact`
-                : "Run the workflow to inspect hypotheses, citations, and review gates."}
+                : "Select a case and run the workflow to inspect hypotheses, evidence, and review state."}
             </p>
           </div>
           <div className="header-badges">
@@ -271,6 +272,13 @@ function App() {
           <div className="notice warning-notice" role="status">
             <AlertTriangle size={18} aria-hidden="true" />
             <span>{error}</span>
+          </div>
+        ) : null}
+
+        {loading ? (
+          <div className="notice running-notice" role="status" aria-live="polite">
+            <RefreshCcw className="spin-icon" size={18} aria-hidden="true" />
+            <span>Investigation is running. The synchronous workflow is retrieving evidence, reviewing hypotheses, and preparing the result.</span>
           </div>
         ) : null}
 
@@ -300,14 +308,18 @@ function App() {
         </section>
 
         <section className="content-grid">
-          <TopHypothesisPanel investigation={investigation} />
-          <FinalReportPanel investigation={investigation} />
-          <EvidencePanel evidence={investigation?.evidence ?? []} />
-          <HypothesisPanel hypotheses={investigation?.hypotheses ?? []} />
-          <ReviewPanel
+          <OutcomePanel
             investigation={investigation}
             reviewing={reviewing}
             onReview={review}
+          />
+          <EvidencePanel
+            evidence={investigation?.evidence ?? []}
+            collapsed={investigation?.report_ready ?? false}
+          />
+          <HypothesisPanel
+            hypotheses={investigation?.hypotheses ?? []}
+            collapsed={investigation?.report_ready ?? false}
           />
         </section>
       </section>
@@ -424,160 +436,7 @@ function RunHistoryPanel({
   );
 }
 
-function FinalReportPanel({
-  investigation
-}: {
-  investigation: Investigation | null;
-}) {
-  const report = investigation?.final_report;
-
-  return (
-    <article className="panel report-panel">
-      <div className="panel-heading">
-        <h3>Final Report</h3>
-        {report ? (
-          <StatusBadge
-            label={report.human_review_status}
-            tone={statusTone(report.human_review_status)}
-          />
-        ) : null}
-      </div>
-      {report ? (
-        <>
-          <p className="report-summary">{report.summary}</p>
-          <div className="report-facts">
-            <div className="detail-row">
-              <span>Confidence</span>
-              <strong>{confidencePercent(report.confidence)}%</strong>
-            </div>
-            <div className="detail-row">
-              <span>Category</span>
-              <strong>{report.category ? formatLabel(report.category) : "None"}</strong>
-            </div>
-            <div className="detail-row">
-              <span>Selected hypothesis</span>
-              <strong>{report.selected_hypothesis_id ?? "None"}</strong>
-            </div>
-          </div>
-          {report.uncertainty ? (
-            <p className="report-uncertainty">{report.uncertainty}</p>
-          ) : null}
-          <div className="report-citations" aria-label="Report citations">
-            {report.evidence_citations.map((citation) => (
-              <code key={citation.evidence_id}>
-                {citation.evidence_id} - {citation.citation}
-              </code>
-            ))}
-          </div>
-        </>
-      ) : (
-        <EmptyState text="The final report appears after the workflow is approved or safely bypasses human review." />
-      )}
-    </article>
-  );
-}
-
-function TopHypothesisPanel({
-  investigation
-}: {
-  investigation: Investigation | null;
-}) {
-  const topHypothesis = investigation?.top_hypothesis;
-
-  return (
-    <article className="panel top-panel">
-      <div className="panel-heading">
-        <h3>Top Hypothesis</h3>
-        {topHypothesis ? (
-          <StatusBadge
-            label={topHypothesis.review_status}
-            tone={statusTone(topHypothesis.review_status)}
-          />
-        ) : null}
-      </div>
-      {topHypothesis ? (
-        <>
-          <p className="statement">{topHypothesis.statement}</p>
-          <div className="detail-row">
-            <span>Category</span>
-            <strong>{formatLabel(topHypothesis.category)}</strong>
-          </div>
-          <div className="detail-row">
-            <span>Confidence</span>
-            <strong>{confidencePercent(topHypothesis.confidence)}%</strong>
-          </div>
-          <div className="evidence-strip">
-            {topHypothesis.evidence_ids.map((evidenceId) => (
-              <span key={evidenceId}>{evidenceId}</span>
-            ))}
-          </div>
-        </>
-      ) : (
-        <EmptyState text="No hypothesis yet. Start an investigation to populate this panel." />
-      )}
-    </article>
-  );
-}
-
-function EvidencePanel({ evidence }: { evidence: Evidence[] }) {
-  return (
-    <article className="panel evidence-panel">
-      <div className="panel-heading">
-        <h3>Evidence Citations</h3>
-        <span className="count-pill">{evidence.length}</span>
-      </div>
-      {evidence.length === 0 ? (
-        <EmptyState text="Retrieved log, trace, and metric citations will appear here." />
-      ) : (
-        <div className="evidence-list">
-          {evidence.map((item) => (
-            <div className="evidence-item" key={item.evidence_id}>
-              <div>
-                <span className="source-pill">{formatLabel(item.source)}</span>
-                <span className={`strength-pill ${item.strength}`}>
-                  {formatLabel(item.strength)}
-                </span>
-              </div>
-              <p>{item.summary}</p>
-              <code>{item.citation}</code>
-            </div>
-          ))}
-        </div>
-      )}
-    </article>
-  );
-}
-
-function HypothesisPanel({ hypotheses }: { hypotheses: Hypothesis[] }) {
-  return (
-    <article className="panel hypothesis-panel">
-      <div className="panel-heading">
-        <h3>Hypothesis Review</h3>
-        <span className="count-pill">{hypotheses.length}</span>
-      </div>
-      {hypotheses.length === 0 ? (
-        <EmptyState text="Validated and critic-reviewed hypotheses will appear here." />
-      ) : (
-        <div className="hypothesis-list">
-          {hypotheses.map((hypothesis) => (
-            <div className="hypothesis-item" key={hypothesis.id}>
-              <div className="hypothesis-title">
-                <StatusBadge
-                  label={hypothesis.status}
-                  tone={statusTone(hypothesis.status)}
-                />
-                <strong>{confidencePercent(hypothesis.confidence)}%</strong>
-              </div>
-              <p>{hypothesis.summary}</p>
-            </div>
-          ))}
-        </div>
-      )}
-    </article>
-  );
-}
-
-function ReviewPanel({
+function OutcomePanel({
   investigation,
   reviewing,
   onReview
@@ -589,58 +448,324 @@ function ReviewPanel({
   const reviewRequired = investigation?.human_review_required ?? false;
   const reviewActionAvailable =
     reviewRequired && investigation?.status === "awaiting_review";
+  const report = investigation?.final_report;
+  const topHypothesis = investigation?.top_hypothesis;
+
+  if (!investigation) {
+    return (
+      <article className="panel outcome-panel">
+        <div className="panel-heading">
+          <h3>Investigation Outcome</h3>
+          <StatusBadge label="ready" tone="neutral" />
+        </div>
+        <EmptyState text="Run a demo case to produce an evidence-backed investigation outcome." />
+      </article>
+    );
+  }
 
   return (
-    <article className="panel review-panel">
+    <article className="panel outcome-panel">
       <div className="panel-heading">
-        <h3>Human Review Gate</h3>
-        {reviewActionAvailable ? (
-          <StatusBadge label="required" tone="warning" />
-        ) : reviewRequired ? (
+        <h3>{outcomeTitle(investigation)}</h3>
+        {report ? (
           <StatusBadge
-            label="decided"
-            tone={statusTone(investigation?.status ?? "")}
+            label={report.human_review_status}
+            tone={statusTone(report.human_review_status)}
           />
+        ) : reviewActionAvailable ? (
+          <StatusBadge label="review required" tone="warning" />
         ) : (
-          <StatusBadge label="not required" tone="success" />
+          <StatusBadge
+            label={investigation.status}
+            tone={statusTone(investigation.status)}
+          />
         )}
       </div>
-      {investigation ? (
-        <>
-          <ul className="reason-list">
-            {reviewDecisionMessages(investigation, reviewActionAvailable).map((reason) => (
-              <li key={reason}>
-                <CheckCircle2 size={16} aria-hidden="true" />
-                {reason}
-              </li>
-            ))}
-          </ul>
-          <div className="review-actions">
-            <button
-              type="button"
-              onClick={() => onReview(true)}
-              disabled={!reviewActionAvailable || reviewing}
-              title="Approve reviewed investigation"
-            >
-              <CheckCircle2 size={17} aria-hidden="true" />
-              Approve
-            </button>
-            <button
-              type="button"
-              className="secondary-danger"
-              onClick={() => onReview(false)}
-              disabled={!reviewActionAvailable || reviewing}
-              title="Reject reviewed investigation"
-            >
-              <AlertTriangle size={17} aria-hidden="true" />
-              Reject
-            </button>
-          </div>
-        </>
+
+      {report ? (
+        <ReportOutcome report={report} />
+      ) : investigation.status === "rejected" ? (
+        <RejectedOutcome investigation={investigation} />
+      ) : topHypothesis ? (
+        <HypothesisOutcome hypothesis={topHypothesis} />
       ) : (
-        <EmptyState text="Review controls activate when the workflow requires human judgment." />
+        <EmptyState text="No accepted hypothesis is available for this investigation." />
       )}
+
+      {investigation.review_reasons.length > 0 || reviewActionAvailable ? (
+        <ReviewDecision
+          investigation={investigation}
+          reviewActionAvailable={reviewActionAvailable}
+          reviewing={reviewing}
+          onReview={onReview}
+        />
+      ) : null}
     </article>
+  );
+}
+
+function outcomeTitle(investigation: Investigation): string {
+  if (investigation.final_report) {
+    return "Final Investigation Report";
+  }
+  if (investigation.status === "awaiting_review") {
+    return "Review Required";
+  }
+  if (investigation.status === "rejected") {
+    return "Review Rejected";
+  }
+  return "Investigation Outcome";
+}
+
+function ReportOutcome({ report }: { report: NonNullable<Investigation["final_report"]> }) {
+  return (
+    <>
+      <p className="report-summary">{report.summary}</p>
+      <div className="report-facts">
+        <div className="detail-row">
+          <span>Confidence</span>
+          <strong>{confidencePercent(report.confidence)}%</strong>
+        </div>
+        <div className="detail-row">
+          <span>Category</span>
+          <strong>{report.category ? formatLabel(report.category) : "None"}</strong>
+        </div>
+        <div className="detail-row">
+          <span>Selected hypothesis</span>
+          <strong>{report.selected_hypothesis_id ?? "None"}</strong>
+        </div>
+      </div>
+      {report.uncertainty ? (
+        <p className="report-uncertainty">{report.uncertainty}</p>
+      ) : null}
+      <div className="report-citations" aria-label="Report citations">
+        {report.evidence_citations.map((citation) => (
+          <span
+            className="citation-chip"
+            key={citation.evidence_id}
+            tabIndex={0}
+            aria-label={`${formatLabel(citation.source)} citation ${citation.evidence_id}`}
+          >
+            {formatLabel(citation.source)}: {citation.evidence_id}
+            <span className="citation-tooltip" role="tooltip">
+              {citation.summary}
+            </span>
+          </span>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function HypothesisOutcome({
+  hypothesis
+}: {
+  hypothesis: NonNullable<Investigation["top_hypothesis"]>;
+}) {
+  return (
+    <>
+      <p className="statement">{hypothesis.statement}</p>
+      <div className="report-facts">
+        <div className="detail-row">
+          <span>Category</span>
+          <strong>{formatLabel(hypothesis.category)}</strong>
+        </div>
+        <div className="detail-row">
+          <span>Confidence</span>
+          <strong>{confidencePercent(hypothesis.confidence)}%</strong>
+        </div>
+        <div className="detail-row">
+          <span>Review status</span>
+          <strong>{formatLabel(hypothesis.review_status)}</strong>
+        </div>
+      </div>
+      <div className="evidence-strip">
+        {hypothesis.evidence_ids.map((evidenceId) => (
+          <span key={evidenceId}>{evidenceId}</span>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function RejectedOutcome({
+  investigation
+}: {
+  investigation: Investigation;
+}) {
+  return (
+    <>
+      <p className="report-summary">
+        The reviewed investigation was rejected, so no final report was produced.
+      </p>
+      {investigation.top_hypothesis ? (
+        <HypothesisOutcome hypothesis={investigation.top_hypothesis} />
+      ) : null}
+    </>
+  );
+}
+
+function ReviewDecision({
+  investigation,
+  reviewActionAvailable,
+  reviewing,
+  onReview
+}: {
+  investigation: Investigation;
+  reviewActionAvailable: boolean;
+  reviewing: boolean;
+  onReview: (approved: boolean) => void;
+}) {
+  return (
+    <div className="review-decision">
+      <div className="panel-heading compact-heading">
+        <h3>Review Decision</h3>
+        {reviewActionAvailable ? (
+          <StatusBadge label="required" tone="warning" />
+        ) : null}
+      </div>
+      <ul className="reason-list">
+        {reviewDecisionMessages(investigation, reviewActionAvailable).map((reason) => (
+          <li key={reason}>
+            <CheckCircle2 size={16} aria-hidden="true" />
+            {reason}
+          </li>
+        ))}
+      </ul>
+      {reviewActionAvailable ? (
+        <div className="review-actions">
+          <button
+            type="button"
+            onClick={() => onReview(true)}
+            disabled={reviewing}
+            title="Approve reviewed investigation"
+          >
+            <CheckCircle2 size={17} aria-hidden="true" />
+            Approve
+          </button>
+          <button
+            type="button"
+            className="secondary-danger"
+            onClick={() => onReview(false)}
+            disabled={reviewing}
+            title="Reject reviewed investigation"
+          >
+            <AlertTriangle size={17} aria-hidden="true" />
+            Reject
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function EvidencePanel({
+  evidence,
+  collapsed
+}: {
+  evidence: Evidence[];
+  collapsed: boolean;
+}) {
+  if (collapsed) {
+    return (
+      <details className="panel disclosure-panel disclosure-panel-collapsed">
+        <summary className="panel-heading disclosure-heading">
+          <h3>Evidence Citations</h3>
+          <span className="count-pill">{evidence.length}</span>
+        </summary>
+        <EvidenceList evidence={evidence} />
+      </details>
+    );
+  }
+
+  return (
+    <details className="panel disclosure-panel evidence-panel" open>
+      <summary className="panel-heading disclosure-heading">
+        <h3>Evidence Citations</h3>
+        <span className="count-pill">{evidence.length}</span>
+      </summary>
+      <EvidenceList evidence={evidence} />
+    </details>
+  );
+}
+
+function EvidenceList({ evidence }: { evidence: Evidence[] }) {
+  if (evidence.length === 0) {
+    return (
+      <EmptyState text="Retrieved log, trace, and metric citations will appear here." />
+    );
+  }
+
+  return (
+    <div className="evidence-list">
+      {evidence.map((item) => (
+        <div className="evidence-item" key={item.evidence_id}>
+          <div>
+            <span className="source-pill">{formatLabel(item.source)}</span>
+            <span className={`strength-pill ${item.strength}`}>
+              {formatLabel(item.strength)}
+            </span>
+          </div>
+          <p>{item.summary}</p>
+          <code>{item.citation}</code>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HypothesisPanel({
+  hypotheses,
+  collapsed
+}: {
+  hypotheses: Hypothesis[];
+  collapsed: boolean;
+}) {
+  if (collapsed) {
+    return (
+      <details className="panel disclosure-panel disclosure-panel-collapsed">
+        <summary className="panel-heading disclosure-heading">
+          <h3>Hypothesis Review</h3>
+          <span className="count-pill">{hypotheses.length}</span>
+        </summary>
+        <HypothesisList hypotheses={hypotheses} />
+      </details>
+    );
+  }
+
+  return (
+    <details className="panel disclosure-panel hypothesis-panel" open>
+      <summary className="panel-heading disclosure-heading">
+        <h3>Hypothesis Review</h3>
+        <span className="count-pill">{hypotheses.length}</span>
+      </summary>
+      <HypothesisList hypotheses={hypotheses} />
+    </details>
+  );
+}
+
+function HypothesisList({ hypotheses }: { hypotheses: Hypothesis[] }) {
+  if (hypotheses.length === 0) {
+    return (
+      <EmptyState text="Validated and critic-reviewed hypotheses will appear here." />
+    );
+  }
+
+  return (
+    <div className="hypothesis-list">
+      {hypotheses.map((hypothesis) => (
+        <div className="hypothesis-item" key={hypothesis.id}>
+          <div className="hypothesis-title">
+            <StatusBadge
+              label={hypothesis.status}
+              tone={statusTone(hypothesis.status)}
+            />
+            <strong>{confidencePercent(hypothesis.confidence)}%</strong>
+          </div>
+          <p>{hypothesis.summary}</p>
+        </div>
+      ))}
+    </div>
   );
 }
 

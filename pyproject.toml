@@ -43,6 +43,7 @@ reportMissingTypeStubs = "none"
 
 [project.scripts]
 telemetry-evals = "telemetry_agents.evaluation_cli.run_evals:main"
+telemetry-demo-reset = "telemetry_agents.demo_cli.reset_demo:main"
 
 [build-system]
 requires = ["hatchling"]

@@ -91,6 +91,7 @@ def test_start_investigation_returns_no_human_review_response() -> None:
             {
                 "evidence_id": "log-001",
                 "source": "log",
+                "summary": "Checkout API reports database timeout errors.",
                 "citation": "sample_data/logs/checkout-api.log:1",
             }
         ],

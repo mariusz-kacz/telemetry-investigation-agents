@@ -44,6 +44,7 @@ class EvidenceResponse(BaseModel):
 class ReportCitationResponse(BaseModel):
     evidence_id: str
     source: str
+    summary: str
     citation: str
 
 

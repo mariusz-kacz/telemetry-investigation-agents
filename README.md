@@ -63,6 +63,12 @@ The API is intentionally synchronous for this checkpoint. Background execution,
 polling workers, WebSockets, auth, and arbitrary incident ingestion are later
 hardening concerns.
 
+Reset local demo run history and checkpoints:
+
+```powershell
+uv run telemetry-demo-reset
+```
+
 ## Live Evaluation
 
 The batch evaluation command uses live Azure OpenAI model calls and requires

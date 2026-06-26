@@ -3,22 +3,22 @@
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   color: #15181f;
-  background: #f3f5f2;
+  background: #eef1f3;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   --ink: #15181f;
-  --muted: #687076;
-  --line: #d9ded8;
+  --muted: #5f6873;
+  --line: #d5dbe1;
   --surface: #ffffff;
-  --surface-soft: #f7f8f4;
+  --surface-soft: #f6f8fa;
   --teal: #167c80;
   --teal-dark: #0f5d61;
   --coral: #d65d4a;
   --amber: #b7791f;
   --green: #2f7d4a;
   --red: #b83d3d;
-  --shadow: 0 24px 70px rgb(31 38 46 / 12%);
+  --shadow: 0 10px 24px rgb(31 38 46 / 8%);
 }
 
 * {
@@ -42,25 +42,18 @@ button {
 
 .app-shell {
   display: grid;
-  grid-template-columns: minmax(280px, 340px) 1fr;
+  grid-template-columns: minmax(280px, 330px) 1fr;
   min-height: 100vh;
 }
 
 .side-panel {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 28px;
-  color: #f9fbf7;
-  background:
-    linear-gradient(145deg, rgb(21 24 31 / 92%), rgb(22 65 66 / 94%)),
-    repeating-linear-gradient(
-      135deg,
-      rgb(255 255 255 / 8%) 0,
-      rgb(255 255 255 / 8%) 1px,
-      transparent 1px,
-      transparent 12px
-    );
+  gap: 18px;
+  padding: 22px;
+  color: var(--ink);
+  border-right: 1px solid var(--line);
+  background: #f8fafb;
 }
 
 .brand-block {
@@ -81,8 +74,7 @@ button {
 
 .brand-mark {
   color: #ffffff;
-  background: #d65d4a;
-  box-shadow: 0 12px 35px rgb(0 0 0 / 28%);
+  background: var(--teal-dark);
 }
 
 .brand-block h1,
@@ -94,21 +86,17 @@ button {
 }
 
 .brand-block h1 {
-  font-size: 1.35rem;
-  line-height: 1.15;
+  font-size: 1.05rem;
+  line-height: 1.22;
 }
 
 .eyebrow {
   margin: 0 0 7px;
-  color: #d6e7dc;
+  color: var(--muted);
   font-size: 0.74rem;
   font-weight: 800;
   letter-spacing: 0;
   text-transform: uppercase;
-}
-
-.dashboard .eyebrow {
-  color: var(--teal-dark);
 }
 
 .control-section,
@@ -117,14 +105,14 @@ button {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 18px;
-  border: 1px solid rgb(255 255 255 / 16%);
+  padding: 14px;
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgb(255 255 255 / 8%);
+  background: var(--surface);
 }
 
 .control-section label {
-  color: #dce6e0;
+  color: var(--muted);
   font-size: 0.82rem;
   font-weight: 800;
 }
@@ -144,7 +132,7 @@ button {
 .history-heading p,
 .history-empty {
   margin: 3px 0 0;
-  color: #cbd9d1;
+  color: var(--muted);
   font-size: 0.8rem;
 }
 
@@ -153,15 +141,15 @@ button {
   width: 34px;
   height: 34px;
   place-items: center;
-  border: 1px solid rgb(255 255 255 / 20%);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  color: #f9fbf7;
-  background: rgb(255 255 255 / 10%);
+  color: var(--ink);
+  background: var(--surface-soft);
   cursor: pointer;
 }
 
 .icon-action:hover {
-  background: rgb(255 255 255 / 18%);
+  background: #eef5f4;
 }
 
 .run-list {
@@ -180,18 +168,18 @@ button {
   width: 100%;
   min-height: 62px;
   padding: 9px;
-  border: 1px solid rgb(255 255 255 / 14%);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  color: #f9fbf7;
-  background: rgb(255 255 255 / 8%);
+  color: var(--ink);
+  background: var(--surface);
   cursor: pointer;
   text-align: left;
 }
 
 .run-item:hover,
 .run-item.active {
-  border-color: rgb(150 216 199 / 58%);
-  background: rgb(255 255 255 / 14%);
+  border-color: #9fcec8;
+  background: #eef7f5;
 }
 
 .run-icon {
@@ -200,8 +188,8 @@ button {
   height: 34px;
   place-items: center;
   border-radius: 8px;
-  color: #96d8c7;
-  background: rgb(0 0 0 / 16%);
+  color: var(--teal-dark);
+  background: #e4f4ee;
 }
 
 .run-main {
@@ -222,7 +210,7 @@ button {
 }
 
 .run-main small {
-  color: #cbd9d1;
+  color: var(--muted);
   font-size: 0.72rem;
 }
 
@@ -231,10 +219,14 @@ select {
   min-height: 44px;
   padding: 0 12px;
   color: var(--ink);
-  border: 1px solid transparent;
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
   outline: none;
+}
+
+select:hover {
+  border-color: #aab5bf;
 }
 
 select:focus-visible,
@@ -284,7 +276,7 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #edf5ee;
+  color: var(--ink);
   font-size: 0.91rem;
 }
 
@@ -295,31 +287,27 @@ button:disabled {
 .dashboard {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 28px;
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 76%), rgb(243 245 242 / 96%)),
-    radial-gradient(circle at 80% 10%, rgb(22 124 128 / 13%), transparent 26%),
-    radial-gradient(circle at 35% 12%, rgb(214 93 74 / 12%), transparent 24%);
+  gap: 16px;
+  padding: 24px;
+  background: #eef1f3;
 }
 
 .dashboard-header {
   display: flex;
-  min-height: 118px;
+  min-height: auto;
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
-  padding: 26px;
+  padding: 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgb(255 255 255 / 82%);
-  box-shadow: var(--shadow);
+  background: var(--surface);
 }
 
 .dashboard-header h2 {
   max-width: 820px;
-  font-size: clamp(1.65rem, 3vw, 3.2rem);
-  line-height: 1.02;
+  font-size: clamp(1.3rem, 2vw, 1.9rem);
+  line-height: 1.16;
 }
 
 .header-badges {
@@ -349,20 +337,36 @@ button:disabled {
   background: #fff6df;
 }
 
+.running-notice {
+  color: #0f5d61;
+  border: 1px solid #a5d7ce;
+  background: #e9f8f4;
+}
+
+.spin-icon {
+  animation: spin 1.1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
 }
 
 .metric-tile {
   position: relative;
   display: grid;
-  min-height: 112px;
-  grid-template-columns: 48px 1fr;
-  gap: 14px;
+  min-height: 88px;
+  grid-template-columns: 40px 1fr;
+  gap: 12px;
   align-items: center;
-  padding: 18px;
+  padding: 14px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -370,6 +374,8 @@ button:disabled {
 }
 
 .metric-icon {
+  width: 40px;
+  height: 40px;
   color: var(--teal-dark);
   background: #e4f4ee;
 }
@@ -384,7 +390,7 @@ button:disabled {
 .metric-tile strong {
   display: block;
   color: var(--ink);
-  font-size: 1.7rem;
+  font-size: 1.25rem;
   line-height: 1;
 }
 
@@ -409,20 +415,29 @@ button:disabled {
 .content-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
-  gap: 16px;
+  gap: 12px;
+  align-items: start;
 }
 
 .panel {
-  min-height: 250px;
-  padding: 20px;
+  min-height: 220px;
+  padding: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgb(255 255 255 / 92%);
-  box-shadow: 0 18px 45px rgb(31 38 46 / 8%);
+  background: var(--surface);
 }
 
-.top-panel {
-  min-height: 306px;
+.disclosure-panel {
+  min-height: auto;
+}
+
+.disclosure-panel-collapsed {
+  padding: 12px 16px;
+}
+
+.outcome-panel {
+  grid-column: 1 / -1;
+  min-height: 260px;
 }
 
 .panel-heading {
@@ -433,8 +448,40 @@ button:disabled {
   margin-bottom: 16px;
 }
 
+.compact-heading {
+  margin-bottom: 10px;
+}
+
+.disclosure-heading {
+  margin-bottom: 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.disclosure-heading::after {
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  content: "";
+  transform: rotate(45deg);
+  transition: transform 120ms ease;
+}
+
+.disclosure-heading::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure-panel[open] .disclosure-heading::after {
+  transform: rotate(225deg);
+}
+
+.disclosure-panel[open] .disclosure-heading {
+  margin-bottom: 16px;
+}
+
 .panel h3 {
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .status-badge,
@@ -478,19 +525,21 @@ button:disabled {
 }
 
 .statement {
-  margin: 0 0 22px;
-  color: var(--ink);
-  font-size: 1.35rem;
-  font-weight: 800;
-  line-height: 1.24;
+  max-width: 980px;
+  margin: 0 0 20px;
+  color: #30353c;
+  font-size: 0.98rem;
+  font-weight: 500;
+  line-height: 1.55;
 }
 
 .report-summary {
+  max-width: 980px;
   margin: 0 0 16px;
-  color: var(--ink);
-  font-size: 1.05rem;
-  font-weight: 800;
-  line-height: 1.35;
+  color: #30353c;
+  font-size: 0.98rem;
+  font-weight: 500;
+  line-height: 1.55;
 }
 
 .report-facts {
@@ -511,16 +560,55 @@ button:disabled {
   display: grid;
   gap: 8px;
   margin-top: 14px;
+  overflow: visible;
 }
 
-.report-citations code {
+.citation-chip {
+  position: relative;
+  display: inline-flex;
   width: fit-content;
   max-width: 100%;
+  min-height: 28px;
+  align-items: center;
   padding: 5px 7px;
   overflow-wrap: anywhere;
   border-radius: 6px;
   color: #61400a;
   background: #fff2d2;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.86rem;
+  cursor: help;
+  outline-offset: 3px;
+}
+
+.citation-tooltip {
+  position: absolute;
+  z-index: 20;
+  bottom: calc(100% + 8px);
+  left: 0;
+  display: block;
+  width: max-content;
+  max-width: min(520px, 78vw);
+  padding: 8px 10px;
+  color: #f9fbf7;
+  background: #15181f;
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgb(31 38 46 / 24%);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  opacity: 0;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.citation-chip:hover .citation-tooltip,
+.citation-chip:focus-visible .citation-tooltip {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .detail-row {
@@ -562,7 +650,7 @@ button:disabled {
 .evidence-list,
 .hypothesis-list {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   max-height: 430px;
   overflow: auto;
   padding-right: 4px;
@@ -571,8 +659,8 @@ button:disabled {
 .evidence-item,
 .hypothesis-item {
   display: grid;
-  gap: 9px;
-  padding: 14px;
+  gap: 8px;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface-soft);
@@ -646,6 +734,12 @@ button:disabled {
 .reason-list svg {
   flex: 0 0 auto;
   color: var(--teal);
+}
+
+.review-decision {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
 }
 
 .review-actions {
@@ -724,7 +818,4 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
-  .statement {
-    font-size: 1.12rem;
-  }
 }

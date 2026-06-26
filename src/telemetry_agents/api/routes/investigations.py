@@ -100,6 +100,7 @@ def to_investigation_response(result: DemoInvestigationResult) -> InvestigationR
                     ReportCitationResponse(
                         evidence_id=evidence.evidence_id,
                         source=evidence.source,
+                        summary=evidence.summary,
                         citation=evidence.citation,
                     )
                     for evidence in result.final_report.evidence_citations

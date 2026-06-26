@@ -35,6 +35,7 @@ export type Evidence = {
 export type ReportCitation = {
   evidence_id: string;
   source: string;
+  summary: string;
   citation: string;
 };
 
