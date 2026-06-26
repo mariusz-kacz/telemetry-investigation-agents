@@ -180,6 +180,12 @@ Provider-backed mode currently has Azure OpenAI adapter implementations. The
 architecture is described more generally as an LLM provider boundary because the
 graph and application logic do not depend on provider-specific SDKs.
 
+The provider prompt contracts are stored as packaged Markdown resources in
+`src/telemetry_agents/infrastructure/prompts/` and loaded by the Azure OpenAI
+adapters at call time. Keeping prompts outside adapter method bodies makes the
+model instructions easier to review, while the deterministic policy remains in
+Python code and tests.
+
 ## Validation And Review Rules
 
 Validation owns the evidence trust boundary:

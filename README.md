@@ -128,6 +128,11 @@ The LLM boundary is intentionally smaller:
 Raw generated hypotheses are candidate state. Downstream reporting relies on
 validated and reviewed hypotheses.
 
+Provider prompt contracts live as packaged Markdown files under
+`src/telemetry_agents/infrastructure/prompts/`. The Azure OpenAI adapters load
+those files and send them as system messages, while deterministic Python code
+still owns validation, confidence policy, review routing, and evaluation.
+
 ## Evidence, Validation, And Review
 
 Every retrieved evidence item has:
