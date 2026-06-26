@@ -8,6 +8,7 @@ from telemetry_agents.app.workflow_runner import (
     WorkflowRunRequest,
     build_workflow_service,
 )
+from telemetry_agents.infrastructure.checkpointing import create_checkpoint_serializer
 
 from telemetry_agents.evaluation.models import (
     EvalCase,
@@ -26,7 +27,7 @@ def build_graph_case_runner(
     def run_case(case: EvalCase) -> EvaluationRunOutput:
         run_id = new_run_id()
         incident = load_incident_file(data_root / case.incident_file)
-        checkpointer = InMemorySaver()
+        checkpointer = InMemorySaver(serde=create_checkpoint_serializer())
         service = build_workflow_service(
             generator=generator, critic=critic, checkpointer=checkpointer
         )
