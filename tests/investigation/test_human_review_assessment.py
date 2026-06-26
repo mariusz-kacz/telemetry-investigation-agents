@@ -197,8 +197,43 @@ def test_accepted_insufficient_evidence_hypothesis_triggers_human_review() -> No
     assert result.human_review_required is True
     assert (
         result.human_review_reason
-        == "accepted hypothesis indicates insufficient evidence"
+        == "top accepted hypothesis indicates insufficient evidence"
     )
+
+
+def test_non_top_insufficient_evidence_hypothesis_does_not_trigger_human_review() -> (
+    None
+):
+    database_hypothesis = _hypothesis(
+        "hyp-database",
+        confidence=0.92,
+        category=HypothesisCategory.DATABASE_FAILURE,
+    )
+    insufficient_evidence_hypothesis = _hypothesis(
+        "hyp-insufficient",
+        confidence=0.45,
+        uncertainty="Database internals are not available.",
+        category=HypothesisCategory.INSUFFICIENT_EVIDENCE,
+    )
+    request = HumanReviewAssessmentRequest(
+        validation_result=HypothesisValidationResult(
+            validated_hypotheses=[
+                database_hypothesis,
+                insufficient_evidence_hypothesis,
+            ]
+        ),
+        reviewed_hypotheses=[
+            _reviewed_hypothesis(database_hypothesis),
+            _reviewed_hypothesis(insufficient_evidence_hypothesis),
+        ],
+        evidence=[_retrieved_evidence()],
+        incident=_incident(),
+    )
+
+    result = assess_human_review_requirement(request)
+
+    assert result.human_review_required is False
+    assert result.human_review_reason is None
 
 
 @pytest.mark.parametrize(

@@ -1,3 +1,6 @@
+from pathlib import Path
+from types import SimpleNamespace
+
 import pytest
 
 from telemetry_agents.evaluation_cli import run_evals
@@ -44,6 +47,46 @@ def test_provider_is_required_before_loading_config(
     assert exc_info.value.code == 2
     error_output = capsys.readouterr().err
     assert "--provider" in error_output
+
+
+def test_eval_run_does_not_show_telemetry_by_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    telemetry_configured = False
+
+    def record_telemetry_configuration() -> None:
+        nonlocal telemetry_configured
+        telemetry_configured = True
+
+    _patch_eval_run_dependencies(
+        monkeypatch,
+        configure_observability_logging=record_telemetry_configuration,
+    )
+
+    result = run_evals.main(["--provider", "azure"])
+
+    assert result == 0
+    assert telemetry_configured is False
+
+
+def test_eval_run_shows_telemetry_when_requested(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    telemetry_configured = False
+
+    def record_telemetry_configuration() -> None:
+        nonlocal telemetry_configured
+        telemetry_configured = True
+
+    _patch_eval_run_dependencies(
+        monkeypatch,
+        configure_observability_logging=record_telemetry_configuration,
+    )
+
+    result = run_evals.main(["--provider", "azure", "--show-telemetry"])
+
+    assert result == 0
+    assert telemetry_configured is True
 
 
 def test_print_report_outputs_readable_summary(
@@ -105,6 +148,35 @@ def test_print_report_outputs_failure_details(
     assert "selected hypothesis: hyp-2" in output
     assert "expected human review: True, actual: False" in output
     assert "hypotheses without citations: hyp-1" in output
+
+
+def _patch_eval_run_dependencies(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    configure_observability_logging: object,
+) -> None:
+    monkeypatch.setattr(
+        run_evals,
+        "configure_observability_logging",
+        configure_observability_logging,
+    )
+    monkeypatch.setattr(
+        run_evals,
+        "get_settings",
+        lambda: SimpleNamespace(tracing_enabled=False, eval_data_root=Path(".")),
+    )
+    monkeypatch.setattr(run_evals, "configure_local_tracing", lambda **_: None)
+    monkeypatch.setattr(run_evals, "_load_eval_cases", lambda _: [])
+    monkeypatch.setattr(
+        run_evals,
+        "build_azure_evaluation_composition",
+        lambda _: SimpleNamespace(run_case=object(), reviewer=object()),
+    )
+    monkeypatch.setattr(
+        run_evals,
+        "run_batch_evaluation",
+        lambda **_: [_scorecard(case_id="case-1")],
+    )
 
 
 def _scorecard(

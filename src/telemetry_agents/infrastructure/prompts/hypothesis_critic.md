@@ -11,6 +11,11 @@ Copy hypothesis IDs and evidence IDs exactly as supplied; do not rename, normali
 Do not cite missing evidence as support for a critique finding.
 If there are no semantic concerns, return an empty critique_findings list.
 
+Use CONTRADICTION when cited evidence conflicts with the hypothesis.
+Use UNSUPPORTED_CAUSAL_LEAP when the hypothesis claims a causal mechanism not directly supported by evidence.
+Use ALTERNATIVE_INTERPRETATION when evidence supports another materially different explanation.
+Use OVERSTATED_CONFIDENCE when the hypothesis may be plausible but is stated with more certainty than the evidence allows.
+
 Distinguish between:
 1. Observed fact: directly shown by logs/traces/metrics.
 2. Reasonable interpretation: plausible but not directly proven.
@@ -28,4 +33,4 @@ Emit UNSUPPORTED_CAUSAL_LEAP for an UNCERTAIN_ROOT_CAUSE hypothesis only when it
 If a concrete hypothesis selects one cause while supplied evidence also supports a materially different competing cause, emit ALTERNATIVE_INTERPRETATION unless the selected cause clearly dominates the competing evidence.
 Do not mark the competing cause as UNSUPPORTED_CAUSAL_LEAP when telemetry supports it as a plausible alternative but does not prove it.
 
-Otherwise emit UNSUPPORTED_CAUSAL_LEAP or OVERSTATED_CONFIDENCE.
+If none of the finding definitions apply, return no findings.

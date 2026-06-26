@@ -33,6 +33,9 @@ The UI and API are presentation boundaries. They do not expose raw LangGraph
 state. They use DTOs that summarize run status, incident metadata, hypotheses,
 evidence citations, review reasons, and final report state.
 
+The standalone editable Mermaid source for the system diagram is stored at
+[docs/diagrams/architecture-overview.mmd](diagrams/architecture-overview.mmd).
+
 ## Backend Components
 
 `telemetry_agents.telemetry`
@@ -207,7 +210,7 @@ Human review is triggered when the reviewed output is risky, including:
 - high incident impact;
 - weak or missing evidence;
 - no validated hypotheses;
-- accepted insufficient-evidence or uncertain-root-cause hypotheses;
+- top accepted insufficient-evidence or uncertain-root-cause hypotheses;
 - top reviewed hypothesis is blocked or disputed;
 - no accepted hypothesis exists;
 - multiple disputed hypotheses without a dominant accepted hypothesis;

@@ -1,14 +1,25 @@
 # Telemetry Investigation Agents
 
-Telemetry Investigation Agents is a portfolio project demonstrating a controlled
-enterprise-style AI workflow for investigating synthetic telemetry incidents. It
-combines deterministic evidence retrieval, scoring, validation, traceability,
-bounded LLM reasoning, evaluation, and human review gates.
+Telemetry Investigation Agents is a Python + LangGraph portfolio project for
+investigating synthetic telemetry incidents with evidence-backed AI assistance.
 
-The goal is not to build a production observability platform. The goal is to
-show how a production-minded AI workflow can be structured so that an LLM
-proposes evidence-bound hypotheses while ordinary Python code owns parsing,
-retrieval, validation, routing, persistence, and auditability.
+The project demonstrates a controlled workflow rather than a chatbot: ordinary
+Python code retrieves evidence, validates citations, applies review policy, and
+assembles reports; bounded LLM calls propose and critique structured hypotheses.
+
+The portfolio thesis is simple: AI-assisted incident investigation becomes more
+credible when the workflow can show which evidence was used, which claims were
+validated, when uncertainty remains, and when a human should review the result.
+
+## Portfolio Snapshot
+
+- LangGraph workflow with typed state, checkpointing, interrupts, and resume.
+- Deterministic parsing, retrieval, evidence scoring, validation, and routing.
+- Azure OpenAI adapters behind small provider boundaries.
+- FastAPI API and React/Vite demo UI over DTOs, not raw graph state.
+- Evaluation suite covering evidence coverage, category behavior, human-review
+  routing, citation correctness, and unsupported claims.
+- Structured JSON events and optional OpenTelemetry console spans for debugging.
 
 ## Problem Statement
 
@@ -29,6 +40,21 @@ This project demonstrates a safer pattern:
   insufficient;
 - evaluate the workflow against known synthetic cases.
 
+## What To Review First
+
+- [Architecture](docs/architecture.md) for the workflow and module boundaries.
+- [Architecture diagram](docs/diagrams/architecture-overview.mmd) for the
+  editable Mermaid system overview.
+- [AI workflow design](docs/ai-workflow-design.md) for deterministic vs LLM
+  responsibilities.
+- [Evaluation](docs/evaluation.md) for the scorecard and case design.
+- [Demo guide](docs/demo-guide.md) for a five-minute walkthrough.
+- [Sample report](docs/sample-output/checkout-database-timeout-report.md) for a
+  successful cited investigation output.
+- [Latest Azure eval report](docs/evaluation/2026-06-26-azure-eval-report.md)
+  for the captured `4/4 passed` provider-backed run.
+- [ADR index](docs/adr/index.md) for architecture decisions.
+
 ## What This Demonstrates
 
 - LangGraph orchestration with explicit typed workflow state.
@@ -43,7 +69,7 @@ This project demonstrates a safer pattern:
   routing, citation correctness, and unsupported-claim checks.
 - Structured logs and optional OpenTelemetry console spans for traceability.
 
-## What This Is Not
+## Boundaries
 
 - Not a production observability product.
 - Not connected to real log, trace, or metric platforms.
@@ -52,6 +78,7 @@ This project demonstrates a safer pattern:
 - Not a replacement for engineers.
 - Not claiming production readiness, auth, RBAC, deployment, cost controls, or
   real telemetry ingestion.
+- Not a broad benchmark of model quality.
 
 Synthetic telemetry is deliberate: it keeps the portfolio focused on workflow
 design, evidence boundaries, evaluation, and review policy rather than vendor
@@ -90,16 +117,8 @@ hypothesis_generation
 ```
 
 See [docs/architecture.md](docs/architecture.md) for the current architecture.
-
-## Further Documentation
-
-- [Architecture](docs/architecture.md)
-- [AI workflow design](docs/ai-workflow-design.md)
-- [Evaluation](docs/evaluation.md)
-- [Demo guide](docs/demo-guide.md)
-- [API](docs/api.md)
-- [Observability](docs/observability.md)
-- [ADR index](docs/adr/index.md)
+The standalone editable diagram source is available at
+[docs/diagrams/architecture-overview.mmd](docs/diagrams/architecture-overview.mmd).
 
 ## Deterministic vs LLM Responsibilities
 
@@ -152,10 +171,10 @@ The validator prevents common failure modes:
 - validation decisions are recorded in structured result objects.
 
 Human review is triggered by deterministic policy when risk remains: high-impact
-incidents, weak or missing evidence, no validated hypothesis, uncertain or
-insufficient-evidence outcomes, disputed or blocked top hypotheses, close blocked
-alternatives, warnings, or conflicting explanations without a dominant accepted
-hypothesis.
+incidents, weak or missing evidence, no validated hypothesis, a top accepted
+uncertain or insufficient-evidence outcome, disputed or blocked top hypotheses,
+close blocked alternatives, warnings, or conflicting explanations without a
+dominant accepted hypothesis.
 
 ## Demo And Evaluation Cases
 
@@ -168,8 +187,22 @@ The repo includes four synthetic cases under `eval_data/`:
 | `conflicting-evidence` | Uncertain root cause; human review expected. |
 | `insufficient-evidence` | Insufficient evidence; human review expected. |
 
-See [docs/evaluation.md](docs/evaluation.md) for the scorecard and case
-details.
+See [docs/evaluation.md](docs/evaluation.md) for the scorecard and case details.
+A sample successful report is captured in
+[docs/sample-output/checkout-database-timeout-report.md](docs/sample-output/checkout-database-timeout-report.md).
+
+## Verification Snapshot
+
+Current captured verification artifacts:
+
+- Offline test suite: `uv run pytest`
+- Azure provider eval: `uv run telemetry-evals --provider azure`
+- Captured result:
+  [docs/evaluation/2026-06-26-azure-eval-report.md](docs/evaluation/2026-06-26-azure-eval-report.md)
+
+The Azure eval report is a regression snapshot, not a production benchmark.
+Provider-backed behavior can vary across model versions, deployments, and
+configuration.
 
 ## Tech Stack
 
@@ -205,6 +238,31 @@ TELEMETRY_AGENTS_DEMO_PROVIDER=fake
 
 This mode runs the real retrieval, graph, validation, review, checkpointing, API,
 and UI path without live model calls.
+
+## Quick Demo Path
+
+1. Start the backend:
+
+```powershell
+uv run uvicorn telemetry_agents.api.app:app --reload
+```
+
+2. Start the frontend in a second terminal:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+3. Open:
+
+```text
+http://127.0.0.1:5173
+```
+
+4. Run `checkout-database-timeout` first to show the happy path, then run
+   `conflicting-evidence` or `insufficient-evidence` to show review escalation.
 
 ## Run The Backend
 
@@ -295,12 +353,21 @@ provider access and runs:
 uv run telemetry-evals --provider azure
 ```
 
+That command prints the compact pass/fail scorecard. Add `--show-telemetry` when
+you want structured JSON events during the run:
+
+```powershell
+uv run telemetry-evals --provider azure --show-telemetry
+```
+
 ## Limitations
 
 - Telemetry data is synthetic and local.
 - The React UI is a presentation/demo layer, not a full product.
 - The API supports predefined demo cases, not arbitrary incident ingestion.
 - Evaluation currently covers four scenarios.
+- No holdout eval set exists yet.
+- Live provider evals are probabilistic and can vary across deployments.
 - The local fake provider is deterministic and exists for repeatable demos.
 - Production concerns such as auth, RBAC, deployment, multi-tenant isolation,
   cost controls, streaming execution, queue workers, real observability
@@ -309,7 +376,7 @@ uv run telemetry-evals --provider azure
 ## Future Improvements
 
 - Add screenshots or a short recorded demo.
-- Add a sample investigation output artifact.
+- Add holdout eval cases that are not used during prompt or policy iteration.
 - Add more eval cases, including deployment/configuration evidence.
 - Add richer metric anomaly logic and baseline comparison.
 - Add a real telemetry adapter behind the existing evidence retrieval boundary.

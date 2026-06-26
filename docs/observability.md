@@ -13,22 +13,28 @@ operation.
 
 ## Runtime Configuration
 
-Structured observability logging is configured by the FastAPI app lifecycle and
-the eval CLI. It writes JSON events to stdout through the dedicated logger:
+Structured observability logging is configured by the FastAPI app lifecycle. The
+eval CLI keeps normal scorecard output readable by default and prints structured
+JSON events only when `--show-telemetry` is passed:
 
 ```text
 telemetry_agents.observability
+```
+
+```powershell
+uv run telemetry-evals --provider azure --show-telemetry
 ```
 
 Local OpenTelemetry console tracing is opt-in:
 
 ```powershell
 $env:TELEMETRY_AGENTS_TRACING_ENABLED="true"
-uv run telemetry-evals --provider azure
+uv run telemetry-evals --provider azure --show-telemetry
 ```
 
-The same setting is read when running the FastAPI backend. When tracing is not
-enabled, the workflow still emits structured JSON logs.
+The same setting is read when running the FastAPI backend. For the backend,
+structured JSON logs are enabled by app startup. For eval CLI runs, structured
+JSON logs are opt-in so the pass/fail report remains readable.
 
 ## Structured Event Logging
 

@@ -203,6 +203,9 @@ def test_critic_passes_system_prompt_to_model() -> None:
     assert "possible rather than definitive" in system_message
     assert "do not emit UNSUPPORTED_CAUSAL_LEAP merely because" in system_message
     assert "supported by correlation or symptoms" in system_message
+    assert "Use CONTRADICTION when cited evidence conflicts" in system_message
+    assert "Use OVERSTATED_CONFIDENCE" in system_message
+    assert "If none of the finding definitions apply, return no findings" in system_message
 
 
 def test_critic_raises_value_error_from_empty_response() -> None:

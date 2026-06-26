@@ -79,6 +79,13 @@ critique, and unsupported-claim review:
 uv run telemetry-evals --provider azure
 ```
 
+The default console output is the compact scorecard. To debug the workflow with
+structured JSON observability events, opt in explicitly:
+
+```powershell
+uv run telemetry-evals --provider azure --show-telemetry
+```
+
 Provider-backed evaluation requires:
 
 - configured `.env`;
@@ -118,6 +125,9 @@ Evaluation summary: 4/4 passed
 When a dimension fails, the report prints diagnostic details such as missing
 evidence sources, expected vs actual category, human review mismatch, unknown
 evidence references, missing-evidence references, or unsupported claims.
+
+The latest captured Azure eval result is stored in
+[2026-06-26-azure-eval-report.md](evaluation/2026-06-26-azure-eval-report.md).
 
 ## What Failure Means
 

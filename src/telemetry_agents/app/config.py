@@ -52,7 +52,7 @@ class Settings(BaseSettings):
         return value
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=PROJECT_ROOT / ".env",
         env_prefix="TELEMETRY_AGENTS_",
         extra="ignore",
     )

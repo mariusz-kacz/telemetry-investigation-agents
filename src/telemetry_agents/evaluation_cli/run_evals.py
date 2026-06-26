@@ -23,6 +23,11 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         required=True,
         help="Evaluation provider to use. Azure runs require configured Azure OpenAI access.",
     )
+    parser.add_argument(
+        "--show-telemetry",
+        action="store_true",
+        help="Print structured JSON observability events while the eval run executes.",
+    )
     return parser.parse_args(argv)
 
 
@@ -111,9 +116,10 @@ def _load_eval_cases(data_root: Path) -> list[EvalCase]:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    _parse_args(argv)
+    args = _parse_args(argv)
 
-    configure_observability_logging()
+    if args.show_telemetry:
+        configure_observability_logging()
     settings = get_settings()
 
     configure_local_tracing(tracing_enabled=settings.tracing_enabled)

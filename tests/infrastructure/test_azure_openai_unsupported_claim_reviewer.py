@@ -121,6 +121,24 @@ def test_review_passes_bounded_system_prompt_to_model() -> None:
     assert "do not rename, normalize, reformat, translate" in system_message
     assert "change hyphens and underscores in IDs" in system_message
     assert "Do not change workflow state" in system_message
+    assert "Treat a claim as unsupported" in system_message
+    assert "not directly supported by cited evidence" in system_message
+    assert "Do not flag cautious uncertainty statements" in system_message
+    assert "Review the hypothesis statement, not the category label alone" in (
+        system_message
+    )
+    assert "dependency-path claim" in system_message
+    assert "Do not require the hypothesis to prove the dependency's internal root cause" in (
+        system_message
+    )
+    assert "does not rule out a database inside the named downstream dependency" in (
+        system_message
+    )
+    assert "explicitly claims that database involvement inside the dependency" in (
+        system_message
+    )
+    assert "operation labels" in system_message
+    assert "unsupported retry claims" in system_message
 
 
 def test_review_raises_value_error_from_empty_response() -> None:

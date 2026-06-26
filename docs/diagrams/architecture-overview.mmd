@@ -1,0 +1,43 @@
+flowchart TD
+    User[User] --> UI[React/Vite demo UI]
+    UI --> API[FastAPI API]
+    API --> Service[Demo investigation service]
+
+    Service --> Registry[(SQLite run registry)]
+    Service --> Retrieval[Deterministic evidence retrieval]
+    Retrieval --> Telemetry[(Synthetic logs, traces, metrics)]
+
+    Service --> Graph[LangGraph workflow]
+    Graph --> Checkpoints[(SQLite checkpoints)]
+
+    Graph --> Generation[Hypothesis generation node]
+    Generation --> GeneratorAdapter[Azure OpenAI generator adapter]
+    GeneratorAdapter --> GeneratorModel[Azure OpenAI deployment]
+
+    Graph --> Validation[Evidence validation node]
+    Validation --> Review[Hypothesis review policy]
+
+    Graph --> Critic[Semantic critic node]
+    Critic --> CriticAdapter[Azure OpenAI critic adapter]
+    CriticAdapter --> CriticModel[Azure OpenAI deployment]
+
+    Review --> HumanPolicy[Human review assessment]
+    HumanPolicy --> Gate{Review required?}
+    Gate -->|No| Report[Final cited report]
+    Gate -->|Yes| Interrupt[LangGraph interrupt]
+    Interrupt --> Resume[Approve or reject]
+    Resume --> Report
+
+    Report --> API
+    API --> UI
+
+    Eval[Evaluation CLI] --> Service
+    Eval --> EvalReviewer[Unsupported-claim reviewer]
+    EvalReviewer --> EvalModel[Azure OpenAI evaluation deployment]
+
+    Observability[Structured logs and optional spans]
+    Retrieval --> Observability
+    Graph --> Observability
+    Generation --> Observability
+    Critic --> Observability
+    Eval --> Observability
