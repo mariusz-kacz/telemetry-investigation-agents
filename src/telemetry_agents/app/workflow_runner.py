@@ -109,17 +109,18 @@ def _build_workflow_runner(
             critic=critic,
             checkpointer=checkpointer,
         )
-        evidence = _load_evidence(
-            run_id=request.run_id,
-            incident=request.incident,
-            data_root=request.data_root,
-        )
         tracer = get_tracer()
         with tracer.start_as_current_span("investigation.run") as run_span:
             run_span.set_attribute("run_id", request.run_id)
             run_span.set_attribute("incident_id", request.incident.incident_id)
             run_span.set_attribute("case_id", request.case_id)
             run_span.set_attribute("workflow.operation", "start")
+
+            evidence = _load_evidence(
+                run_id=request.run_id,
+                incident=request.incident,
+                data_root=request.data_root,
+            )
 
             config: RunnableConfig = {"configurable": {"thread_id": request.run_id}}
 

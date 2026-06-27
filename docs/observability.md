@@ -32,6 +32,21 @@ $env:TELEMETRY_AGENTS_TRACING_ENABLED="true"
 uv run telemetry-evals --provider azure --show-telemetry
 ```
 
+To export spans to a local OTLP collector or Jaeger instance, use the OTLP
+exporter:
+
+```powershell
+$env:TELEMETRY_AGENTS_TRACING_ENABLED="true"
+$env:TELEMETRY_AGENTS_TRACING_EXPORTER="otlp"
+$env:TELEMETRY_AGENTS_OTLP_ENDPOINT="http://localhost:4317"
+uv run telemetry-evals --provider azure --show-telemetry
+```
+
+In Jaeger, select the `telemetry-investigation-agents` service. The current
+trace model contains manually created workflow spans only. It does not yet add
+automatic FastAPI route spans, HTTP client spans, SQLite spans, or OpenAI SDK
+transport spans.
+
 The same setting is read when running the FastAPI backend. For the backend,
 structured JSON logs are enabled by app startup. For eval CLI runs, structured
 JSON logs are opt-in so the pass/fail report remains readable.

@@ -7,7 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from telemetry_agents.api.routes import demo_cases, investigations, health
 from telemetry_agents.app.config import get_settings
 from telemetry_agents.shared.logging_config import configure_observability_logging
-from telemetry_agents.shared.tracing import configure_local_tracing
+from telemetry_agents.shared.tracing import (
+    configure_local_tracing,
+    force_flush_local_tracing,
+)
 
 
 @asynccontextmanager
@@ -15,9 +18,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
 
     configure_observability_logging()
-    configure_local_tracing(tracing_enabled=settings.tracing_enabled)
+    configure_local_tracing(
+        tracing_enabled=settings.tracing_enabled,
+        exporter=settings.tracing_exporter,
+        otlp_endpoint=settings.otlp_endpoint,
+    )
 
-    yield
+    try:
+        yield
+    finally:
+        force_flush_local_tracing()
 
 
 def create_app() -> FastAPI:

@@ -163,7 +163,12 @@ def _patch_eval_run_dependencies(
     monkeypatch.setattr(
         run_evals,
         "get_settings",
-        lambda: SimpleNamespace(tracing_enabled=False, eval_data_root=Path(".")),
+        lambda: SimpleNamespace(
+            tracing_enabled=False,
+            tracing_exporter="console",
+            otlp_endpoint=None,
+            eval_data_root=Path("."),
+        ),
     )
     monkeypatch.setattr(run_evals, "configure_local_tracing", lambda **_: None)
     monkeypatch.setattr(run_evals, "_load_eval_cases", lambda _: [])

@@ -6,6 +6,7 @@ from pydantic import field_validator
 from pydantic_settings import SettingsConfigDict, BaseSettings
 
 from telemetry_agents.shared.paths import PROJECT_ROOT
+from telemetry_agents.shared.tracing import TracingExporter
 
 
 class Settings(BaseSettings):
@@ -16,6 +17,8 @@ class Settings(BaseSettings):
     data_root: Path
     eval_data_root: Path
     tracing_enabled: bool = False
+    tracing_exporter: TracingExporter = "console"
+    otlp_endpoint: str | None = None
     checkpoint_db_path: Path
     run_registry_db_path: Path
 

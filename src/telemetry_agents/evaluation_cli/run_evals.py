@@ -10,7 +10,10 @@ from telemetry_agents.evaluation_cli.azure_composition import (
     build_azure_evaluation_composition,
 )
 from telemetry_agents.shared.logging_config import configure_observability_logging
-from telemetry_agents.shared.tracing import configure_local_tracing
+from telemetry_agents.shared.tracing import (
+    configure_local_tracing,
+    force_flush_local_tracing,
+)
 
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -122,14 +125,22 @@ def main(argv: Sequence[str] | None = None) -> int:
         configure_observability_logging()
     settings = get_settings()
 
-    configure_local_tracing(tracing_enabled=settings.tracing_enabled)
-    cases = _load_eval_cases(settings.eval_data_root)
-    evaluation_composition = build_azure_evaluation_composition(settings)
-    scorecards = run_batch_evaluation(
-        cases=cases,
-        run_case=evaluation_composition.run_case,
-        reviewer=evaluation_composition.reviewer,
+    configure_local_tracing(
+        tracing_enabled=settings.tracing_enabled,
+        exporter=settings.tracing_exporter,
+        otlp_endpoint=settings.otlp_endpoint,
     )
+    try:
+        cases = _load_eval_cases(settings.eval_data_root)
+        evaluation_composition = build_azure_evaluation_composition(settings)
+        scorecards = run_batch_evaluation(
+            cases=cases,
+            run_case=evaluation_composition.run_case,
+            reviewer=evaluation_composition.reviewer,
+        )
+    finally:
+        force_flush_local_tracing()
+
     print_report(scorecards)
     return 0
 
