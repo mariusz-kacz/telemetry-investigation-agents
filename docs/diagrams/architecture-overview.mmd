@@ -1,43 +1,34 @@
-flowchart TD
-    User[User] --> UI[React/Vite demo UI]
-    UI --> API[FastAPI API]
-    API --> Service[Demo investigation service]
+flowchart LR
+    User["Person: demo user"]
 
-    Service --> Registry[(SQLite run registry)]
-    Service --> Retrieval[Deterministic evidence retrieval]
-    Retrieval --> Telemetry[(Synthetic logs, traces, metrics)]
+    subgraph Browser["Browser"]
+        UI["React/Vite demo UI"]
+    end
 
-    Service --> Graph[LangGraph workflow]
-    Graph --> Checkpoints[(SQLite checkpoints)]
+    subgraph Backend["Python backend"]
+        API["FastAPI API<br/>DTO boundary"]
+        App["Demo investigation service<br/>run lifecycle and composition"]
+        Retrieval["Deterministic evidence retrieval<br/>logs, traces, metrics"]
+        Graph["LangGraph workflow<br/>hypotheses, review, report"]
+        Providers["Hypothesis generator and critic adapters"]
+    end
 
-    Graph --> Generation[Hypothesis generation node]
-    Generation --> GeneratorAdapter[Azure OpenAI generator adapter]
-    GeneratorAdapter --> GeneratorModel[Azure OpenAI deployment]
+    Telemetry["Synthetic telemetry files"]
+    Registry["SQLite run registry"]
+    Checkpoints["SQLite LangGraph checkpoints"]
 
-    Graph --> Validation[Evidence validation node]
-    Validation --> Review[Hypothesis review policy]
+    subgraph External["Optional external service"]
+        LLM["External LLM service"]
+    end
 
-    Graph --> Critic[Semantic critic node]
-    Critic --> CriticAdapter[Azure OpenAI critic adapter]
-    CriticAdapter --> CriticModel[Azure OpenAI deployment]
-
-    Review --> HumanPolicy[Human review assessment]
-    HumanPolicy --> Gate{Review required?}
-    Gate -->|No| Report[Final cited report]
-    Gate -->|Yes| Interrupt[LangGraph interrupt]
-    Interrupt --> Resume[Approve or reject]
-    Resume --> Report
-
-    Report --> API
-    API --> UI
-
-    Eval[Evaluation CLI] --> Service
-    Eval --> EvalReviewer[Unsupported-claim reviewer]
-    EvalReviewer --> EvalModel[Azure OpenAI evaluation deployment]
-
-    Observability[Structured logs and optional spans]
-    Retrieval --> Observability
-    Graph --> Observability
-    Generation --> Observability
-    Critic --> Observability
-    Eval --> Observability
+    User -->|"uses"| UI
+    UI -->|"HTTP /api/v1 DTOs"| API
+    API -->|"delegates"| App
+    App -->|"loads incident and telemetry"| Retrieval
+    Retrieval -->|"reads"| Telemetry
+    Retrieval -->|"ranked cited evidence"| App
+    App -->|"invokes or resumes"| Graph
+    Graph -->|"uses configured adapter"| Providers
+    Providers -->|"provider-backed mode"| LLM
+    App -->|"stores run metadata"| Registry
+    Graph -->|"persists workflow state"| Checkpoints

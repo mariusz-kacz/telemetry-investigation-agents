@@ -8,33 +8,33 @@ code owns evidence handling and workflow policy; bounded LLM calls propose and
 critique structured hypotheses.
 
 ```mermaid
-flowchart TD
-    User[User] --> UI[React/Vite demo UI]
+flowchart LR
+    User[Demo user] --> UI[React/Vite UI]
     UI --> API[FastAPI API]
     API --> App[Demo investigation service]
-    App --> Registry[(SQLite run registry)]
-    App --> Retrieval[Evidence retrieval]
-    Retrieval --> Files[(Synthetic logs, traces, metrics)]
+    App --> Retrieval[Deterministic evidence retrieval]
+    Retrieval --> Telemetry[(Synthetic telemetry files)]
     App --> Graph[LangGraph workflow]
+    Graph --> Providers[Fake or Azure OpenAI provider]
+    App --> Registry[(SQLite run registry)]
     Graph --> Checkpoints[(SQLite checkpoints)]
-    Graph --> Generator[Hypothesis generator adapter]
-    Graph --> Validator[Deterministic validator]
-    Graph --> Critic[Hypothesis critic adapter]
-    Graph --> ReviewPolicy[Deterministic hypothesis review]
-    ReviewPolicy --> HumanPolicy[Human review assessment]
-    HumanPolicy --> Gate{Review required?}
-    Gate -->|No| Report[Final cited report]
-    Gate -->|Yes| Interrupt[LangGraph interrupt]
-    Interrupt --> Resume[Approve or reject]
-    Resume --> Report
+    App --> Observability[Structured logs and optional spans]
+    Retrieval --> Observability
+    Graph --> Observability
 ```
 
 The UI and API are presentation boundaries. They do not expose raw LangGraph
 state. They use DTOs that summarize run status, incident metadata, hypotheses,
 evidence citations, review reasons, and final report state.
 
-The standalone editable Mermaid source for the system diagram is stored at
-[docs/diagrams/architecture-overview.mmd](diagrams/architecture-overview.mmd).
+The editable Mermaid sources are split by level of detail:
+
+- [C4-style container overview](diagrams/architecture-overview.mmd)
+- [Investigation runtime flow](diagrams/investigation-runtime-flow.mmd)
+- [LangGraph workflow internals](diagrams/langgraph-workflow.mmd)
+
+For a step-by-step responsibility map, see
+[Agent And Control Responsibilities](agent-responsibilities.md).
 
 ## Backend Components
 

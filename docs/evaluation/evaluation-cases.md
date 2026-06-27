@@ -63,18 +63,3 @@ but does not provide enough direct evidence to support a concrete cause.
 
 The expected result is human review and an insufficient-evidence outcome. The
 system should state what is missing rather than invent a root cause.
-
-## Design Principles
-
-- Runtime incident input must not contain the known root cause.
-- Query terms are weak retrieval seeds, not the answer.
-- Retrieval should preserve incident-window `WARN`, `ERROR`, and `CRITICAL`
-  logs even when they do not match initial query terms.
-- Trace IDs should preferably be discovered from retrieved logs rather than
-  hardcoded in incident input.
-- Logs should describe symptoms, not conclusions.
-- Traces should provide timing and dependency context.
-- Metrics should support trends, not encode answers.
-- Cases should be deterministic and easy to explain.
-- Evaluation should focus on evidence quality, confidence, citations, and
-  human-review behavior rather than exact prose matching.

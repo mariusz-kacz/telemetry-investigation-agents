@@ -1,0 +1,45 @@
+sequenceDiagram
+    actor User
+    participant UI as React/Vite UI
+    participant API as FastAPI API
+    participant Service as DemoInvestigationService
+    participant Registry as SQLite run registry
+    participant Runner as WorkflowService
+    participant Retrieval as retrieve_evidence
+    participant Graph as LangGraph workflow
+    participant Checkpoints as SQLite checkpoints
+
+    User->>UI: Select demo case
+    UI->>API: POST /api/v1/investigations
+    API->>Service: start(case_id)
+    Service->>Registry: create pending run
+    Service->>Runner: run(run_id, incident, data_root)
+    Runner->>Retrieval: load ranked cited evidence
+    Retrieval-->>Runner: RetrievedEvidence[]
+    Runner->>Graph: invoke incident + evidence + run_id
+    Graph->>Checkpoints: persist state by thread_id
+
+    alt no human review required
+        Graph-->>Runner: report_ready state
+        Runner-->>Service: WorkflowRunResult
+        Service->>Registry: mark completed
+        Service-->>API: InvestigationResponse
+        API-->>UI: completed report
+    else human review required
+        Graph-->>Runner: interrupted state
+        Runner-->>Service: WorkflowRunResult
+        Service->>Registry: mark awaiting_review
+        Service-->>API: InvestigationResponse
+        API-->>UI: review packet summary
+        User->>UI: Approve or reject
+        UI->>API: POST /api/v1/investigations/{run_id}/review
+        API->>Service: review(run_id, approved)
+        Service->>Runner: resume(run_id, approved)
+        Runner->>Graph: Command(resume)
+        Graph->>Checkpoints: update resumed state
+        Graph-->>Runner: completed or rejected state
+        Runner-->>Service: WorkflowRunResult
+        Service->>Registry: mark completed or rejected
+        Service-->>API: InvestigationResponse
+        API-->>UI: final status
+    end

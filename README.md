@@ -42,18 +42,22 @@ This project demonstrates a safer pattern:
 
 ## What To Review First
 
-- [Architecture](docs/architecture.md) for the workflow and module boundaries.
-- [Architecture diagram](docs/diagrams/architecture-overview.mmd) for the
-  editable Mermaid system overview.
-- [AI workflow design](docs/ai-workflow-design.md) for deterministic vs LLM
-  responsibilities.
-- [Evaluation](docs/evaluation.md) for the scorecard and case design.
-- [Demo guide](docs/demo-guide.md) for a five-minute walkthrough.
-- [Sample report](docs/sample-output/checkout-database-timeout-report.md) for a
-  successful cited investigation output.
-- [Latest Azure eval report](docs/evaluation/2026-06-26-azure-eval-report.md)
-  for the captured `4/4 passed` provider-backed run.
-- [ADR index](docs/adr/index.md) for architecture decisions.
+1. [Architecture](docs/architecture.md) for the system shape, module
+   boundaries, state model, persistence, and review flow.
+2. [Architecture diagrams](docs/diagrams/architecture-overview.mmd) for the
+   editable C4-style overview. The detailed runtime and graph diagrams live in
+   [docs/diagrams](docs/diagrams).
+3. [Agent responsibilities](docs/agent-responsibilities.md) for what each
+   workflow step does, what is LLM-backed, and what is verified
+   deterministically.
+4. [AI workflow design](docs/ai-workflow-design.md) for the core design
+   principle: deterministic Python owns evidence and policy; bounded LLM calls
+   propose and critique structured hypotheses.
+5. [Evaluation](docs/evaluation.md) and the
+   [latest Azure eval report](docs/evaluation/2026-06-26-azure-eval-report.md)
+   for the scorecard, cases, and captured `4/4 passed` provider-backed run.
+6. [ADR index](docs/adr/index.md) for the design decisions behind evidence
+   retrieval, validation, checkpointing, evaluation, and semantic review.
 
 ## What This Demonstrates
 
@@ -117,8 +121,11 @@ hypothesis_generation
 ```
 
 See [docs/architecture.md](docs/architecture.md) for the current architecture.
-The standalone editable diagram source is available at
-[docs/diagrams/architecture-overview.mmd](docs/diagrams/architecture-overview.mmd).
+Editable diagram sources:
+
+- [C4-style container overview](docs/diagrams/architecture-overview.mmd)
+- [Investigation runtime flow](docs/diagrams/investigation-runtime-flow.mmd)
+- [LangGraph workflow internals](docs/diagrams/langgraph-workflow.mmd)
 
 ## Deterministic vs LLM Responsibilities
 

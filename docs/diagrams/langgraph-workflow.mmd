@@ -1,0 +1,18 @@
+flowchart TD
+    Start([START]) --> Generation["hypothesis_generation<br/>provider proposes candidate hypotheses"]
+    Generation --> Validation["hypothesis_validation<br/>deterministic citation and evidence policy"]
+    Validation --> Critic["hypothesis_critic<br/>provider returns structured critique findings"]
+    Critic --> Review["hypothesis_review<br/>deterministic review status policy"]
+    Review --> Assessment["human_review_assessment<br/>risk-based escalation policy"]
+    Assessment --> Gate{"Human review required?"}
+
+    Gate -->|"No"| NotRequired["human_review_not_required_marker"]
+    NotRequired --> Report["final_report_builder"]
+    Report --> Ready["report_ready_marker"]
+    Ready --> End([END])
+
+    Gate -->|"Yes"| Interrupt["report_review_gate<br/>LangGraph interrupt"]
+    Interrupt --> Decision{"Reviewer approved?"}
+    Decision -->|"Yes"| Report
+    Decision -->|"No"| Rejected["report_rejected_marker"]
+    Rejected --> End
