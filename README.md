@@ -59,6 +59,10 @@ This project demonstrates a safer pattern:
 6. [ADR index](docs/adr/index.md) for the design decisions behind evidence
    retrieval, validation, checkpointing, evaluation, and semantic review.
 
+For learning background, read the compressed
+[learning journey summary](docs/learning-journey-summary.md). The original
+session notes are kept as an archive.
+
 ## What This Demonstrates
 
 - LangGraph orchestration with explicit typed workflow state.

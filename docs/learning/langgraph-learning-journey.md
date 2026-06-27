@@ -1218,7 +1218,7 @@ Stop after a local observability walkthrough from a real workflow or eval run.
 
 ---
 
-# Phase 16 — FastAPI demo interface
+# Phase 16 ï¿½ FastAPI demo interface
 
 ## Goal
 
@@ -1447,156 +1447,16 @@ Add:
 
 ## Checkpoint
 
-- [ ] README is portfolio-quality.
-- [ ] Architecture diagram exists.
-- [ ] Sample data and sample output exist.
-- [ ] ADRs document major decisions.
-- [ ] Eval results are included.
-- [ ] Limitations are honest.
-- [ ] Setup is reproducible.
+- [x] README is portfolio-quality.
+- [x] Architecture diagram exists.
+- [x] Sample data and sample output exist.
+- [x] ADRs document major decisions.
+- [x] Eval results are included.
+- [x] Limitations are honest.
+- [x] Setup is reproducible.
 
 ## Codex stop condition
 
 Stop after portfolio hardening. Do not add unnecessary features.
-
----
-
-# Phase 18 â€” Final review and roadmap
-
-## Goal
-
-Pressure-test the project as if it were discussed in a Senior AI Engineer interview.
-
-## Review questions
-
-- Can I explain why LangGraph is used here?
-- Can I explain state, nodes, edges, checkpoints, and interrupts?
-- Can I show where deterministic code ends and LLM reasoning begins?
-- Can I explain how hallucination is controlled?
-- Can I show evals?
-- Can I show telemetry/traces?
-- Can I explain failure modes?
-- Can I compare this with MAF conceptually?
-- Can I explain what would change in a real enterprise deployment?
-- Can I explain what is intentionally out of scope?
-
-## Final checkpoint
-
-- [ ] I can explain the graph architecture from memory.
-- [ ] I can add a new node without Codex.
-- [ ] I can add a new eval case without Codex.
-- [ ] I can debug a failed investigation run.
-- [ ] I can explain confidence scoring.
-- [ ] I can explain human review triggers.
-- [ ] I can defend architecture decisions.
-- [ ] I can discuss LangGraph vs MAF tradeoffs clearly.
-
----
-
-## 5. Learning journal template
-
-For every session, create or update a note in:
-
-```text
-docs/learning-notes/YYYY-MM-DD-session-title.md
-```
-
-Use this template:
-
-```markdown
-# Session: <title>
-
-## Goal
-
-## What I built
-
-## LangGraph concept learned
-
-## Mapping to .NET/C# thinking
-
-## What confused me
-
-## Tradeoffs noticed
-
-## Production concerns
-
-## Tests/evals added
-
-## Next step
-```
-
----
-
-## 6. ADR template
-
-For meaningful decisions, create:
-
-```text
-docs/adr/NNNN-short-title.md
-```
-
-Template:
-
-```markdown
-# ADR NNNN: <decision>
-
-## Status
-
-Proposed / Accepted / Superseded
-
-## Context
-
-## Decision
-
-## Consequences
-
-## Alternatives considered
-
-## Why this matters for Telemetry Investigation Agents
-```
-
----
-
-## 7. Codex usage rule
-
-At the start of every Codex session, provide the mentor prompt and remind Codex:
-
-```text
-Read docs/langgraph-learning-journey.md.
-Continue from the first incomplete checkpoint.
-Do not regenerate the entire project.
-Teach one concept, implement one vertical slice, update the checklist, then stop.
-```
-
----
-
-## 8. Quality bar
-
-The project is successful only if it demonstrates senior engineering quality.
-
-The minimum acceptable standard:
-
-- typed state,
-- clear module boundaries,
-- deterministic processing separated from LLM reasoning,
-- citations for claims,
-- weak evidence behavior,
-- evaluation cases,
-- observability,
-- human review for risky decisions,
-- honest documentation,
-- reproducible setup.
-
-The project fails if it becomes:
-
-- a chatbot,
-- prompt spaghetti,
-- untyped Python scripts,
-- a LangGraph tutorial clone,
-- an overengineered distributed system,
-- a demo with no evals,
-- a system that produces confident answers from weak evidence.
-
-
 
 
