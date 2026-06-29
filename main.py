@@ -1,5 +1,5 @@
 def main():
-    print("Hello from langgraph-sandox!")
+    print("Hello from telemetry-investigation-agents!")
 
 
 if __name__ == "__main__":

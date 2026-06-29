@@ -275,6 +275,17 @@ http://127.0.0.1:5173
 4. Run `checkout-database-timeout` first to show the happy path, then run
    `conflicting-evidence` or `insufficient-evidence` to show review escalation.
 
+## Demo Screenshots
+
+The dashboard shows a completed Azure OpenAI-backed demo investigation with the
+final report, confidence, evidence count, and human-review status:
+
+![Telemetry Investigation Agents dashboard showing a completed checkout database timeout investigation](docs/img/dashboard.png)
+
+The same run can be inspected in Jaeger when OTLP tracing is enabled:
+
+![Jaeger trace timeline showing the investigation workflow spans for one executed case](docs/img/jaeger.png)
+
 ## Run The Backend
 
 ```powershell
@@ -386,7 +397,7 @@ uv run telemetry-evals --provider azure --show-telemetry
 
 ## Future Improvements
 
-- Add screenshots or a short recorded demo.
+- Add a short recorded demo.
 - Add holdout eval cases that are not used during prompt or policy iteration.
 - Add more eval cases, including deployment/configuration evidence.
 - Add richer metric anomaly logic and baseline comparison.

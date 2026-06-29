@@ -177,8 +177,7 @@ Before any phase is marked DONE:
 | 15. Observability and tracing | DONE | 2026-06-08 | Structured JSON logs, run IDs, graph node events/spans, retrieval events/spans, Azure workflow LLM adapter events/spans, eval scoring events, local stdout logging, opt-in console tracing, focused observability tests, docs, and learning note exist. |
 | 16. API / CLI interface | DONE | 2026-06-09 | FastAPI app factory, demo-case listing, start/read/review investigation endpoints, thin route delegation, UI-oriented response fields, TestClient coverage, and README API examples exist. |
 | 16.5 React/Vite portfolio demo UI | DONE | 2026-06-25 | React/Vite dashboard consumes API DTOs only, launches demo investigations, shows hypotheses/evidence/review state, supports human-review decisions, and reloads past run outcomes through a run-history endpoint. |
-| 17. Portfolio skeleton hardening | TODO |  |  |
-| 18. Final review and roadmap | TODO |  |  |
+| 17. Portfolio skeleton hardening | DONE | 2026-06-29 | Portfolio README, architecture docs, eval report, sample output, observability docs, demo screenshots, Jaeger trace view, limitations, and roadmap are in place. |
 
 Status values: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`, `REWORK`.
 

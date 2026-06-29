@@ -36,16 +36,22 @@ To export spans to a local OTLP collector or Jaeger instance, use the OTLP
 exporter:
 
 ```powershell
+docker run --rm --name jaeger -p 16686:16686 -p 4317:4317 -p 4318:4318 jaegertracing/all-in-one:latest
+```
+
+```powershell
 $env:TELEMETRY_AGENTS_TRACING_ENABLED="true"
 $env:TELEMETRY_AGENTS_TRACING_EXPORTER="otlp"
 $env:TELEMETRY_AGENTS_OTLP_ENDPOINT="http://localhost:4317"
 uv run telemetry-evals --provider azure --show-telemetry
 ```
 
-In Jaeger, select the `telemetry-investigation-agents` service. The current
-trace model contains manually created workflow spans only. It does not yet add
-automatic FastAPI route spans, HTTP client spans, SQLite spans, or OpenAI SDK
-transport spans.
+Open the Jaeger UI at `http://localhost:16686`, then select the
+`telemetry-investigation-agents` service. The current trace model contains
+manually created workflow spans only. It does not yet add automatic FastAPI
+route spans, HTTP client spans, SQLite spans, or OpenAI SDK transport spans.
+
+![Jaeger trace timeline showing the investigation workflow spans for one executed case](img/jaeger.png)
 
 The same setting is read when running the FastAPI backend. For the backend,
 structured JSON logs are enabled by app startup. For eval CLI runs, structured
