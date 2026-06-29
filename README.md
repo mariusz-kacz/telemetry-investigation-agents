@@ -390,17 +390,3 @@ uv run telemetry-evals --provider azure --show-telemetry
 - Add background execution and polling/WebSocket updates for longer runs.
 - Add production-grade auth, deployment, monitoring, and cost controls if the
   project were evolved beyond portfolio scope.
-
-## Interview Talking Points
-
-- LangGraph is used because the workflow needs explicit state, branching,
-  checkpointing, interrupts, and resumable human review.
-- The system is not a chatbot: evidence retrieval, validation, routing, and
-  reporting are controlled by deterministic code.
-- The LLM is bounded to structured hypothesis generation and semantic critique.
-- Evidence IDs and citations let a reviewer trace conclusions back to source
-  telemetry.
-- Human review is a risk-control mechanism, not a UI afterthought.
-- Evaluation exists before prompt tuning, so changes can be checked against
-  evidence coverage, categories, review routing, citations, and unsupported
-  claims.
