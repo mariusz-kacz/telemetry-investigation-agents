@@ -1,4 +1,5 @@
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
@@ -61,6 +62,81 @@ class EvidenceRetrievalRequest(BaseModel):
     start_timestamp: str = Field(min_length=1)
     end_timestamp: str = Field(min_length=1)
     trace_id: str | None = None
+
+
+@dataclass(frozen=True)
+class EvidenceRetrievalSummary:
+    log_count: int
+    trace_count: int
+    metric_count: int
+    strong_count: int
+    medium_count: int
+    weak_count: int
+    missing_count: int
+
+
+def _evidence_citation(source_file: Path, line_number: int) -> str:
+    return f"{source_file.as_posix()}:{line_number}"
+
+
+def _retrieved_evidence(
+    *,
+    evidence_id: str,
+    source: EvidenceSource,
+    service: str,
+    summary: str,
+    source_file: Path,
+    line_number: int,
+    timestamp: datetime,
+    selection_reason: str,
+    strength: EvidenceStrength,
+    relevance_score: float,
+) -> RetrievedEvidence:
+    return RetrievedEvidence(
+        evidence=TelemetryEvidence(
+            evidence_id=evidence_id,
+            service=service,
+            citation=_evidence_citation(source_file, line_number),
+            source=source,
+            summary=summary,
+        ),
+        citation=CitationMetadata(
+            line_number=line_number,
+            source_file=source_file.as_posix(),
+            service=service,
+            timestamp=timestamp.isoformat(),
+            record_id=None,
+            selection_reason=selection_reason,
+        ),
+        strength=strength,
+        relevance_score=relevance_score,
+    )
+
+
+def _summarize_retrieved_evidence(
+    *,
+    log_evidence: list[RetrievedEvidence],
+    trace_evidence: list[RetrievedEvidence],
+    metric_evidence: list[RetrievedEvidence],
+) -> EvidenceRetrievalSummary:
+    retrieved_evidence = log_evidence + trace_evidence + metric_evidence
+    return EvidenceRetrievalSummary(
+        log_count=len(log_evidence),
+        trace_count=len(trace_evidence),
+        metric_count=len(metric_evidence),
+        strong_count=sum(
+            item.strength == EvidenceStrength.STRONG for item in retrieved_evidence
+        ),
+        medium_count=sum(
+            item.strength == EvidenceStrength.MEDIUM for item in retrieved_evidence
+        ),
+        weak_count=sum(
+            item.strength == EvidenceStrength.WEAK for item in retrieved_evidence
+        ),
+        missing_count=sum(
+            item.strength == EvidenceStrength.MISSING for item in retrieved_evidence
+        ),
+    )
 
 
 def _missing_evidence(
@@ -183,28 +259,27 @@ def _retrieve_log_evidence(
     )
 
     for matching_log_line in matching_log_lines:
-        telemetry_evidence = TelemetryEvidence(
-            evidence_id=f"log-{matching_log_line.log_line.service}-{matching_log_line.line_number}",
-            service=matching_log_line.log_line.service,
-            citation=f"{matching_log_line.source_file.as_posix()}:{matching_log_line.line_number}",
-            source=EvidenceSource.LOG,
-            summary=f"{matching_log_line.log_line.level} log from {matching_log_line.log_line.service}: {matching_log_line.log_line.message}",
-        )
-        citation_metadata = CitationMetadata(
-            line_number=matching_log_line.line_number,
-            source_file=matching_log_line.source_file.as_posix(),
-            service=matching_log_line.log_line.service,
-            timestamp=matching_log_line.log_line.timestamp.isoformat(),
-            record_id=None,
-            selection_reason=_format_selection_reason(matching_log_line.match_details),
-        )
-
         evidence_strength, relevance_score = score_matching_log_line(matching_log_line)
 
         retrieved_log_evidence.append(
-            RetrievedEvidence(
-                evidence=telemetry_evidence,
-                citation=citation_metadata,
+            _retrieved_evidence(
+                evidence_id=(
+                    f"log-{matching_log_line.log_line.service}-"
+                    f"{matching_log_line.line_number}"
+                ),
+                service=matching_log_line.log_line.service,
+                source=EvidenceSource.LOG,
+                source_file=matching_log_line.source_file,
+                line_number=matching_log_line.line_number,
+                timestamp=matching_log_line.log_line.timestamp,
+                summary=(
+                    f"{matching_log_line.log_line.level} log from "
+                    f"{matching_log_line.log_line.service}: "
+                    f"{matching_log_line.log_line.message}"
+                ),
+                selection_reason=_format_selection_reason(
+                    matching_log_line.match_details
+                ),
                 strength=evidence_strength,
                 relevance_score=relevance_score,
             )
@@ -254,37 +329,29 @@ def _retrieve_trace_evidence(
         )
 
     for matching_trace_span in matching_trace_spans:
-        telemetry_evidence = TelemetryEvidence(
-            evidence_id=f"trace-{request.service}-{matching_trace_span.line_number}",
-            service=matching_trace_span.trace_span.service,
-            citation=f"{matching_trace_span.source_file.as_posix()}:{matching_trace_span.line_number}",
-            source=EvidenceSource.TRACE,
-            summary=(
-                f"Trace {matching_trace_span.trace_span.trace_id} span {matching_trace_span.trace_span.span_id} "
-                f"for {matching_trace_span.trace_span.operation} ended with status {matching_trace_span.trace_span.status} "
-                f"in {matching_trace_span.trace_span.duration_ms}ms."
-            ),
-        )
-        citation_metadata = CitationMetadata(
-            line_number=matching_trace_span.line_number,
-            source_file=matching_trace_span.source_file.as_posix(),
-            service=matching_trace_span.trace_span.service,
-            timestamp=matching_trace_span.trace_span.timestamp.isoformat(),
-            record_id=None,
-            selection_reason=_format_trace_selection_reason(
-                matching_trace_span.match_reason,
-                matching_trace_span.trace_span.trace_id,
-            ),
-        )
-
-        (evidence_strength, relevance_score) = score_matching_trace_span(
+        evidence_strength, relevance_score = score_matching_trace_span(
             matching_trace_span.match_reason
         )
 
         retrieved_trace_evidence.append(
-            RetrievedEvidence(
-                evidence=telemetry_evidence,
-                citation=citation_metadata,
+            _retrieved_evidence(
+                evidence_id=f"trace-{request.service}-{matching_trace_span.line_number}",
+                service=matching_trace_span.trace_span.service,
+                source=EvidenceSource.TRACE,
+                source_file=matching_trace_span.source_file,
+                line_number=matching_trace_span.line_number,
+                timestamp=matching_trace_span.trace_span.timestamp,
+                summary=(
+                    f"Trace {matching_trace_span.trace_span.trace_id} span "
+                    f"{matching_trace_span.trace_span.span_id} for "
+                    f"{matching_trace_span.trace_span.operation} ended with status "
+                    f"{matching_trace_span.trace_span.status} in "
+                    f"{matching_trace_span.trace_span.duration_ms}ms."
+                ),
+                selection_reason=_format_trace_selection_reason(
+                    matching_trace_span.match_reason,
+                    matching_trace_span.trace_span.trace_id,
+                ),
                 strength=evidence_strength,
                 relevance_score=relevance_score,
             )
@@ -331,31 +398,29 @@ def _retrieve_metric_evidence(
         )
 
     for matching_metric_sample in matching_metric_samples:
-        telemetry_evidence = TelemetryEvidence(
-            evidence_id=f"metric-{request.service}-{matching_metric_sample.line_number}",
-            service=matching_metric_sample.metric_sample.service,
-            citation=f"{matching_metric_sample.source_file.as_posix()}:{matching_metric_sample.line_number}",
-            source=EvidenceSource.METRIC,
-            summary=(
-                f"Metric {matching_metric_sample.metric_sample.metric_name} from timestamp {matching_metric_sample.metric_sample.timestamp} "
-                f"for {matching_metric_sample.metric_sample.service} has value {matching_metric_sample.metric_sample.value}."
-            ),
-        )
-        citation_metadata = CitationMetadata(
-            line_number=matching_metric_sample.line_number,
-            source_file=matching_metric_sample.source_file.as_posix(),
-            service=matching_metric_sample.metric_sample.service,
-            timestamp=matching_metric_sample.metric_sample.timestamp.isoformat(),
-            record_id=None,
-            selection_reason=f"Matched metric {matching_metric_sample.metric_sample.metric_name} for service {matching_metric_sample.metric_sample.service} inside incident time window.",
-        )
-
-        (evidence_strength, relevance_score) = score_matching_metric_sample()
+        evidence_strength, relevance_score = score_matching_metric_sample()
 
         retrieved_metric_evidence.append(
-            RetrievedEvidence(
-                evidence=telemetry_evidence,
-                citation=citation_metadata,
+            _retrieved_evidence(
+                evidence_id=(
+                    f"metric-{request.service}-{matching_metric_sample.line_number}"
+                ),
+                service=matching_metric_sample.metric_sample.service,
+                source=EvidenceSource.METRIC,
+                source_file=matching_metric_sample.source_file,
+                line_number=matching_metric_sample.line_number,
+                timestamp=matching_metric_sample.metric_sample.timestamp,
+                summary=(
+                    f"Metric {matching_metric_sample.metric_sample.metric_name} "
+                    f"from timestamp {matching_metric_sample.metric_sample.timestamp} "
+                    f"for {matching_metric_sample.metric_sample.service} has value "
+                    f"{matching_metric_sample.metric_sample.value}."
+                ),
+                selection_reason=(
+                    f"Matched metric {matching_metric_sample.metric_sample.metric_name} "
+                    f"for service {matching_metric_sample.metric_sample.service} "
+                    "inside incident time window."
+                ),
                 strength=evidence_strength,
                 relevance_score=relevance_score,
             )
@@ -408,38 +473,35 @@ def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEviden
         )
 
         retrieved_evidence = log_evidence + trace_span_evidence + metric_sample_evidence
-        strong_count = sum(
-            item.strength == EvidenceStrength.STRONG for item in retrieved_evidence
+        evidence_summary = _summarize_retrieved_evidence(
+            log_evidence=log_evidence,
+            trace_evidence=trace_span_evidence,
+            metric_evidence=metric_sample_evidence,
         )
-        medium_count = sum(
-            item.strength == EvidenceStrength.MEDIUM for item in retrieved_evidence
-        )
-        weak_count = sum(
-            item.strength == EvidenceStrength.WEAK for item in retrieved_evidence
-        )
-        missing_count = sum(
-            item.strength == EvidenceStrength.MISSING for item in retrieved_evidence
-        )
-        retrieval_span.set_attribute("evidence.log_count", len(log_evidence))
-        retrieval_span.set_attribute("evidence.trace_count", len(trace_span_evidence))
+        retrieval_span.set_attribute("evidence.log_count", evidence_summary.log_count)
         retrieval_span.set_attribute(
-            "evidence.metric_count", len(metric_sample_evidence)
+            "evidence.trace_count", evidence_summary.trace_count
         )
-        retrieval_span.set_attribute("evidence.strong_count", strong_count)
-        retrieval_span.set_attribute("evidence.medium_count", medium_count)
-        retrieval_span.set_attribute("evidence.weak_count", weak_count)
-        retrieval_span.set_attribute("evidence.missing_count", missing_count)
+        retrieval_span.set_attribute(
+            "evidence.metric_count", evidence_summary.metric_count
+        )
+        retrieval_span.set_attribute(
+            "evidence.strong_count", evidence_summary.strong_count
+        )
+        retrieval_span.set_attribute(
+            "evidence.medium_count", evidence_summary.medium_count
+        )
+        retrieval_span.set_attribute(
+            "evidence.weak_count", evidence_summary.weak_count
+        )
+        retrieval_span.set_attribute(
+            "evidence.missing_count", evidence_summary.missing_count
+        )
 
         _emit_evidence_retrieval_completed_event(
             run_id=request.run_id,
             incident_id=request.incident_id,
-            log_evidence_len=len(log_evidence),
-            metric_sample_evidence_len=len(metric_sample_evidence),
-            trace_span_evidence_len=len(trace_span_evidence),
-            strong_count=strong_count,
-            medium_count=medium_count,
-            weak_count=weak_count,
-            missing_count=missing_count,
+            evidence_summary=evidence_summary,
         )
         return sorted(
             retrieved_evidence,
@@ -451,23 +513,17 @@ def retrieve_evidence(request: EvidenceRetrievalRequest) -> list[RetrievedEviden
 def _emit_evidence_retrieval_completed_event(
     run_id: str,
     incident_id: str,
-    log_evidence_len: int,
-    metric_sample_evidence_len: int,
-    trace_span_evidence_len: int,
-    strong_count: int,
-    medium_count: int,
-    weak_count: int,
-    missing_count: int,
+    evidence_summary: EvidenceRetrievalSummary,
 ) -> None:
     emit_event(
         EVENT_EVIDENCE_RETRIEVAL_COMPLETED,
         run_id=run_id,
         incident_id=incident_id,
-        log_count=log_evidence_len,
-        trace_count=trace_span_evidence_len,
-        metric_count=metric_sample_evidence_len,
-        strong_count=strong_count,
-        medium_count=medium_count,
-        weak_count=weak_count,
-        missing_count=missing_count,
+        log_count=evidence_summary.log_count,
+        trace_count=evidence_summary.trace_count,
+        metric_count=evidence_summary.metric_count,
+        strong_count=evidence_summary.strong_count,
+        medium_count=evidence_summary.medium_count,
+        weak_count=evidence_summary.weak_count,
+        missing_count=evidence_summary.missing_count,
     )
