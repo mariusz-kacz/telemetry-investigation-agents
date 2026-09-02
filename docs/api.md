@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The FastAPI layer exposes a focused portfolio demo interface. It is not a
+The FastAPI layer exposes a focused local investigation interface. It is not a
 general incident ingestion API. The API accepts predefined demo case IDs, starts
 or resumes workflow runs, and returns UI-oriented response DTOs.
 

@@ -1,6 +1,11 @@
 # Codex Mentor Prompt — LangGraph Learning Journey
 
-Use this prompt at the beginning of every Codex session for the `Telemetry Investigation Agents` repository.
+> **Archived development material:** This prompt records the repository's
+> original guided-learning process. It is not active repository guidance. See
+> the root `AGENTS.md` for current maintenance instructions.
+
+This prompt was used at the beginning of Codex sessions for the
+`Telemetry Investigation Agents` repository.
 
 ---
 

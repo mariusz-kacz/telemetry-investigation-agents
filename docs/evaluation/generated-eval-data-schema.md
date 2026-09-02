@@ -176,5 +176,5 @@ Rules:
 - Use stable service names across incident input and filenames.
 - Reuse trace IDs across logs and trace spans when trace correlation matters.
 - Include only enough records to express the scenario.
-- Include ordinary or weakly relevant records when needed to prove filtering.
+- Include ordinary or weakly relevant records when needed to verify filtering.
 - Avoid leaking known root causes into runtime incident input.

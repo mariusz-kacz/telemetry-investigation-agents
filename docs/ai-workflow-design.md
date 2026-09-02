@@ -105,7 +105,7 @@ checkpointing. A reviewer can approve or reject the paused workflow.
 
 ## Tradeoffs
 
-The controlled design has more code than a single prompt-based demo, but the
+The controlled design has more code than a single prompt-based workflow, but the
 extra structure creates clear ownership:
 
 - retrieval quality can be tested without the LLM;
@@ -115,8 +115,8 @@ extra structure creates clear ownership:
 - failures are easier to diagnose.
 
 The tradeoff is that the workflow is narrower than a general chatbot. It handles
-predefined synthetic cases and known telemetry formats. That is intentional for a
-portfolio project focused on enterprise AI workflow engineering.
+predefined synthetic cases and known telemetry formats so evidence boundaries,
+evaluation, and review policy remain explicit and inspectable.
 
 ## Current Limits
 

@@ -76,6 +76,6 @@ Rejected. LangGraph should orchestrate workflow state and transitions. Source-sp
 
 ## Why this matters for Telemetry Investigation Agents
 
-The project is intended to demonstrate reliable AI workflow design, not a chatbot over logs.
+The implementation uses an auditable AI workflow rather than a chatbot over logs.
 
 This decision creates the evidence contract that later phases must respect: hypotheses and reports should be grounded in retrieved evidence with citations. LLM reasoning starts after deterministic evidence retrieval, not before it.

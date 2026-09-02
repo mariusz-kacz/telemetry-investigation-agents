@@ -7,14 +7,14 @@ policy tuning. It checks whether the system produces evidence-bound, reviewable
 outputs for a small set of synthetic incidents.
 
 The evals do not prove production correctness. They provide a regression suite
-for the portfolio workflow: retrieval, structured hypotheses, validation,
+for the implemented workflow: retrieval, structured hypotheses, validation,
 review routing, citations, and unsupported-claim controls.
 
 ## Evaluation Cases
 
 The four eval/demo cases live under `eval_data/`.
 
-| Case | Expected category | Expected review | What it proves |
+| Case | Expected category | Expected review | Behavior verified |
 |---|---|---:|---|
 | `checkout-database-timeout` | `database_failure` | No | The workflow can identify a clear database failure when logs, traces, and metrics agree. |
 | `downstream-dependency-latency` | `downstream_dependency_failure` | No | The workflow can reason across a downstream dependency path. |
@@ -38,7 +38,7 @@ Category and unsupported-claim checks inspect accepted reviewed hypotheses only.
 Blocked or disputed hypotheses are not considered auto-usable workflow
 conclusions.
 
-## What Each Case Proves
+## Behavior Verified By Each Case
 
 `checkout-database-timeout`
 
@@ -160,4 +160,5 @@ claim that the system is production-ready.
 - Only four synthetic cases are included.
 - The semantic unsupported-claim check uses a provider-backed reviewer.
 - There is no statistical benchmark or multi-judge aggregation.
-- The eval data is intentionally small so it can be inspected during interviews.
+- The eval data is intentionally small so each case and score can be inspected
+  manually.

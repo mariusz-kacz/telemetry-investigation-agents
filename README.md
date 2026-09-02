@@ -1,17 +1,15 @@
 # Telemetry Investigation Agents
 
-Telemetry Investigation Agents is a Python + LangGraph portfolio project for
-investigating synthetic telemetry incidents with evidence-backed AI assistance.
+Telemetry Investigation Agents is a bounded Python and LangGraph implementation
+for investigating synthetic telemetry incidents with evidence-backed AI
+assistance.
 
-The project demonstrates a controlled workflow rather than a chatbot: ordinary
-Python code retrieves evidence, validates citations, applies review policy, and
-assembles reports; bounded LLM calls propose and critique structured hypotheses.
+Deterministic Python retrieves and scores evidence, validates citations, applies
+review policy, and assembles reports. Bounded Azure OpenAI calls propose and
+critique structured hypotheses, while LangGraph coordinates checkpointed
+execution and human review.
 
-The portfolio thesis is simple: AI-assisted incident investigation becomes more
-credible when the workflow can show which evidence was used, which claims were
-validated, when uncertainty remains, and when a human should review the result.
-
-## Portfolio Snapshot
+## Implementation Snapshot
 
 - LangGraph workflow with typed state, checkpointing, interrupts, and resume.
 - Deterministic parsing, retrieval, evidence scoring, validation, and routing.
@@ -28,7 +26,7 @@ pressure to produce a clear answer. A generic chatbot over telemetry can produce
 plausible explanations, but it is hard to verify which evidence was used, where
 claims came from, and when the system should stop and ask for human review.
 
-This project demonstrates a safer pattern:
+The workflow implements the following pattern:
 
 - retrieve and score telemetry evidence deterministically;
 - preserve evidence IDs and citations;
@@ -43,27 +41,24 @@ This project demonstrates a safer pattern:
 ## What To Review First
 
 1. [Architecture](docs/architecture.md) for the system shape, module
-   boundaries, state model, persistence, and review flow.
-2. [Architecture diagrams](docs/diagrams/architecture-overview.mmd) for the
-   editable C4-style overview. The detailed runtime and graph diagrams live in
-   [docs/diagrams](docs/diagrams).
-3. [Agent responsibilities](docs/agent-responsibilities.md) for what each
+   boundaries, state model, persistence, and review flow. The editable
+   [architecture diagrams](docs/diagrams/architecture-overview.mmd) provide the
+   container, runtime, and graph views.
+2. [Agent responsibilities](docs/agent-responsibilities.md) for what each
    workflow step does, what is LLM-backed, and what is verified
    deterministically.
-4. [AI workflow design](docs/ai-workflow-design.md) for the core design
+3. [AI workflow design](docs/ai-workflow-design.md) for the core design
    principle: deterministic Python owns evidence and policy; bounded LLM calls
    propose and critique structured hypotheses.
-5. [Evaluation](docs/evaluation.md) and the
+4. [Evaluation](docs/evaluation.md) and the
    [latest Azure eval report](docs/evaluation/2026-06-26-azure-eval-report.md)
    for the scorecard, cases, and captured `4/4 passed` provider-backed run.
-6. [ADR index](docs/adr/index.md) for the design decisions behind evidence
+5. [ADR index](docs/adr/index.md) for the design decisions behind evidence
    retrieval, validation, checkpointing, evaluation, and semantic review.
+6. [Observability](docs/observability.md) and [API documentation](docs/api.md)
+   for runtime inspection and the external DTO contract.
 
-For learning background, read the compressed
-[learning journey summary](docs/learning-journey-summary.md). The original
-session notes are kept as an archive.
-
-## What This Demonstrates
+## Implemented Capabilities
 
 - LangGraph orchestration with explicit typed workflow state.
 - Deterministic telemetry parsing, matching, evidence scoring, and citations.
@@ -88,9 +83,9 @@ session notes are kept as an archive.
   real telemetry ingestion.
 - Not a broad benchmark of model quality.
 
-Synthetic telemetry is deliberate: it keeps the portfolio focused on workflow
-design, evidence boundaries, evaluation, and review policy rather than vendor
-integration.
+Synthetic telemetry is deliberate: it keeps the implementation focused on
+workflow design, evidence boundaries, evaluation, and review policy rather than
+vendor integration.
 
 ## Architecture Overview
 
@@ -385,7 +380,7 @@ uv run telemetry-evals --provider azure --show-telemetry
 ## Limitations
 
 - Telemetry data is synthetic and local.
-- The React UI is a presentation/demo layer, not a full product.
+- The React UI is a thin presentation layer, not a full product.
 - The API supports predefined demo cases, not arbitrary incident ingestion.
 - Evaluation currently covers four scenarios.
 - No holdout eval set exists yet.
@@ -397,11 +392,11 @@ uv run telemetry-evals --provider azure --show-telemetry
 
 ## Future Improvements
 
-- Add a short recorded demo.
+- Add a short recorded operator walkthrough.
 - Add holdout eval cases that are not used during prompt or policy iteration.
 - Add more eval cases, including deployment/configuration evidence.
 - Add richer metric anomaly logic and baseline comparison.
 - Add a real telemetry adapter behind the existing evidence retrieval boundary.
 - Add background execution and polling/WebSocket updates for longer runs.
-- Add production-grade auth, deployment, monitoring, and cost controls if the
-  project were evolved beyond portfolio scope.
+- Add authentication, deployment, monitoring, and cost controls if the
+  system is evolved beyond the current implementation scope.

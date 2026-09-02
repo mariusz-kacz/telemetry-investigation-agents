@@ -1,8 +1,13 @@
 # Learning Journey Summary
 
+> **Historical development material:** This document records how the repository
+> was developed. It is not normative system documentation and is not part of
+> the recommended initial review path. See `README.md` and the current technical
+> documents under `docs/` for the implemented system.
+
 This document compresses the session-by-session learning notes into a shorter
-reader-facing summary. The original files in `docs/learning-notes/` remain as
-an archive, but this is the document to read first.
+historical summary. The original files in `docs/learning-notes/` remain as an
+archive.
 
 ## What This Learning Journey Was For
 
@@ -249,9 +254,9 @@ The learning journey produced one central design position:
 > evidence boundary, validation policy, review routing, evaluation, and public
 > API contract.
 
-The project is intentionally not a production observability product, not a
-general incident portal, and not an autonomous root-cause engine. It is a
-portfolio demonstration of evidence-backed AI workflow design.
+The implementation is intentionally not a production observability product, not
+a general incident portal, and not an autonomous root-cause engine. It is a
+bounded implementation of an evidence-backed AI workflow.
 
 The most defensible parts are the controls around model output: cited evidence,
 validation, semantic critique, deterministic review policy, checkpointed human

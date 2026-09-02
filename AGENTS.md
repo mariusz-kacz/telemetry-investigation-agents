@@ -1,95 +1,56 @@
-# Codex instructions for this repository
+# Repository maintenance guidance
 
-## Core rule
+## Working context
 
-This repository is a learning project. Do not behave primarily as a code generator.
+Before changing system behavior, read `README.md`, `docs/architecture.md`,
+`docs/agent-responsibilities.md`, `docs/ai-workflow-design.md`, and the relevant
+ADRs under `docs/adr/`.
 
-You are my LangGraph mentor, reviewer, and constraint setter.
+Update tests and documentation whenever behavior or contracts change. Do not
+broaden this bounded implementation into a production observability platform
+without an explicit requirement.
 
-Before doing any implementation work:
+## Architecture invariants
 
-1. Read `docs/learning/langgraph-learning-journey.md`.
-2. Read `docs/learning/codex-mentor-prompt.md`.
-3. Find the first incomplete checkpoint.
-4. Continue from that checkpoint only.
-5. Teach one concept at a time.
-6. Do not generate the full project unless explicitly asked.
+- Deterministic Python owns evidence retrieval, evidence IDs, scoring, citation
+  validation, confidence policy, review routing, report assembly, persistence
+  boundaries, API DTOs, and evaluation scoring.
+- LLM calls are bounded to structured hypothesis generation and semantic
+  critique. Treat all model output as untrusted candidate state.
+- LangGraph owns orchestration, typed workflow state, checkpointing, conditional
+  routing, interrupts, and resume behavior.
+- Do not move deterministic evidence handling or approval policy into prompts or
+  model decisions.
+- Keep graph nodes thin. Put testable behavior in ordinary application
+  functions.
+- Preserve provider boundaries so offline tests do not require a live model.
 
-## Teaching mode
+## Python design
 
-For each checkpoint:
+Prefer simple, explicit, testable, idiomatic Python over C# architecture
+translated into Python.
 
-1. Explain the concept.
-2. Teach the native Python/LangGraph approach first. Mention .NET/C# only when it helps explain a contrast, tradeoff, or anti-pattern.
-3. Create only minimal scaffolding, failing tests, or TODO skeletons.
-4. Do not implement the core learning target immediately.
-5. Ask me to implement the core logic myself.
-6. Review my implementation critically after I make changes.
-7. Only provide full implementation if I am blocked and explicitly ask.
-8. After review and correction, update the checklist in `docs/learning/langgraph-learning-journey.md`.
-9. Stop.
+- Prefer a module-level function when it is clearer than a class.
+- Use `Protocol` only for a meaningful substitutable boundary.
+- Avoid unnecessary abstractions, class hierarchies, factories, and enterprise
+  boilerplate.
+- Use exceptions, iterators, context managers, dataclasses, `pathlib`, pytest,
+  and typing idiomatically where they improve clarity.
 
-## Native Python bias
+## Review quality bar
 
-Prefer the design a senior Python engineer would naturally choose, not a C# architecture translated into Python.
+Review both behavior and maintainability. Explicitly check for:
 
-When I propose a design, evaluate it against Python norms:
+- unclear names such as `item`, `data`, `result`, `obj`, or `temp` when a domain
+  name would be clearer;
+- tuple or list indexing where destructuring or a small named model would
+  improve readability;
+- clever comprehensions or control flow that are difficult to audit;
+- missing negative tests and edge cases;
+- tests that pass for the wrong reason;
+- unnecessary abstractions or C#-style ceremony;
+- duplicated logic that should be extracted only when the shared concept is
+  meaningful.
 
-- Is this abstraction necessary in Python?
-- Would a module-level function be clearer than a class?
-- Would a protocol be better than an abstract base class?
-- Is this ceremony useful, or just familiar from .NET?
-- Are we using exceptions, iterators, context managers, dataclasses, pathlib, pytest, and typing idiomatically?
-- Are we preserving clean boundaries without importing enterprise boilerplate?
-
-Default to simple, explicit, testable Python.
-
-Only introduce heavier architecture when it solves a real project problem.
-
-## What Codex may implement directly
-
-Codex may implement boring plumbing:
-
-- project setup,
-- package configuration,
-- folder structure,
-- lint/test configuration,
-- simple sample data scaffolding,
-- README boilerplate.
-
-## What I must implement myself
-
-I should implement the main learning targets:
-
-- graph state,
-- node functions,
-- edge wiring,
-- conditional routing,
-- tool interfaces,
-- telemetry adapters,
-- evidence ranking,
-- hypothesis schemas,
-- validation logic,
-- human-review routing,
-- eval scoring.
-
-## Code review quality bar
-
-When reviewing code, Codex must review both behavior and maintainability.
-
-Do not stop at whether tests pass. Explicitly check for:
-
-- unclear names such as `item`, `data`, `result`, `obj`, or `temp` when a domain name would be clearer,
-- tuple/list indexing such as `item[0]` or `item[1]` where destructuring or a small named model would improve readability,
-- functions that hide intent behind clever comprehensions,
-- code that is technically correct but hard to audit,
-- missing negative tests and edge cases,
-- tests that pass for the wrong reason,
-- unnecessary abstractions or C#-style ceremony,
-- duplicated logic that should be extracted only if it is meaningful, not preemptively.
-
-For every review, include a short `Maintainability` section, even if there are no issues.
-
-## Stop rule
-
-After every learning unit, stop and wait for my next instruction.
+Include a short `Maintainability` section in every code review, even when there
+are no issues.

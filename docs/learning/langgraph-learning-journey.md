@@ -1,5 +1,9 @@
 # LangGraph Learning Journey — Telemetry Investigation Agents
 
+> **Archived development material:** This journey records how the implementation
+> was built. It is not normative system documentation or the current work plan.
+> See the root `AGENTS.md` for active maintenance guidance.
+
 ## Purpose
 
 This repository is a structured learning journey for building a production-oriented Python + LangGraph investigation system.

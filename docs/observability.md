@@ -106,7 +106,7 @@ Decision events:
 - `eval.case.scored`
 
 Evaluation judge calls, such as unsupported-claim review, are not emitted as
-workflow `llm.call.*` events. They are evaluation infrastructure, not production
+workflow `llm.call.*` events. They are evaluation infrastructure, not runtime
 investigation workflow steps.
 
 ## Span Model
@@ -194,8 +194,8 @@ llm.call.hypothesis_generation
   parent_id: 0x74c511bb5291aa0e
 ```
 
-This proves the LLM generation call occurred inside the hypothesis-generation
-graph node, which occurred inside the investigation run.
+This verifies that the LLM generation call occurred inside the
+hypothesis-generation graph node, which occurred inside the investigation run.
 
 ## Privacy Boundary
 

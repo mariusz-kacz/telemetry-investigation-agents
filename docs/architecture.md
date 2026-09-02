@@ -248,9 +248,9 @@ application read model for the API and UI.
 
 ## Why The Design Is Intentionally Controlled
 
-This project avoids the common failure mode where the LLM receives raw telemetry
-and returns a polished but hard-to-audit answer. The controlled design creates
-clear accountability:
+This implementation avoids the common failure mode where the LLM receives raw
+telemetry and returns a polished but hard-to-audit answer. The controlled design
+creates clear accountability:
 
 - deterministic code says what evidence exists;
 - the LLM proposes possible interpretations;
@@ -258,8 +258,8 @@ clear accountability:
 - review policy decides whether automation can continue;
 - final reports cite accepted evidence.
 
-That structure is the main portfolio signal: production-minded AI workflow
-engineering rather than a chatbot-style demo.
+That structure is the main design characteristic: an evidence-backed,
+reviewable workflow rather than an opaque chatbot-style system.
 
 ## Deliberate Limits
 

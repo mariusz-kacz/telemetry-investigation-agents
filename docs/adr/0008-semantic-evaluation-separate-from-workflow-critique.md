@@ -74,9 +74,8 @@ and human review; evaluation measures the result after those controls run.
 
 ## Why this matters for Telemetry Investigation Agents
 
-The portfolio claim is not merely that reports contain citations. The stronger
-claim is that conclusions are evidence-backed and that unsupported causal claims
-are controlled.
+The design goal is not merely for reports to contain citations. Conclusions
+should be evidence-backed, and unsupported causal claims should be controlled.
 
 The unsupported-claim reviewer gives the evaluation suite a semantic regression
 signal for that claim. Keeping it separate from the workflow critic makes the

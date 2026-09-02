@@ -1,7 +1,7 @@
 [project]
 name = "telemetry-investigation-agents"
 version = "0.1.0"
-description = "Controlled LangGraph telemetry investigation workflow portfolio project"
+description = "Controlled LangGraph workflow for evidence-backed telemetry investigation"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
