@@ -392,7 +392,6 @@ uv run telemetry-evals --provider azure --show-telemetry
 
 ## Future Improvements
 
-- Add a short recorded operator walkthrough.
 - Add holdout eval cases that are not used during prompt or policy iteration.
 - Add more eval cases, including deployment/configuration evidence.
 - Add richer metric anomaly logic and baseline comparison.
